@@ -1,38 +1,38 @@
 {
-  "name": "solidity-template",
+  "name": "@1inch/gas-comparison",
   "version": "1.0.0",
-  "description": "",
+  "description": "Gas Comparison Repository",
   "repository": {
     "type": "git",
-    "url": "git@github.com:zumzoom/solidity-template.git"
+    "url": "git@github.com:1inch/gas-comparison.git"
   },
   "license": "MIT",
   "dependencies": {
-    "@1inch/solidity-utils": "3.5.5",
-    "@openzeppelin/contracts": "5.0.1"
+    "@1inch/solidity-utils": "3.8.2",
+    "@openzeppelin/contracts": "5.0.2"
   },
   "devDependencies": {
-    "@nomicfoundation/hardhat-chai-matchers": "2.0.2",
+    "@nomicfoundation/hardhat-chai-matchers": "2.0.6",
     "@nomicfoundation/hardhat-ethers": "3.0.5",
-    "@nomicfoundation/hardhat-verify": "2.0.3",
+    "@nomicfoundation/hardhat-verify": "2.0.4",
     "@nomicfoundation/hardhat-network-helpers": "1.0.10",
-    "chai": "4.3.10",
-    "dotenv": "16.3.1",
-    "eslint": "8.56.0",
+    "chai": "4.4.0",
+    "dotenv": "16.4.5",
+    "eslint": "8.57.0",
     "eslint-config-standard": "17.1.0",
     "eslint-plugin-import": "2.29.1",
-    "eslint-plugin-n": "16.4.0",
+    "eslint-plugin-n": "16.6.2",
     "eslint-plugin-promise": "6.1.1",
-    "ethers": "6.9.0",
+    "ethers": "6.11.1",
     "hardhat": "2.19.3",
     "hardhat-dependency-compiler": "1.1.3",
-    "hardhat-deploy": "0.11.45",
-    "hardhat-gas-reporter": "1.0.9",
+    "hardhat-deploy": "0.12.2",
+    "hardhat-gas-reporter": "1.0.10",
     "hardhat-tracer": "2.7.0",
     "rimraf": "5.0.5",
     "solc": "0.8.23",
-    "solhint": "3.6.2",
-    "solidity-coverage": "0.8.5",
+    "solhint": "4.1.1",
+    "solidity-coverage": "0.8.11",
     "solidity-docgen": "0.5.17"
   },
   "scripts": {
