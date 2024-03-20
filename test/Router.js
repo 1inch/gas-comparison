@@ -1,0 +1,216 @@
+const hre = require('hardhat');
+const { ethers } = hre;
+const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
+const { ether, constants } = require('@1inch/solidity-utils');
+
+describe('Router', async function () {
+    const gasUsed = {};
+
+    after(async function () {
+        console.table(gasUsed);
+    });
+
+    async function initContracts () {
+        const [addr1] = await ethers.getSigners();
+
+        const inch = await ethers.getContractAt('IAggregationRouter', '0x111111125421ca6dc452d289314280a0f8842a65');
+        const uniswap = await ethers.getContractAt('IUniswapV2Router', '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D');
+        const matcha = await ethers.getContractAt('IMatchaRouter', '0xdef1c0ded9bec7f1a1670819833240f027b25eff');
+
+        const tokens = {
+            ETH: {
+                async getAddress () { return constants.ZERO_ADDRESS; },
+            },
+            EEE: {
+                async getAddress () { return '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'; },
+            },
+            WETH: await ethers.getContractAt('IWETH', '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'),
+            DAI: await ethers.getContractAt('IERC20', '0x6B175474E89094C44Da98b954EedeAC495271d0F'),
+            USDC: await ethers.getContractAt('IERC20', '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'),
+            USDT: await ethers.getContractAt('IERC20', '0xdAC17F958D2ee523a2206206994597C13D831ec7'),
+        };
+
+        return { addr1, tokens, inch, matcha, uniswap };
+    }
+
+    it('ETH => DAI', async function () {
+        const { addr1, tokens, inch, matcha, uniswap } = await loadFixture(initContracts);
+        const inchTx = await inch.ethUnoswap(
+            '10000000000',
+            938967527125595836475317159035754667655090662161n,
+            { value: ether('1') },
+        );
+        const matchaTx = await matcha.sellToUniswap(
+            [tokens.EEE, tokens.DAI],
+            ether('1'),
+            '1',
+            false,
+            { value: ether('1') },
+        );
+        const uniTx = await uniswap.swapExactETHForTokens(
+            ether('1'),
+            [tokens.WETH, tokens.DAI],
+            addr1.address,
+            '10000000000',
+            { value: ether('1') },
+        );
+
+        gasUsed['ETH => DAI'] = {
+            inch: (await inchTx.wait()).gasUsed.toString(),
+            matcha: (await matchaTx.wait()).gasUsed.toString(),
+            uni: (await uniTx.wait()).gasUsed.toString(),
+        };
+    });
+
+    it('ETH => USDC => DAI', async function () {
+        const { addr1, tokens, inch, matcha, uniswap } = await loadFixture(initContracts);
+        const inchTx = await inch.ethUnoswap2(
+            ether('0'),
+            1032645502136839097869158895333537673945117411804n,
+            994927942081732774077955121581421418523584542933n,
+            { value: ether('1') },
+        );
+        const matchaTx = await matcha.sellToUniswap(
+            [tokens.EEE, tokens.USDC, tokens.DAI],
+            ether('1'),
+            '1',
+            false,
+            { value: ether('1') },
+        );
+        const uniTx = await uniswap.swapExactETHForTokens(
+            ether('1'),
+            [tokens.WETH, tokens.USDC, tokens.DAI],
+            addr1.address,
+            '10000000000',
+            { value: ether('1') },
+        );
+
+        gasUsed['ETH => USDC => DAI'] = {
+            inch: (await inchTx.wait()).gasUsed.toString(),
+            matcha: (await matchaTx.wait()).gasUsed.toString(),
+            uni: (await uniTx.wait()).gasUsed.toString(),
+        };
+    });
+
+    it('DAI => ETH', async function () {
+        const { addr1, tokens, inch, matcha, uniswap } = await loadFixture(initContracts);
+        const inchTx = await inch.unoswap(
+            await tokens.DAI.getAddress(),
+            ether('1'),
+            ether('0'),
+            7463162001623895408159848644077055337980887816877931638141419261915116595985n,
+            { gasLimit: '300000' },
+        );
+        const matchaTx = await matcha.sellToUniswap(
+            [tokens.DAI, tokens.EEE],
+            ether('1'),
+            '1',
+            false,
+            { gasLimit: '300000' },
+        );
+        const uniTx = await uniswap.swapExactTokensForETH(
+            ether('1'),
+            ether('0'),
+            [tokens.DAI, tokens.WETH],
+            addr1.address,
+            '10000000000',
+            { gasLimit: '300000' },
+        );
+
+        gasUsed['DAI => ETH'] = {
+            inch: (await inchTx.wait()).gasUsed.toString(),
+            matcha: (await matchaTx.wait()).gasUsed.toString(),
+            uni: (await uniTx.wait()).gasUsed.toString(),
+        };
+    });
+
+    it('DAI => WETH', async function () {
+        const { addr1, tokens, inch, matcha, uniswap } = await loadFixture(initContracts);
+        const inchTx = await inch.unoswap(
+            await tokens.DAI.getAddress(),
+            ether('1'),
+            ether('0'),
+            226156424291633194186662081034061097151513775275396385675320261420545993489n,
+        );
+        const matchaTx = await matcha.sellToUniswap(
+            [tokens.DAI, tokens.WETH],
+            ether('1'),
+            '1',
+            false,
+        );
+        const uniTx = await uniswap.swapExactTokensForTokens(
+            ether('1'),
+            ether('0'),
+            [tokens.DAI, tokens.WETH],
+            addr1.address,
+            '10000000000',
+        );
+
+        gasUsed['DAI => WETH'] = {
+            inch: (await inchTx.wait()).gasUsed.toString(),
+            matcha: (await matchaTx.wait()).gasUsed.toString(),
+            uni: (await uniTx.wait()).gasUsed.toString(),
+        };
+    });
+
+    it('DAI => WETH => USDC', async function () {
+        const { addr1, tokens, inch, matcha, uniswap } = await loadFixture(initContracts);
+        const inchTx = await inch.unoswap2(
+            await tokens.DAI.getAddress(),
+            ether('1'),
+            ether('0'),
+            226156424291633194186662081034061097151513775275396385675320261420545993489n,
+            1032645502136839097869158895333537673945117411804n,
+        );
+        const matchaTx = await matcha.sellToUniswap(
+            [tokens.DAI, tokens.WETH, tokens.USDC],
+            ether('1'),
+            '1',
+            false,
+        );
+        const uniTx = await uniswap.swapExactTokensForTokens(
+            ether('1'),
+            ether('0'),
+            [tokens.DAI, tokens.WETH, tokens.USDC],
+            addr1.address,
+            '10000000000',
+        );
+
+        gasUsed['DAI => WETH => USDC'] = {
+            inch: (await inchTx.wait()).gasUsed.toString(),
+            matcha: (await matchaTx.wait()).gasUsed.toString(),
+            uni: (await uniTx.wait()).gasUsed.toString(),
+        };
+    });
+
+    it('DAI => WETH => USDC => USDT', async function () {
+        const { addr1, tokens, inch, matcha, uniswap } = await loadFixture(initContracts);
+        const inchTx = await inch.unoswap3(
+            await tokens.DAI.getAddress(),
+            ether('1'),
+            ether('0'),
+            226156424291633194186662081034061097151513775275396385675320261420545993489n,
+            1032645502136839097869158895333537673945117411804n,
+            226156424291633194186662080370592431195940027908611666024061324202391007071n,
+        );
+        const matchaTx = await matcha.sellToUniswap(
+            [tokens.DAI, tokens.WETH, tokens.USDC, tokens.USDT],
+            ether('1'),
+            '1',
+            false,
+        );
+        const uniTx = await uniswap.swapExactTokensForTokens(
+            ether('1'),
+            ether('0'),
+            [tokens.DAI, tokens.WETH, tokens.USDC, tokens.USDT],
+            addr1.address,
+            '10000000000',
+        );
+
+        gasUsed['DAI => WETH => USDC => USDT'] = {
+            inch: (await inchTx.wait()).gasUsed.toString(),
+            matcha: (await matchaTx.wait()).gasUsed.toString(),
+            uni: (await uniTx.wait()).gasUsed.toString(),
+        };
+    });
+});

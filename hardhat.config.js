@@ -39,6 +39,9 @@ module.exports = {
         enableAllOpcodes: true,
     },
     dependencyCompiler: {
-        paths: [],
+        paths: [
+            '@1inch/solidity-utils/contracts/interfaces/IWETH.sol',
+            '@openzeppelin/contracts/token/ERC20/IERC20.sol',
+        ],
     },
 };
