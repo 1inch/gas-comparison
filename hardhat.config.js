@@ -10,7 +10,7 @@ require('solidity-coverage');
 
 const { Networks, getNetwork } = require('@1inch/solidity-utils/hardhat-setup');
 
-const { networks, etherscan } = (new Networks()).registerAll();
+const { networks, etherscan } = (new Networks(true, 'mainnet', true)).registerAll();
 
 module.exports = {
     solidity: {

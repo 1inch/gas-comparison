@@ -14,8 +14,8 @@ describe('Router', async function () {
         const [addr1] = await ethers.getSigners();
 
         const inch = await ethers.getContractAt('IAggregationRouter', '0x111111125421ca6dc452d289314280a0f8842a65');
-        const uniswap = await ethers.getContractAt('IUniswapV2Router', '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D');
         const matcha = await ethers.getContractAt('IMatchaRouter', '0xdef1c0ded9bec7f1a1670819833240f027b25eff');
+        const uniswap = await ethers.getContractAt('IUniswapV2Router', '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D');
 
         const tokens = {
             ETH: {
@@ -30,12 +30,20 @@ describe('Router', async function () {
             USDT: await ethers.getContractAt('IERC20', '0xdAC17F958D2ee523a2206206994597C13D831ec7'),
         };
 
+        await tokens.DAI.approve(inch, ether('1'));
+        await tokens.DAI.approve(matcha, ether('1'));
+        await tokens.DAI.approve(uniswap, ether('1'));
+
+        // Buy some DAI using UNI-V1 pool
+        await addr1.sendTransaction({ to: '0x2a1530c4c41db0b0b2bb646cb5eb1a67b7158667', value: ether('1') });
+
         return { addr1, tokens, inch, matcha, uniswap };
     }
 
     it('ETH => DAI', async function () {
         const { addr1, tokens, inch, matcha, uniswap } = await loadFixture(initContracts);
-        const inchTx = await inch.ethUnoswap(
+        const inchTx = await inch.ethUnoswapTo(
+            addr1.address,
             '10000000000',
             938967527125595836475317159035754667655090662161n,
             { value: ether('1') },
@@ -64,7 +72,8 @@ describe('Router', async function () {
 
     it('ETH => USDC => DAI', async function () {
         const { addr1, tokens, inch, matcha, uniswap } = await loadFixture(initContracts);
-        const inchTx = await inch.ethUnoswap2(
+        const inchTx = await inch.ethUnoswapTo2(
+            addr1.address,
             ether('0'),
             1032645502136839097869158895333537673945117411804n,
             994927942081732774077955121581421418523584542933n,
@@ -94,7 +103,8 @@ describe('Router', async function () {
 
     it('DAI => ETH', async function () {
         const { addr1, tokens, inch, matcha, uniswap } = await loadFixture(initContracts);
-        const inchTx = await inch.unoswap(
+        const inchTx = await inch.unoswapTo(
+            addr1.address,
             await tokens.DAI.getAddress(),
             ether('1'),
             ether('0'),
@@ -126,7 +136,8 @@ describe('Router', async function () {
 
     it('DAI => WETH', async function () {
         const { addr1, tokens, inch, matcha, uniswap } = await loadFixture(initContracts);
-        const inchTx = await inch.unoswap(
+        const inchTx = await inch.unoswapTo(
+            addr1.address,
             await tokens.DAI.getAddress(),
             ether('1'),
             ether('0'),
@@ -155,7 +166,8 @@ describe('Router', async function () {
 
     it('DAI => WETH => USDC', async function () {
         const { addr1, tokens, inch, matcha, uniswap } = await loadFixture(initContracts);
-        const inchTx = await inch.unoswap2(
+        const inchTx = await inch.unoswapTo2(
+            addr1.address,
             await tokens.DAI.getAddress(),
             ether('1'),
             ether('0'),
@@ -185,7 +197,8 @@ describe('Router', async function () {
 
     it('DAI => WETH => USDC => USDT', async function () {
         const { addr1, tokens, inch, matcha, uniswap } = await loadFixture(initContracts);
-        const inchTx = await inch.unoswap3(
+        const inchTx = await inch.unoswapTo3(
+            addr1.address,
             await tokens.DAI.getAddress(),
             ether('1'),
             ether('0'),
