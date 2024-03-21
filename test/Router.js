@@ -1,7 +1,51 @@
 const hre = require('hardhat');
 const { ethers } = hre;
+const axios = require('axios');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 const { ether, constants } = require('@1inch/solidity-utils');
+const { constructFullSDK, constructAxiosFetcher, constructEthersContractCaller } = require('@paraswap/sdk');
+
+const PARASWAP_TOKEN_TRANSFER_PROXY = '0x216B4B4Ba9F3e719726886d34a177484278Bfcae';
+
+const makeAndBroadcastParaswapTx = async ({
+    paraswap,
+    srcTokenSymbol,
+    dstTokenSymbol,
+    amount,
+    user,
+}) => {
+    const paraTokens = (await paraswap.swap.getTokens())
+        .filter(t => [srcTokenSymbol, dstTokenSymbol].indexOf(t.symbol) !== -1)
+        .reduce((acc, token) => {
+            acc[token.symbol] = token;
+            return acc;
+        }, {});
+    const priceRoute = await paraswap.swap.getRate({
+        srcToken: paraTokens[srcTokenSymbol].address,
+        destToken: paraTokens[dstTokenSymbol].address,
+        amount,
+    });
+    const txParams = await paraswap.swap.buildTx({
+        srcToken: paraTokens[srcTokenSymbol].address,
+        destToken: paraTokens[dstTokenSymbol].address,
+        srcAmount: amount.toString(),
+        slippage: 1,
+        priceRoute,
+        userAddress: user.address,
+        receiver: user.address,
+        ignoreChecks: true,
+    });
+    const filteredTxParams = ['from', 'to', 'value', 'data'].reduce((acc, key) => {
+        acc[key] = txParams[key];
+        return acc;
+    }, {});
+
+    if (srcTokenSymbol !== 'ETH') {
+        const srcToken = await ethers.getContractAt('IERC20', paraTokens[srcTokenSymbol].address);
+        await srcToken.approve(PARASWAP_TOKEN_TRANSFER_PROXY, amount);
+    }
+    return await user.sendTransaction(filteredTxParams);
+};
 
 describe('Router', async function () {
     const gasUsed = {};
@@ -16,6 +60,14 @@ describe('Router', async function () {
         const inch = await ethers.getContractAt('IAggregationRouter', '0x111111125421ca6dc452d289314280a0f8842a65');
         const matcha = await ethers.getContractAt('IMatchaRouter', '0xdef1c0ded9bec7f1a1670819833240f027b25eff');
         const uniswap = await ethers.getContractAt('IUniswapV2Router', '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D');
+        const paraswap = constructFullSDK({
+            chainId: 1,
+            fetcher: constructAxiosFetcher(axios),
+            contractCaller: constructEthersContractCaller({
+                ethersProviderOrSigner: ethers.provider,
+                EthersContract: ethers.Contract,
+            }, addr1),
+        });
 
         const tokens = {
             ETH: {
@@ -46,11 +98,11 @@ describe('Router', async function () {
         ); // USDT
         await tokens.WETH.deposit({ value: ether('1') }); // WETH
 
-        return { addr1, tokens, inch, matcha, uniswap };
+        return { addr1, tokens, inch, matcha, paraswap, uniswap };
     }
 
     it('ETH => DAI', async function () {
-        const { addr1, tokens, inch, matcha, uniswap } = await loadFixture(initContracts);
+        const { addr1, tokens, inch, matcha, paraswap, uniswap } = await loadFixture(initContracts);
         const inchTx = await inch.ethUnoswapTo(
             addr1.address,
             '10000000000',
@@ -71,10 +123,18 @@ describe('Router', async function () {
             '10000000000',
             { value: ether('1') },
         );
+        const paraTx = await makeAndBroadcastParaswapTx({
+            paraswap,
+            srcTokenSymbol: 'ETH',
+            dstTokenSymbol: 'DAI',
+            amount: ether('0.01'),
+            user: addr1,
+        });
 
         gasUsed['ETH => DAI'] = {
             inch: (await inchTx.wait()).gasUsed.toString(),
             matcha: (await matchaTx.wait()).gasUsed.toString(),
+            paraswap: (await paraTx.wait()).gasUsed.toString(),
             uni: (await uniTx.wait()).gasUsed.toString(),
         };
     });
@@ -111,7 +171,7 @@ describe('Router', async function () {
     });
 
     it('DAI => ETH', async function () {
-        const { addr1, tokens, inch, matcha, uniswap } = await loadFixture(initContracts);
+        const { addr1, tokens, inch, matcha, paraswap, uniswap } = await loadFixture(initContracts);
         const inchTx = await inch.unoswapTo(
             addr1.address,
             await tokens.DAI.getAddress(),
@@ -135,16 +195,24 @@ describe('Router', async function () {
             '10000000000',
             { gasLimit: '300000' },
         );
+        const paraTx = await makeAndBroadcastParaswapTx({
+            paraswap,
+            srcTokenSymbol: 'DAI',
+            dstTokenSymbol: 'ETH',
+            amount: ether('0.1'),
+            user: addr1,
+        });
 
         gasUsed['DAI => ETH'] = {
             inch: (await inchTx.wait()).gasUsed.toString(),
             matcha: (await matchaTx.wait()).gasUsed.toString(),
+            paraswap: (await paraTx.wait()).gasUsed.toString(),
             uni: (await uniTx.wait()).gasUsed.toString(),
         };
     });
 
     it('DAI => WETH', async function () {
-        const { addr1, tokens, inch, matcha, uniswap } = await loadFixture(initContracts);
+        const { addr1, tokens, inch, matcha, paraswap, uniswap } = await loadFixture(initContracts);
         const inchTx = await inch.unoswapTo(
             addr1.address,
             await tokens.DAI.getAddress(),
@@ -165,10 +233,18 @@ describe('Router', async function () {
             addr1.address,
             '10000000000',
         );
+        const paraTx = await makeAndBroadcastParaswapTx({
+            paraswap,
+            srcTokenSymbol: 'DAI',
+            dstTokenSymbol: 'WETH',
+            amount: ether('0.1'),
+            user: addr1,
+        });
 
         gasUsed['DAI => WETH'] = {
             inch: (await inchTx.wait()).gasUsed.toString(),
             matcha: (await matchaTx.wait()).gasUsed.toString(),
+            paraswap: (await paraTx.wait()).gasUsed.toString(),
             uni: (await uniTx.wait()).gasUsed.toString(),
         };
     });

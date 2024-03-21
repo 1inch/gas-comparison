@@ -1414,6 +1414,20 @@
   resolved "https://registry.yarnpkg.com/@openzeppelin/contracts/-/contracts-5.0.2.tgz#b1d03075e49290d06570b2fd42154d76c2a5d210"
   integrity sha512-ytPc6eLGcHHnapAZ9S+5qsdomhjo6QBHTDRRBFfTxXIpsicMhVPouPgmUPebZZZGX7vt9USA+Z+0M0dSVtSUEA==
 
+"@paraswap/core@2.0.0":
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/@paraswap/core/-/core-2.0.0.tgz#be62161abec67db3cef22498a1631b12aa2d81e1"
+  integrity sha512-zhXSjX2dbYaRxYZt9LhzOCW/qeP0CLyvaFU7e8MkWahu/IAhyvKc/45/STDgNgTjPw1MHjNHbmi5a5pVqXyXBg==
+
+"@paraswap/sdk@6.6.0":
+  version "6.6.0"
+  resolved "https://registry.yarnpkg.com/@paraswap/sdk/-/sdk-6.6.0.tgz#96089b35d695d730b3bfb48695177d832907ad7a"
+  integrity sha512-iLsZCbTgnoyYoa3IDCsEEiELKcROuecriruVBM/Uk3XmnJMPPR0VkxU1LIRorce6Wn5KrToWNQYXziPUJN2kjg==
+  dependencies:
+    "@paraswap/core" "2.0.0"
+    bignumber.js "^9.0.2"
+    ts-essentials "^9.1.2"
+
 "@pkgjs/parseargs@^0.11.0":
   version "0.11.0"
   resolved "https://registry.yarnpkg.com/@pkgjs/parseargs/-/parseargs-0.11.0.tgz#a77ea742fab25775145434eb1d2328cf5013ac33"
@@ -2187,6 +2201,11 @@ bigint-crypto-utils@^3.0.23:
   version "3.3.0"
   resolved "https://registry.yarnpkg.com/bigint-crypto-utils/-/bigint-crypto-utils-3.3.0.tgz#72ad00ae91062cf07f2b1def9594006c279c1d77"
   integrity sha512-jOTSb+drvEDxEq6OuUybOAv/xxoh3cuYRUIPyu8sSHQNKM303UQ2R1DAo45o1AkcIXw6fzbaFI1+xGGdaXs2lg==
+
+bignumber.js@^9.0.2:
+  version "9.1.2"
+  resolved "https://registry.yarnpkg.com/bignumber.js/-/bignumber.js-9.1.2.tgz#b7c4242259c008903b13707983b5f4bbd31eda0c"
+  integrity sha512-2/mKyZH9K85bzOEfhXDBFZTGd1CTs+5IHpeFQo9luiBG7hghdC851Pj2WAhb6E3R6b9tZj/XKhbg4fum+Kepug==
 
 binary-extensions@^2.0.0:
   version "2.2.0"
@@ -6462,6 +6481,11 @@ toidentifier@1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/toidentifier/-/toidentifier-1.0.1.tgz#3be34321a88a820ed1bd80dfaa33e479fbb8dd35"
   integrity sha512-o5sSPKEkg/DIQNmH43V0/uerLrpzVedkUh8tGNvaeXpfpuwjKenlSox/2O/BTlZUtEe+JG7s5YhEz608PlAHRA==
+
+ts-essentials@^9.1.2:
+  version "9.4.1"
+  resolved "https://registry.yarnpkg.com/ts-essentials/-/ts-essentials-9.4.1.tgz#6a6b6f81c2138008a5eef216e9fa468d8d9e2ab4"
+  integrity sha512-oke0rI2EN9pzHsesdmrOrnqv1eQODmJpd/noJjwj2ZPC3Z4N2wbjrOEqnsEgmvlO2+4fBb0a794DCna2elEVIQ==
 
 ts-node@^10.9.1:
   version "10.9.1"
