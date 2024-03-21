@@ -34,8 +34,17 @@ describe('Router', async function () {
         await tokens.DAI.approve(matcha, ether('1'));
         await tokens.DAI.approve(uniswap, ether('1'));
 
-        // Buy some DAI using UNI-V1 pool
-        await addr1.sendTransaction({ to: '0x2a1530c4c41db0b0b2bb646cb5eb1a67b7158667', value: ether('1') });
+        // Buy some tokens for warmup address and exchanges
+        await addr1.sendTransaction({ to: '0x2a1530c4c41db0b0b2bb646cb5eb1a67b7158667', value: ether('1') }); // DAI
+        await addr1.sendTransaction({ to: '0x97deC872013f6B5fB443861090ad931542878126', value: ether('1') }); // USDC
+        await uniswap.swapExactETHForTokens(
+            ether('0'),
+            [tokens.WETH, tokens.USDT],
+            addr1,
+            ether('1'),
+            { value: ether('1') },
+        ); // USDT
+        await tokens.WETH.deposit({ value: ether('1') }); // WETH
 
         return { addr1, tokens, inch, matcha, uniswap };
     }
