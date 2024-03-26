@@ -135,7 +135,7 @@ describe('Router', async function () {
             inch: (await inchTx.wait()).gasUsed.toString(),
             matcha: (await matchaTx.wait()).gasUsed.toString(),
             paraswap: (await paraTx.wait()).gasUsed.toString(),
-            uni: (await uniTx.wait()).gasUsed.toString(),
+            uniswap: (await uniTx.wait()).gasUsed.toString(),
         };
     });
 
@@ -166,7 +166,7 @@ describe('Router', async function () {
         gasUsed['ETH => USDC => DAI'] = {
             inch: (await inchTx.wait()).gasUsed.toString(),
             matcha: (await matchaTx.wait()).gasUsed.toString(),
-            uni: (await uniTx.wait()).gasUsed.toString(),
+            uniswap: (await uniTx.wait()).gasUsed.toString(),
         };
     });
 
@@ -207,7 +207,7 @@ describe('Router', async function () {
             inch: (await inchTx.wait()).gasUsed.toString(),
             matcha: (await matchaTx.wait()).gasUsed.toString(),
             paraswap: (await paraTx.wait()).gasUsed.toString(),
-            uni: (await uniTx.wait()).gasUsed.toString(),
+            uniswap: (await uniTx.wait()).gasUsed.toString(),
         };
     });
 
@@ -245,7 +245,7 @@ describe('Router', async function () {
             inch: (await inchTx.wait()).gasUsed.toString(),
             matcha: (await matchaTx.wait()).gasUsed.toString(),
             paraswap: (await paraTx.wait()).gasUsed.toString(),
-            uni: (await uniTx.wait()).gasUsed.toString(),
+            uniswap: (await uniTx.wait()).gasUsed.toString(),
         };
     });
 
@@ -276,7 +276,7 @@ describe('Router', async function () {
         gasUsed['DAI => WETH => USDC'] = {
             inch: (await inchTx.wait()).gasUsed.toString(),
             matcha: (await matchaTx.wait()).gasUsed.toString(),
-            uni: (await uniTx.wait()).gasUsed.toString(),
+            uniswap: (await uniTx.wait()).gasUsed.toString(),
         };
     });
 
@@ -308,7 +308,7 @@ describe('Router', async function () {
         gasUsed['DAI => WETH => USDC => USDT'] = {
             inch: (await inchTx.wait()).gasUsed.toString(),
             matcha: (await matchaTx.wait()).gasUsed.toString(),
-            uni: (await uniTx.wait()).gasUsed.toString(),
+            uniswap: (await uniTx.wait()).gasUsed.toString(),
         };
     });
 });
