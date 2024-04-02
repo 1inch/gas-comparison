@@ -58,6 +58,7 @@ describe('LimitOrders', async function () {
     it('ETH => DAI', async function () {
         const { maker, taker, tokens, inch, uniswap } = await loadFixture(initContracts);
 
+        // Create 1inch order, sign and fill it
         const inchOrder = new InchOrder({
             makerAsset: await tokens.DAI.getAddress(),
             takerAsset: await tokens.WETH.getAddress(),
@@ -73,8 +74,9 @@ describe('LimitOrders', async function () {
             { value: inchOrder.order.takingAmount },
         );
         await expect(inchTx).to.changeTokenBalances(tokens.DAI, [maker, taker], [-inchOrder.order.makingAmount, inchOrder.order.makingAmount]);
-        await expect(inchTx).to.changeEtherBalance(maker, inchOrder.order.takingAmount);
+        await expect(inchTx).to.changeEtherBalances([maker, taker], [inchOrder.order.takingAmount, -inchOrder.order.takingAmount], { includeFee: false });
 
+        // Create Uniswap order, sign and fill it
         const uniswapOrder = new UniswapOrder({
             chainId: await getChainId(),
             verifyingContract: await uniswap.getAddress(),
@@ -90,7 +92,7 @@ describe('LimitOrders', async function () {
         const signedOrder = await uniswapOrder.sign(maker);
         const uniTx = await uniswap.connect(taker).execute(signedOrder, { value: uniswapOrder.order.info.outputs[0].startAmount });
         await expect(uniTx).to.changeTokenBalances(tokens.DAI, [maker, taker], [-uniswapOrder.order.info.input.startAmount, uniswapOrder.order.info.input.startAmount]);
-        await expect(uniTx).to.changeEtherBalance(maker, uniswapOrder.order.info.outputs[0].startAmount);
+        await expect(uniTx).to.changeEtherBalances([maker, taker], [uniswapOrder.order.info.outputs[0].startAmount, -uniswapOrder.order.info.outputs[0].startAmount], { includeFee: false });
 
         gasUsed['ETH => DAI'] = {
             inch: (await inchTx.wait()).gasUsed.toString(),
@@ -101,6 +103,7 @@ describe('LimitOrders', async function () {
     it('WETH => DAI', async function () {
         const { maker, taker, tokens, inch, matcha, uniswap } = await loadFixture(initContracts);
 
+        // Create 1inch order, sign and fill it
         const inchOrder = new InchOrder({
             makerAsset: await tokens.DAI.getAddress(),
             takerAsset: await tokens.WETH.getAddress(),
@@ -114,6 +117,7 @@ describe('LimitOrders', async function () {
         await expect(inchTx).to.changeTokenBalances(tokens.DAI, [maker, taker], [-inchOrder.order.makingAmount, inchOrder.order.makingAmount]);
         await expect(inchTx).to.changeTokenBalances(tokens.WETH, [maker, taker], [inchOrder.order.takingAmount, -inchOrder.order.takingAmount]);
 
+        // Create 0xProtocol order, sign and fill it
         const matchaOrder = new MatchaOrder({
             chainId: await getChainId(),
             verifyingContract: await matcha.getAddress(),
@@ -129,6 +133,7 @@ describe('LimitOrders', async function () {
         await expect(matchaTx).to.changeTokenBalances(tokens.DAI, [maker, taker], [-matchaOrder.order.makerAmount, matchaOrder.order.makerAmount]);
         await expect(matchaTx).to.changeTokenBalances(tokens.WETH, [maker, taker], [matchaOrder.order.takerAmount, -matchaOrder.order.takerAmount]);
 
+        // Create Uniswap order, sign and fill it
         const uniswapOrder = new UniswapOrder({
             chainId: await getChainId(),
             verifyingContract: await uniswap.getAddress(),
@@ -146,6 +151,7 @@ describe('LimitOrders', async function () {
         await expect(uniTx).to.changeTokenBalances(tokens.DAI, [maker, taker], [-uniswapOrder.order.info.input.startAmount, uniswapOrder.order.info.input.startAmount]);
         await expect(uniTx).to.changeTokenBalances(tokens.WETH, [maker, taker], [uniswapOrder.order.info.outputs[0].startAmount, -uniswapOrder.order.info.outputs[0].startAmount]);
 
+        // Create Paraswap order, sign and fill it
         const paraswapOrder = new ParaswapOrder({
             maker,
             taker,
@@ -154,8 +160,10 @@ describe('LimitOrders', async function () {
             makerAmount: ether('0.1').toString(),
             takerAmount: ether('0.01').toString(),
         });
-        const txParams = await paraswapOrder.buildTxParams(await paraswapOrder.sign(maker), taker.address);
-        const paraTx = await taker.sendTransaction(txParams);
+        // First swap to clean up PARASWAP_TOKEN_TRANSFER_PROXY from extra amounts
+        await taker.sendTransaction(await paraswapOrder.buildTxParams(await paraswapOrder.sign(maker), taker.address));
+        // Main tx
+        const paraTx = await taker.sendTransaction(await paraswapOrder.buildTxParams(await paraswapOrder.sign(maker), taker.address));
         await expect(paraTx).to.changeTokenBalances(tokens.DAI, [maker, taker], [-BigInt(paraswapOrder.order.makerAmount), BigInt(paraswapOrder.order.makerAmount)]);
         await expect(paraTx).to.changeTokenBalances(tokens.WETH, [maker, taker], [BigInt(paraswapOrder.order.takerAmount), -BigInt(paraswapOrder.order.takerAmount)]);
 
