@@ -5,8 +5,9 @@ const { loadFixture, time } = require('@nomicfoundation/hardhat-network-helpers'
 const { ether, constants, deployContract, trim0x } = require('@1inch/solidity-utils');
 const { buildAuctionDetails, buildExtensionsBitmapData } = require('@1inch/limit-order-settlement/test/helpers/fusionUtils');
 const { buildMakerTraits, buildTakerTraits } = require('@1inch/limit-order-protocol-contract/test/helpers/orderUtils');
-const { InchOrder, UniswapOrder } = require('./helpers/orders');
+const { InchOrder, UniswapOrder, CowswapOrder } = require('./helpers/orders');
 
+const COWSWAP_VAULT_RELAYER_MAINNET_ADDRESS = '0xC92E8bdf79f0507f65a392b0ab4667716BFE0110';
 const PERMIT2CONTRACT = '0x000000000022D473030F116dDEE9F6B43aC78BA3';
 const abiCoder = ethers.AbiCoder.defaultAbiCoder();
 
@@ -36,19 +37,32 @@ describe('Fusion', async function () {
         const inch = await ethers.getContractAt('LimitOrderProtocol', '0x111111125421ca6dc452d289314280a0f8842a65');
         const settlement = await deployContract('Settlement', [inch, tokens['1INCH']]);
         const uniswap = await ethers.getContractAt('IReactor', '0x6000da47483062A0D734Ba3dc7576Ce6A0B645C4');
+        const cowswap = await ethers.getContractAt('ICowswapGPv2Settlement', '0x9008D19f58AAbD9eD0D60971565AA8510560ab41');
 
         // Init resolver
         const Resolver = await ethers.getContractFactory('Resolver');
-        const resolver = await Resolver.connect(taker).deploy(inch, uniswap);
-        for (const token of [tokens.DAI, tokens.WETH]) {
-            await resolver.connect(taker).approve(token, inch);
-            await resolver.connect(taker).approve(token, uniswap);
-        }
+        const resolver = await Resolver.connect(taker).deploy(inch, uniswap, cowswap);
         // for case when resolver use its own funds
         await tokens.WETH.connect(taker).deposit({ value: ether('1') });
         await tokens.WETH.connect(taker).transfer(resolver, ether('1'));
         // for case when resolver use taker funds
         await tokens.WETH.connect(taker).approve(resolver, ether('1'));
+
+        // Set our resolver for cowswap protocol
+        const authenticator = await cowswap.authenticator();
+        const authenticatorContract = await ethers.getContractAt('ICowswapGPv2Authentication', authenticator);
+        const managerAddress = await authenticatorContract.manager();
+        await ethers.provider.send('hardhat_impersonateAccount', [managerAddress]);
+        const manager = await ethers.getSigner(managerAddress);
+        // set our solvers for cowswap protocol
+        await authenticatorContract.connect(manager).addSolver(taker);
+        await authenticatorContract.connect(manager).addSolver(resolver);
+
+        for (const token of [tokens.DAI, tokens.WETH]) {
+            await resolver.connect(taker).approve(token, inch);
+            await resolver.connect(taker).approve(token, uniswap);
+            await resolver.connect(taker).approve(token, COWSWAP_VAULT_RELAYER_MAINNET_ADDRESS);
+        }
 
         // Init and warmup wallets
         for (const wallet of [maker, taker]) {
@@ -61,16 +75,17 @@ describe('Fusion', async function () {
                 await token.connect(wallet).approve(inch, ether('1'));
                 await token.connect(wallet).approve(uniswap, ether('1'));
                 await token.connect(wallet).approve(PERMIT2CONTRACT, ether('1'));
+                await token.connect(wallet).approve(COWSWAP_VAULT_RELAYER_MAINNET_ADDRESS, ether('1'));
             }
         }
 
         const maxPriorityFeePerGas = (await ethers.provider.getBlock('latest')).baseFeePerGas / 2n;
 
-        return { maker, taker, tokens, inch, settlement, resolver, uniswap, maxPriorityFeePerGas };
+        return { maker, taker, tokens, inch, settlement, resolver, uniswap, cowswap, maxPriorityFeePerGas };
     }
 
     it('WETH => DAI without callback', async function () {
-        const { maker, taker, tokens, inch, settlement, uniswap, maxPriorityFeePerGas } = await loadFixture(initContracts);
+        const { maker, taker, tokens, inch, settlement, uniswap, cowswap, maxPriorityFeePerGas } = await loadFixture(initContracts);
 
         // Create 1inch settlement order, sign and fill it
         const auctionStartTime = await time.latest();
@@ -127,14 +142,53 @@ describe('Fusion', async function () {
             maxPriorityFeePerGas,
         });
 
+        // Create Cowswap settlement order, sign and fill it
+        const cowswapOrder = new CowswapOrder({
+            makingAmount: ether('0.1'),
+            takingAmount: ether('0.01'),
+            maker,
+            makerAsset: await tokens.DAI.getAddress(),
+            takerAsset: await tokens.WETH.getAddress(),
+            destination: taker.address,
+            verifyingContract: await cowswap.getAddress(),
+        });
+        const cowTx = await cowswap.connect(taker).settle(
+            [cowswapOrder.order.sellToken, cowswapOrder.order.buyToken],
+            [cowswapOrder.order.buyAmount, cowswapOrder.order.sellAmount],
+            [await cowswapOrder.buildTrade(await cowswapOrder.sign(maker))],
+            [
+                [],
+                [
+                    {
+                        value: 0,
+                        target: cowswapOrder.order.sellToken,
+                        callData: tokens.DAI.interface.encodeFunctionData('transfer', [
+                            taker.address,
+                            cowswapOrder.order.sellAmount,
+                        ]),
+                    },
+                    {
+                        value: 0,
+                        target: taker.address,
+                        callData: '0x',
+                    },
+                ],
+                [],
+            ],
+            {
+                maxPriorityFeePerGas,
+            },
+        );
+
         gasUsed['WETH => DAI w/o callback'] = {
             inch: (await inchTx.wait()).gasUsed.toString(),
             uniswap: (await uniTx.wait()).gasUsed.toString(),
+            cowswap: (await cowTx.wait()).gasUsed.toString(),
         };
     });
 
     it('WETH => DAI with callback when resolver has funds', async function () {
-        const { maker, taker, tokens, inch, settlement, resolver, uniswap, maxPriorityFeePerGas } = await loadFixture(initContracts);
+        const { maker, taker, tokens, inch, settlement, resolver, uniswap, cowswap, maxPriorityFeePerGas } = await loadFixture(initContracts);
 
         // Create 1inch settlement order, sign and fill it
         const auctionStartTime = await time.latest();
@@ -200,14 +254,67 @@ describe('Fusion', async function () {
             },
         );
 
+        // Create Cowswap settlement order, sign and fill it
+        const cowswapOrder = new CowswapOrder({
+            makingAmount: ether('0.1'),
+            takingAmount: ether('0.01'),
+            maker,
+            makerAsset: await tokens.DAI.getAddress(),
+            takerAsset: await tokens.WETH.getAddress(),
+            destination: await resolver.getAddress(),
+            verifyingContract: await cowswap.getAddress(),
+        });
+        const cowTx = await resolver.settleCowswapOrders(
+            0,
+            cowswap.interface.encodeFunctionData('settle', [
+                [cowswapOrder.order.sellToken, cowswapOrder.order.buyToken],
+                [cowswapOrder.order.buyAmount, cowswapOrder.order.sellAmount],
+                [await cowswapOrder.buildTrade(await cowswapOrder.sign(maker))],
+                [
+                    [],
+                    [
+                        {
+                            value: 0,
+                            target: cowswapOrder.order.sellToken,
+                            callData: tokens.DAI.interface.encodeFunctionData('transfer', [
+                                await resolver.getAddress(),
+                                cowswapOrder.order.sellAmount,
+                            ]),
+                        },
+                        {
+                            value: 0,
+                            target: await resolver.getAddress(),
+                            callData: resolver.interface.encodeFunctionData('cowswapResolve', [
+                                abiCoder.encode(
+                                    ['bytes[]'],
+                                    [
+                                        [
+                                            await tokens.WETH.getAddress() + trim0x(tokens.WETH.interface.encodeFunctionData('transfer', [
+                                                await cowswap.getAddress(), cowswapOrder.order.buyAmount,
+                                            ])),
+                                        ],
+                                    ],
+                                ),
+                            ]),
+                        },
+                    ],
+                    [],
+                ],
+            ]),
+            {
+                maxPriorityFeePerGas,
+            },
+        );
+
         gasUsed['WETH => DAI with callback, resolver funds'] = {
             inch: (await inchTx.wait()).gasUsed.toString(),
             uniswap: (await uniTx.wait()).gasUsed.toString(),
+            cowswap: (await cowTx.wait()).gasUsed.toString(),
         };
     });
 
     it('WETH => DAI with callback when resolver use taker funds', async function () {
-        const { maker, taker, tokens, inch, settlement, resolver, uniswap, maxPriorityFeePerGas } = await loadFixture(initContracts);
+        const { maker, taker, tokens, inch, settlement, resolver, uniswap, cowswap, maxPriorityFeePerGas } = await loadFixture(initContracts);
 
         // Create 1inch settlement order, sign and fill it
         const auctionStartTime = await time.latest();
@@ -294,9 +401,62 @@ describe('Fusion', async function () {
             },
         );
 
+        // Create Cowswap settlement order, sign and fill it
+        const cowswapOrder = new CowswapOrder({
+            makingAmount: ether('0.1'),
+            takingAmount: ether('0.01'),
+            maker,
+            makerAsset: await tokens.DAI.getAddress(),
+            takerAsset: await tokens.WETH.getAddress(),
+            destination: await resolver.getAddress(),
+            verifyingContract: await cowswap.getAddress(),
+        });
+        const cowTx = await resolver.settleCowswapOrders(
+            0,
+            cowswap.interface.encodeFunctionData('settle', [
+                [cowswapOrder.order.sellToken, cowswapOrder.order.buyToken],
+                [cowswapOrder.order.buyAmount, cowswapOrder.order.sellAmount],
+                [await cowswapOrder.buildTrade(await cowswapOrder.sign(maker))],
+                [
+                    [],
+                    [
+                        {
+                            value: 0,
+                            target: cowswapOrder.order.sellToken,
+                            callData: tokens.DAI.interface.encodeFunctionData('transfer', [
+                                await resolver.getAddress(),
+                                cowswapOrder.order.sellAmount,
+                            ]),
+                        },
+                        {
+                            value: 0,
+                            target: await resolver.getAddress(),
+                            callData: resolver.interface.encodeFunctionData('cowswapResolve', [
+                                abiCoder.encode(
+                                    ['bytes[]'],
+                                    [
+                                        [
+                                            await tokens.WETH.getAddress() + trim0x(tokens.WETH.interface.encodeFunctionData('transferFrom', [
+                                                taker.address, await cowswap.getAddress(), cowswapOrder.order.buyAmount,
+                                            ])),
+                                        ],
+                                    ],
+                                ),
+                            ]),
+                        },
+                    ],
+                    [],
+                ],
+            ]),
+            {
+                maxPriorityFeePerGas,
+            },
+        );
+
         gasUsed['WETH => DAI with callback, taker funds'] = {
             inch: (await inchTx.wait()).gasUsed.toString(),
             uniswap: (await uniTx.wait()).gasUsed.toString(),
+            cowswap: (await cowTx.wait()).gasUsed.toString(),
         };
     });
 });

@@ -37,7 +37,7 @@ contract InchResolver is ITakerInteraction {
         token.forceApprove(to, type(uint256).max);
     }
 
-    function settleOrders(bytes calldata data) public onlyOwner() {
+    function settleOrders(bytes calldata data) public {
         // solhint-disable-next-line avoid-low-level-calls
         (bool success,) = address(_LOPV4).call(data);
         if (!success) RevertReasonForwarder.reRevert();
