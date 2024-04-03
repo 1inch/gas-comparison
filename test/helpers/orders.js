@@ -28,7 +28,18 @@ class InchOrder {
         { name: 'makerTraits', type: 'uint256' },
     ];
 
-    constructor ({ makerAsset, takerAsset, makingAmount, takingAmount, maker, verifyingContract }) {
+    constructor ({
+        makerAsset,
+        takerAsset,
+        makingAmount,
+        takingAmount,
+        maker,
+        verifyingContract,
+        makerTraits,
+        makingAmountData,
+        takingAmountData,
+        postInteraction,
+    }) {
         this.verifyingContract = verifyingContract;
         this.order = buildOrder({
             makerAsset,
@@ -36,6 +47,11 @@ class InchOrder {
             makingAmount,
             takingAmount,
             maker: maker.address,
+            makerTraits,
+        }, {
+            makingAmountData,
+            takingAmountData,
+            postInteraction,
         });
     }
 
@@ -134,7 +150,11 @@ class UniswapOrder {
         inputTokenAddress,
         outputTokenAddress,
         inputAmount,
+        inputStartAmount = inputAmount,
+        inputEndAmount = inputAmount,
         outputAmount,
+        outputStartAmount = outputAmount,
+        outputEndAmount = outputAmount,
         permit2contractAddress,
     }) {
         this.verifyingContract = verifyingContract;
@@ -165,13 +185,13 @@ class UniswapOrder {
             .nonce(nonce)
             .input({
                 token: inputTokenAddress,
-                startAmount: inputAmount,
-                endAmount: inputAmount,
+                startAmount: inputStartAmount,
+                endAmount: inputEndAmount,
             })
             .output({
                 token: outputTokenAddress,
-                startAmount: outputAmount,
-                endAmount: outputAmount,
+                startAmount: outputStartAmount,
+                endAmount: outputEndAmount,
                 recipient: maker.address,
             })
             .build();
