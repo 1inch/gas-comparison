@@ -95,7 +95,7 @@ describe('LimitOrders', async function () {
         await expect(uniTx).to.changeEtherBalances([maker, taker], [uniswapOrder.order.info.outputs[0].startAmount, -uniswapOrder.order.info.outputs[0].startAmount], { includeFee: false });
 
         gasUsed['ETH => DAI'] = {
-            inch: (await inchTx.wait()).gasUsed.toString(),
+            '1inch': (await inchTx.wait()).gasUsed.toString(),
             uniswap: (await uniTx.wait()).gasUsed.toString(),
         };
     });
@@ -168,8 +168,8 @@ describe('LimitOrders', async function () {
         await expect(paraTx).to.changeTokenBalances(tokens.WETH, [maker, taker], [BigInt(paraswapOrder.order.takerAmount), -BigInt(paraswapOrder.order.takerAmount)]);
 
         gasUsed['WETH => DAI'] = {
-            inch: (await inchTx.wait()).gasUsed.toString(),
-            matcha: (await matchaTx.wait()).gasUsed.toString(),
+            '1inch': (await inchTx.wait()).gasUsed.toString(),
+            '0x': (await matchaTx.wait()).gasUsed.toString(),
             paraswap: (await paraTx.wait()).gasUsed.toString(),
             uniswap: (await uniTx.wait()).gasUsed.toString(),
         };

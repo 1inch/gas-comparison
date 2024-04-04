@@ -29,20 +29,14 @@ contract UniswapResolver is IReactorCallback {
     function reactorCallback(ResolvedOrder[] calldata resolvedOrders, bytes calldata callbackData) public virtual {
         if (msg.sender != _REACTOR) revert OnlyReactor();
 
-        uint8 approvalMask = uint8(callbackData[0]);
-
         bytes[] calldata blobs;
         assembly ("memory-safe") { // solhint-disable-line no-inline-assembly
-            // 1 extra byte was used for approvals mask
-            blobs.offset := add(callbackData.offset, 0x21)
-            blobs.length := calldataload(add(callbackData.offset, 1))
+            blobs.offset := add(callbackData.offset, 0x20)
+            blobs.length := calldataload(callbackData.offset)
         }
         if (resolvedOrders.length != blobs.length) revert LengthMismatch();
 
         for (uint256 i = 0; i < resolvedOrders.length; i++) {
-            if ((approvalMask >> i) & 1 == 1) {
-                IERC20(resolvedOrders[i].outputs[0].token).forceApprove(_REACTOR, type(uint256).max);
-            }
             bytes calldata blob = blobs[i];
             bytes[] calldata arguments;
             assembly { // solhint-disable-line no-inline-assembly

@@ -132,8 +132,8 @@ describe('Router', async function () {
         });
 
         gasUsed['ETH => DAI'] = {
-            inch: (await inchTx.wait()).gasUsed.toString(),
-            matcha: (await matchaTx.wait()).gasUsed.toString(),
+            '1inch': (await inchTx.wait()).gasUsed.toString(),
+            '0x': (await matchaTx.wait()).gasUsed.toString(),
             paraswap: (await paraTx.wait()).gasUsed.toString(),
             uniswap: (await uniTx.wait()).gasUsed.toString(),
         };
@@ -164,8 +164,8 @@ describe('Router', async function () {
         );
 
         gasUsed['ETH => USDC => DAI'] = {
-            inch: (await inchTx.wait()).gasUsed.toString(),
-            matcha: (await matchaTx.wait()).gasUsed.toString(),
+            '1inch': (await inchTx.wait()).gasUsed.toString(),
+            '0x': (await matchaTx.wait()).gasUsed.toString(),
             uniswap: (await uniTx.wait()).gasUsed.toString(),
         };
     });
@@ -204,8 +204,8 @@ describe('Router', async function () {
         });
 
         gasUsed['DAI => ETH'] = {
-            inch: (await inchTx.wait()).gasUsed.toString(),
-            matcha: (await matchaTx.wait()).gasUsed.toString(),
+            '1inch': (await inchTx.wait()).gasUsed.toString(),
+            '0x': (await matchaTx.wait()).gasUsed.toString(),
             paraswap: (await paraTx.wait()).gasUsed.toString(),
             uniswap: (await uniTx.wait()).gasUsed.toString(),
         };
@@ -242,8 +242,8 @@ describe('Router', async function () {
         });
 
         gasUsed['DAI => WETH'] = {
-            inch: (await inchTx.wait()).gasUsed.toString(),
-            matcha: (await matchaTx.wait()).gasUsed.toString(),
+            '1inch': (await inchTx.wait()).gasUsed.toString(),
+            '0x': (await matchaTx.wait()).gasUsed.toString(),
             paraswap: (await paraTx.wait()).gasUsed.toString(),
             uniswap: (await uniTx.wait()).gasUsed.toString(),
         };
@@ -274,8 +274,8 @@ describe('Router', async function () {
         );
 
         gasUsed['DAI => WETH => USDC'] = {
-            inch: (await inchTx.wait()).gasUsed.toString(),
-            matcha: (await matchaTx.wait()).gasUsed.toString(),
+            '1inch': (await inchTx.wait()).gasUsed.toString(),
+            '0x': (await matchaTx.wait()).gasUsed.toString(),
             uniswap: (await uniTx.wait()).gasUsed.toString(),
         };
     });
@@ -306,8 +306,8 @@ describe('Router', async function () {
         );
 
         gasUsed['DAI => WETH => USDC => USDT'] = {
-            inch: (await inchTx.wait()).gasUsed.toString(),
-            matcha: (await matchaTx.wait()).gasUsed.toString(),
+            '1inch': (await inchTx.wait()).gasUsed.toString(),
+            '0x': (await matchaTx.wait()).gasUsed.toString(),
             uniswap: (await uniTx.wait()).gasUsed.toString(),
         };
     });

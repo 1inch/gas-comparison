@@ -39,6 +39,21 @@ describe('Fusion', async function () {
         const uniswap = await ethers.getContractAt('IReactor', '0x6000da47483062A0D734Ba3dc7576Ce6A0B645C4');
         const cowswap = await ethers.getContractAt('ICowswapGPv2Settlement', '0x9008D19f58AAbD9eD0D60971565AA8510560ab41');
 
+        // Init and warmup wallets
+        for (const wallet of [maker, taker]) {
+            // Buy some DAI
+            await wallet.sendTransaction({ to: '0x2a1530c4c41db0b0b2bb646cb5eb1a67b7158667', value: ether('1') });
+            // Buy some WETH
+            await tokens.WETH.connect(wallet).deposit({ value: ether('1') });
+
+            for (const token of [tokens.DAI, tokens.WETH]) {
+                await token.connect(wallet).approve(inch, ether('1'));
+                await token.connect(wallet).approve(uniswap, ether('1'));
+                await token.connect(wallet).approve(PERMIT2CONTRACT, ether('1'));
+                await token.connect(wallet).approve(COWSWAP_VAULT_RELAYER_MAINNET_ADDRESS, ether('1'));
+            }
+        }
+
         // Init resolver
         const Resolver = await ethers.getContractFactory('Resolver');
         const resolver = await Resolver.connect(taker).deploy(inch, uniswap, cowswap);
@@ -47,6 +62,8 @@ describe('Fusion', async function () {
         await tokens.WETH.connect(taker).transfer(resolver, ether('1'));
         // for case when resolver use taker funds
         await tokens.WETH.connect(taker).approve(resolver, ether('1'));
+        // warmup resolver
+        await tokens.DAI.connect(taker).transfer(resolver, ether('1'));
 
         // Set our resolver for cowswap protocol
         const authenticator = await cowswap.authenticator();
@@ -64,27 +81,12 @@ describe('Fusion', async function () {
             await resolver.connect(taker).approve(token, COWSWAP_VAULT_RELAYER_MAINNET_ADDRESS);
         }
 
-        // Init and warmup wallets
-        for (const wallet of [maker, taker]) {
-            // Buy some DAI
-            await wallet.sendTransaction({ to: '0x2a1530c4c41db0b0b2bb646cb5eb1a67b7158667', value: ether('1') });
-            // Buy some WETH
-            await tokens.WETH.connect(wallet).deposit({ value: ether('1') });
-
-            for (const token of [tokens.DAI, tokens.WETH]) {
-                await token.connect(wallet).approve(inch, ether('1'));
-                await token.connect(wallet).approve(uniswap, ether('1'));
-                await token.connect(wallet).approve(PERMIT2CONTRACT, ether('1'));
-                await token.connect(wallet).approve(COWSWAP_VAULT_RELAYER_MAINNET_ADDRESS, ether('1'));
-            }
-        }
-
         const maxPriorityFeePerGas = (await ethers.provider.getBlock('latest')).baseFeePerGas / 2n;
 
         return { maker, taker, tokens, inch, settlement, resolver, uniswap, cowswap, maxPriorityFeePerGas };
     }
 
-    it('WETH => DAI without callback', async function () {
+    it('WETH => DAI by EOA', async function () {
         const { maker, taker, tokens, inch, settlement, uniswap, cowswap, maxPriorityFeePerGas } = await loadFixture(initContracts);
 
         // Create 1inch settlement order, sign and fill it
@@ -134,7 +136,7 @@ describe('Fusion', async function () {
             outputTokenAddress: await tokens.WETH.getAddress(),
             inputAmount: ether('0.1'),
             outputStartAmount: ether('0.01'),
-            outputEndAmount: ether('0.001'),
+            outputEndAmount: ether('0.009'),
             permit2contractAddress: PERMIT2CONTRACT,
         });
         const signedOrder = await uniswapOrder.sign(maker);
@@ -167,11 +169,6 @@ describe('Fusion', async function () {
                             cowswapOrder.order.sellAmount,
                         ]),
                     },
-                    {
-                        value: 0,
-                        target: taker.address,
-                        callData: '0x',
-                    },
                 ],
                 [],
             ],
@@ -180,19 +177,19 @@ describe('Fusion', async function () {
             },
         );
 
-        gasUsed['WETH => DAI w/o callback'] = {
-            inch: (await inchTx.wait()).gasUsed.toString(),
+        gasUsed['WETH => DAI w/o callback by EOA'] = {
+            '1inch': (await inchTx.wait()).gasUsed.toString(),
             uniswap: (await uniTx.wait()).gasUsed.toString(),
             cowswap: (await cowTx.wait()).gasUsed.toString(),
         };
     });
 
-    it('WETH => DAI with callback when resolver has funds', async function () {
-        const { maker, taker, tokens, inch, settlement, resolver, uniswap, cowswap, maxPriorityFeePerGas } = await loadFixture(initContracts);
+    it('WETH => DAI without callback by resolver contract', async function () {
+        const { maker, tokens, inch, settlement, resolver, uniswap, cowswap, maxPriorityFeePerGas } = await loadFixture(initContracts);
 
         // Create 1inch settlement order, sign and fill it
         const auctionStartTime = await time.latest();
-        const { details: auctionDetails } = await buildAuctionDetails({ startTime: auctionStartTime, duration: time.duration.hours(1) });
+        const { details: auctionDetails } = await buildAuctionDetails({ startTime: auctionStartTime, duration: time.duration.hours(1), initialRateBump: 1000000 });
         const inchOrder = new InchOrder({
             makerAsset: await tokens.DAI.getAddress(),
             takerAsset: await tokens.WETH.getAddress(),
@@ -213,7 +210,7 @@ describe('Fusion', async function () {
             minReturn: inchOrder.order.makingAmount * 9n / 10n,
             extension: inchOrder.order.extension,
         });
-        const inchTx = await resolver.connect(taker).settleOrders(
+        const inchTx = await resolver.settleOrders(
             inch.interface.encodeFunctionData('fillOrderArgs', [
                 inchOrder.order,
                 r,
@@ -238,16 +235,14 @@ describe('Fusion', async function () {
             outputTokenAddress: await tokens.WETH.getAddress(),
             inputAmount: ether('0.1'),
             outputStartAmount: ether('0.01'),
-            outputEndAmount: ether('0.001'),
+            outputEndAmount: ether('0.009'),
             permit2contractAddress: PERMIT2CONTRACT,
         });
         const signedOrder = await uniswapOrder.sign(maker);
-        const resolverCalldata = '0x01' + trim0x(abiCoder.encode(['bytes[]'], [[]]));
         const uniTx = await resolver.settleUniswapXOrders(
             0,
-            uniswap.interface.encodeFunctionData('executeWithCallback', [
+            uniswap.interface.encodeFunctionData('execute', [
                 signedOrder,
-                '0x00' + abiCoder.encode(['bytes[]'], [[resolverCalldata]]).slice(66), // skip 0x and 32 bytes of location
             ]),
             {
                 maxPriorityFeePerGas,
@@ -281,22 +276,6 @@ describe('Fusion', async function () {
                                 cowswapOrder.order.sellAmount,
                             ]),
                         },
-                        {
-                            value: 0,
-                            target: await resolver.getAddress(),
-                            callData: resolver.interface.encodeFunctionData('cowswapResolve', [
-                                abiCoder.encode(
-                                    ['bytes[]'],
-                                    [
-                                        [
-                                            await tokens.WETH.getAddress() + trim0x(tokens.WETH.interface.encodeFunctionData('transfer', [
-                                                await cowswap.getAddress(), cowswapOrder.order.buyAmount,
-                                            ])),
-                                        ],
-                                    ],
-                                ),
-                            ]),
-                        },
                     ],
                     [],
                 ],
@@ -306,8 +285,8 @@ describe('Fusion', async function () {
             },
         );
 
-        gasUsed['WETH => DAI with callback, resolver funds'] = {
-            inch: (await inchTx.wait()).gasUsed.toString(),
+        gasUsed['WETH => DAI w/o callback by contract'] = {
+            '1inch': (await inchTx.wait()).gasUsed.toString(),
             uniswap: (await uniTx.wait()).gasUsed.toString(),
             cowswap: (await cowTx.wait()).gasUsed.toString(),
         };
@@ -378,23 +357,23 @@ describe('Fusion', async function () {
             outputTokenAddress: await tokens.WETH.getAddress(),
             inputAmount: ether('0.1'),
             outputStartAmount: ether('0.01'),
-            outputEndAmount: ether('0.001'),
+            outputEndAmount: ether('0.009'),
             permit2contractAddress: PERMIT2CONTRACT,
         });
         const signedOrder = await uniswapOrder.sign(maker);
-        const resolverCalldata = '0x01' + trim0x(abiCoder.encode(
+        const resolverCalldata = abiCoder.encode(
             ['bytes[]'],
             [
                 [await tokens.WETH.getAddress() + trim0x(tokens.WETH.interface.encodeFunctionData('transferFrom', [
                     taker.address, await resolver.getAddress(), uniswapOrder.order.info.outputs[0].startAmount,
                 ]))],
             ],
-        ));
+        );
         const uniTx = await resolver.settleUniswapXOrders(
             0,
             uniswap.interface.encodeFunctionData('executeWithCallback', [
                 signedOrder,
-                '0x00' + abiCoder.encode(['bytes[]'], [[resolverCalldata]]).slice(66), // skip 0x and 32 bytes of location
+                '0x' + abiCoder.encode(['bytes[]'], [[resolverCalldata]]).slice(66), // skip 0x and 32 bytes of location
             ]),
             {
                 maxPriorityFeePerGas,
@@ -454,7 +433,7 @@ describe('Fusion', async function () {
         );
 
         gasUsed['WETH => DAI with callback, taker funds'] = {
-            inch: (await inchTx.wait()).gasUsed.toString(),
+            '1inch': (await inchTx.wait()).gasUsed.toString(),
             uniswap: (await uniTx.wait()).gasUsed.toString(),
             cowswap: (await cowTx.wait()).gasUsed.toString(),
         };
