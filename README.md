@@ -35,3 +35,15 @@ yarn test:ci
 ```
 
 These commands will first install the necessary dependencies and then execute the tests defined in your project. Ensure you have Yarn installed on your system. If not, you can install it by following the instructions on the [Yarn documentation](https://classic.yarnpkg.com/en/docs/install).
+
+## Contribution
+
+We warmly welcome the contribution of additional comparison cases. By sharing different scenarios and use cases, teams can identify specific areas for potential improvements in their protocols. If you have encountered a scenario where you believe there is room for optimization or enhancement, please consider contributing by:
+
+1. Forking the repository.
+2. Adding your case to the designated section/file with a clear description of the scenario and why it presents an opportunity for improvement.
+3. Creating a pull request with a concise but informative title and description.
+
+Your contributions will not only help improve the protocols but also provide valuable insights for the community on where there are opportunities for enhancement. 
+
+Thank you for helping us and the community identify opportunities for improvement and optimization.
