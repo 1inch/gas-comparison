@@ -20,7 +20,7 @@ contract UniswapResolver is IReactorCallback {
         _REACTOR = reactor;
     }
 
-    function settleUniswapXOrders(uint256 value, bytes calldata params) external payable {
+    function settleUniswapXOrders(uint256 value, bytes calldata params) public payable virtual {
         // solhint-disable-next-line avoid-low-level-calls
         (bool success,) = _REACTOR.call{value: value}(params);
         if (!success) RevertReasonForwarder.reRevert();

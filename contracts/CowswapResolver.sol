@@ -17,7 +17,7 @@ contract CowswapResolver {
         _COWSWAP_SETTLEMENT = cowswapSettlement;
     }
 
-    function settleCowswapOrders(uint256 value, bytes calldata params) external payable {
+    function settleCowswapOrders(uint256 value, bytes calldata params) public payable virtual {
         // solhint-disable-next-line avoid-low-level-calls
         (bool success,) = _COWSWAP_SETTLEMENT.call{value: value}(params);
         if (!success) RevertReasonForwarder.reRevert();
