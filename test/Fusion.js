@@ -35,7 +35,7 @@ describe('Fusion', async function () {
 
         // Init fusion contracts
         const inch = await ethers.getContractAt('LimitOrderProtocol', '0x111111125421ca6dc452d289314280a0f8842a65');
-        const settlement = await deployContract('Settlement', [inch, tokens['1INCH']]);
+        const settlement = await ethers.getContractAt('Settlement', '0xfb2809a5314473e1165f6b58018e20ed8f07b840');
         const uniswap = await ethers.getContractAt('IReactor', '0x6000da47483062A0D734Ba3dc7576Ce6A0B645C4');
         const cowswap = await ethers.getContractAt('ICowswapGPv2Settlement', '0x9008D19f58AAbD9eD0D60971565AA8510560ab41');
 

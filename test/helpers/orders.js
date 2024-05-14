@@ -160,16 +160,15 @@ class UniswapOrder {
         this.verifyingContract = verifyingContract;
         const builder = new DutchOrderBuilder(chainId, verifyingContract, permit2contractAddress);
 
-        { // eslint-disable-line no-lone-blocks
+        {
             // TODO: remove when @uniswap/uniswapx-sdk will move to ethers v6
             builder.output = function (output) {
-                const tslib_1 = require('tslib'); // eslint-disable-line camelcase
-                const tiny_invariant_1 = tslib_1.__importDefault(require('tiny-invariant')); // eslint-disable-line camelcase
+                const tslib_1 = require('tslib');
+                const tiny_invariant_1 = tslib_1.__importDefault(require('tiny-invariant'));
 
                 if (!builder.info.outputs) {
                     builder.info.outputs = [];
                 }
-                // eslint-disable-next-line camelcase
                 (0, tiny_invariant_1.default)(output.startAmount >= output.endAmount, `startAmount must be greater than endAmount: ${output.startAmount.toString()}`);
                 builder.info.outputs.push(output);
                 return builder;
