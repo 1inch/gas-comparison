@@ -88,21 +88,29 @@ describe('Fusion', async function () {
     }
 
     describe('WETH => DAI by EOA', async function () {
-        const getCaseParams = (tokens) => {
+        async function initContractsWithCaseSettings () {
+            const fixtureData = await initContracts();
+
             const GAS_USED_KEY = 'WETH => DAI w/o callback by EOA';
             gasUsed[GAS_USED_KEY] = gasUsed[GAS_USED_KEY] || {};
+
             return {
-                GAS_USED_KEY,
-                makerToken: tokens.DAI,
-                takerToken: tokens.WETH,
-                makingAmount: ether('0.1'),
-                takingAmount: ether('0.01'),
+                ...fixtureData,
+                settings: {
+                    GAS_USED_KEY,
+                    makerToken: fixtureData.tokens.DAI,
+                    takerToken: fixtureData.tokens.WETH,
+                    makingAmount: ether('0.1'),
+                    takingAmount: ether('0.01'),
+                },
             };
-        };
+        }
 
         it('1inch', async function () {
-            const { maker, taker, tokens, inch, settlement, maxPriorityFeePerGas } = await loadFixture(initContracts);
-            const { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount } = getCaseParams(tokens);
+            const {
+                maker, taker, inch, settlement, maxPriorityFeePerGas,
+                settings: { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount },
+            } = await loadFixture(initContractsWithCaseSettings);
 
             // Create 1inch settlement order, sign and fill it
             const auctionStartTime = await time.latest();
@@ -143,8 +151,10 @@ describe('Fusion', async function () {
         });
 
         it('uniswap', async function () {
-            const { maker, taker, tokens, uniswap } = await loadFixture(initContracts);
-            const { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount } = getCaseParams(tokens);
+            const {
+                maker, taker, uniswap,
+                settings: { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount },
+            } = await loadFixture(initContractsWithCaseSettings);
 
             // Create Uniswap settlement order, sign and fill it
             const uniswapOrder = new UniswapOrder({
@@ -166,8 +176,10 @@ describe('Fusion', async function () {
         });
 
         it('cowswap', async function () {
-            const { maker, taker, tokens, cowswap } = await loadFixture(initContracts);
-            const { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount } = getCaseParams(tokens);
+            const {
+                maker, taker, cowswap,
+                settings: { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount },
+            } = await loadFixture(initContractsWithCaseSettings);
 
             // Create Cowswap settlement order, sign and fill it
             const cowswapOrder = new CowswapOrder({
@@ -203,21 +215,29 @@ describe('Fusion', async function () {
     });
 
     describe('WETH => DAI without callback by resolver contract', async function () {
-        const getCaseParams = (tokens) => {
+        async function initContractsWithCaseSettings () {
+            const fixtureData = await initContracts();
+
             const GAS_USED_KEY = 'WETH => DAI w/o callback by contract';
             gasUsed[GAS_USED_KEY] = gasUsed[GAS_USED_KEY] || {};
+
             return {
-                GAS_USED_KEY,
-                makerToken: tokens.DAI,
-                takerToken: tokens.WETH,
-                makingAmount: ether('0.1'),
-                takingAmount: ether('0.01'),
+                ...fixtureData,
+                settings: {
+                    GAS_USED_KEY,
+                    makerToken: fixtureData.tokens.DAI,
+                    takerToken: fixtureData.tokens.WETH,
+                    makingAmount: ether('0.1'),
+                    takingAmount: ether('0.01'),
+                },
             };
-        };
+        }
 
         it('1inch', async function () {
-            const { maker, taker, tokens, inch, settlement, resolver, maxPriorityFeePerGas } = await loadFixture(initContracts);
-            const { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount } = getCaseParams(tokens);
+            const {
+                maker, taker, inch, settlement, resolver, maxPriorityFeePerGas,
+                settings: { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount },
+            } = await loadFixture(initContractsWithCaseSettings);
 
             // Create 1inch settlement order, sign and fill it
             const auctionStartTime = await time.latest();
@@ -259,8 +279,10 @@ describe('Fusion', async function () {
         });
 
         it('uniswap', async function () {
-            const { maker, taker, tokens, resolver, uniswap } = await loadFixture(initContracts);
-            const { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount } = getCaseParams(tokens);
+            const {
+                maker, taker, resolver, uniswap,
+                settings: { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount },
+            } = await loadFixture(initContractsWithCaseSettings);
 
             // Create Uniswap settlement order, sign and fill it
             const uniswapOrder = new UniswapOrder({
@@ -285,8 +307,10 @@ describe('Fusion', async function () {
         });
 
         it('cowswap', async function () {
-            const { maker, taker, tokens, resolver, cowswap } = await loadFixture(initContracts);
-            const { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount } = getCaseParams(tokens);
+            const {
+                maker, taker, resolver, cowswap,
+                settings: { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount },
+            } = await loadFixture(initContractsWithCaseSettings);
 
             // Create Cowswap settlement order, sign and fill it
             const cowswapOrder = new CowswapOrder({
@@ -325,21 +349,29 @@ describe('Fusion', async function () {
     });
 
     describe('WETH => DAI with callback when resolver has funds', async function () {
-        const getCaseParams = (tokens) => {
+        async function initContractsWithCaseSettings () {
+            const fixtureData = await initContracts();
+
             const GAS_USED_KEY = 'WETH => DAI with callback, resolver funds';
             gasUsed[GAS_USED_KEY] = gasUsed[GAS_USED_KEY] || {};
+
             return {
-                GAS_USED_KEY,
-                makerToken: tokens.DAI,
-                takerToken: tokens.WETH,
-                makingAmount: ether('0.1'),
-                takingAmount: ether('0.01'),
+                ...fixtureData,
+                settings: {
+                    GAS_USED_KEY,
+                    makerToken: fixtureData.tokens.DAI,
+                    takerToken: fixtureData.tokens.WETH,
+                    makingAmount: ether('0.1'),
+                    takingAmount: ether('0.01'),
+                },
             };
-        };
+        }
 
         it('1inch', async function () {
-            const { maker, taker, tokens, inch, settlement, resolver, maxPriorityFeePerGas } = await loadFixture(initContracts);
-            const { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount } = getCaseParams(tokens);
+            const {
+                maker, taker, inch, settlement, resolver, maxPriorityFeePerGas,
+                settings: { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount },
+            } = await loadFixture(initContractsWithCaseSettings);
 
             // Create 1inch settlement order, sign and fill it
             const auctionStartTime = await time.latest();
@@ -389,8 +421,10 @@ describe('Fusion', async function () {
         });
 
         it('uniswap', async function () {
-            const { maker, taker, tokens, resolver, uniswap } = await loadFixture(initContracts);
-            const { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount } = getCaseParams(tokens);
+            const {
+                maker, taker, resolver, uniswap,
+                settings: { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount },
+            } = await loadFixture(initContractsWithCaseSettings);
 
             // Create Uniswap settlement order, sign and fill it
             const uniswapOrder = new UniswapOrder({
@@ -419,8 +453,10 @@ describe('Fusion', async function () {
         });
 
         it('cowswap', async function () {
-            const { maker, taker, tokens, resolver, cowswap } = await loadFixture(initContracts);
-            const { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount } = getCaseParams(tokens);
+            const {
+                maker, taker, resolver, cowswap,
+                settings: { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount },
+            } = await loadFixture(initContractsWithCaseSettings);
 
             // Create Cowswap settlement order, sign and fill it
             const cowswapOrder = new CowswapOrder({
@@ -469,21 +505,29 @@ describe('Fusion', async function () {
     });
 
     describe('WETH => DAI with callback when resolver use taker funds', async function () {
-        const getCaseParams = (tokens) => {
+        async function initContractsWithCaseSettings () {
+            const fixtureData = await initContracts();
+
             const GAS_USED_KEY = 'WETH => DAI with callback, taker funds';
             gasUsed[GAS_USED_KEY] = gasUsed[GAS_USED_KEY] || {};
+
             return {
-                GAS_USED_KEY,
-                makerToken: tokens.DAI,
-                takerToken: tokens.WETH,
-                makingAmount: ether('0.1'),
-                takingAmount: ether('0.01'),
+                ...fixtureData,
+                settings: {
+                    GAS_USED_KEY,
+                    makerToken: fixtureData.tokens.DAI,
+                    takerToken: fixtureData.tokens.WETH,
+                    makingAmount: ether('0.1'),
+                    takingAmount: ether('0.01'),
+                },
             };
-        };
+        }
 
         it('1inch', async function () {
-            const { maker, taker, tokens, inch, settlement, resolver, maxPriorityFeePerGas } = await loadFixture(initContracts);
-            const { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount } = getCaseParams(tokens);
+            const {
+                maker, taker, inch, settlement, resolver, maxPriorityFeePerGas,
+                settings: { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount },
+            } = await loadFixture(initContractsWithCaseSettings);
 
             // Create 1inch settlement order, sign and fill it
             const auctionStartTime = await time.latest();
@@ -539,8 +583,10 @@ describe('Fusion', async function () {
         });
 
         it('uniswap', async function () {
-            const { maker, taker, tokens, inch, settlement, resolver, uniswap, cowswap, maxPriorityFeePerGas } = await loadFixture(initContracts);
-            const { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount } = getCaseParams(tokens);
+            const {
+                maker, taker, resolver, uniswap,
+                settings: { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount },
+            } = await loadFixture(initContractsWithCaseSettings);
 
             // Create Uniswap settlement order, sign and fill it
             const uniswapOrder = new UniswapOrder({
@@ -576,8 +622,10 @@ describe('Fusion', async function () {
         });
 
         it('cowswap', async function () {
-            const { maker, taker, tokens, resolver, cowswap } = await loadFixture(initContracts);
-            const { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount } = getCaseParams(tokens);
+            const {
+                maker, taker, resolver, cowswap,
+                settings: { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount },
+            } = await loadFixture(initContractsWithCaseSettings);
 
             // Create Cowswap settlement order, sign and fill it
             const cowswapOrder = new CowswapOrder({

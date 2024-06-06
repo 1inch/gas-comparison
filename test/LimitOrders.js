@@ -57,21 +57,29 @@ describe('LimitOrders', async function () {
     }
 
     describe('ETH => DAI', async function () {
-        const getCaseParams = (tokens) => {
+        async function initContractsWithCaseSettings () {
+            const fixtureData = await initContracts();
+
             const GAS_USED_KEY = 'ETH => DAI';
             gasUsed[GAS_USED_KEY] = gasUsed[GAS_USED_KEY] || {};
+
             return {
-                GAS_USED_KEY,
-                makerToken: tokens.DAI,
-                takerToken: tokens.ETH,
-                makingAmount: ether('0.1'),
-                takingAmount: ether('0.01'),
+                ...fixtureData,
+                settings: {
+                    GAS_USED_KEY,
+                    makerToken: fixtureData.tokens.DAI,
+                    takerToken: fixtureData.tokens.ETH,
+                    makingAmount: ether('0.1'),
+                    takingAmount: ether('0.01'),
+                },
             };
-        };
+        }
 
         it('1inch', async function () {
-            const { maker, taker, tokens, inch } = await loadFixture(initContracts);
-            const { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount } = getCaseParams(tokens);
+            const {
+                maker, taker, tokens, inch,
+                settings: { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount },
+            } = await loadFixture(initContractsWithCaseSettings);
 
             // Create 1inch order, sign and fill it
             const inchOrder = new InchOrder({
@@ -94,8 +102,10 @@ describe('LimitOrders', async function () {
         });
 
         it('uniswap', async function () {
-            const { maker, taker, tokens, uniswap } = await loadFixture(initContracts);
-            const { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount } = getCaseParams(tokens);
+            const {
+                maker, taker, uniswap,
+                settings: { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount },
+            } = await loadFixture(initContractsWithCaseSettings);
 
             // Create Uniswap order, sign and fill it
             const uniswapOrder = new UniswapOrder({
@@ -119,21 +129,29 @@ describe('LimitOrders', async function () {
     });
 
     describe('WETH => DAI', async function () {
-        const getCaseParams = (tokens) => {
+        async function initContractsWithCaseSettings () {
+            const fixtureData = await initContracts();
+
             const GAS_USED_KEY = 'WETH => DAI';
             gasUsed[GAS_USED_KEY] = gasUsed[GAS_USED_KEY] || {};
+
             return {
-                GAS_USED_KEY,
-                makerToken: tokens.DAI,
-                takerToken: tokens.WETH,
-                makingAmount: ether('0.1'),
-                takingAmount: ether('0.01'),
+                ...fixtureData,
+                settings: {
+                    GAS_USED_KEY,
+                    makerToken: fixtureData.tokens.DAI,
+                    takerToken: fixtureData.tokens.WETH,
+                    makingAmount: ether('0.1'),
+                    takingAmount: ether('0.01'),
+                },
             };
-        };
+        }
 
         it('1inch', async function () {
-            const { maker, taker, tokens, inch } = await loadFixture(initContracts);
-            const { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount } = getCaseParams(tokens);
+            const {
+                maker, taker, inch,
+                settings: { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount },
+            } = await loadFixture(initContractsWithCaseSettings);
 
             // Create 1inch order, sign and fill it
             const inchOrder = new InchOrder({
@@ -152,8 +170,10 @@ describe('LimitOrders', async function () {
         });
 
         it('matcha', async function () {
-            const { maker, taker, tokens, matcha } = await loadFixture(initContracts);
-            const { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount } = getCaseParams(tokens);
+            const {
+                maker, taker, matcha,
+                settings: { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount },
+            } = await loadFixture(initContractsWithCaseSettings);
 
             // Create 0xProtocol order, sign and fill it
             const matchaOrder = new MatchaOrder({
@@ -174,8 +194,10 @@ describe('LimitOrders', async function () {
         });
 
         it('uniswap', async function () {
-            const { maker, taker, tokens, uniswap } = await loadFixture(initContracts);
-            const { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount } = getCaseParams(tokens);
+            const {
+                maker, taker, uniswap,
+                settings: { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount },
+            } = await loadFixture(initContractsWithCaseSettings);
 
             // Create Uniswap order, sign and fill it
             const uniswapOrder = new UniswapOrder({
@@ -198,8 +220,10 @@ describe('LimitOrders', async function () {
         });
 
         it('paraswap', async function () {
-            const { maker, taker, tokens } = await loadFixture(initContracts);
-            const { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount } = getCaseParams(tokens);
+            const {
+                maker, taker,
+                settings: { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount },
+            } = await loadFixture(initContractsWithCaseSettings);
 
             // Create Paraswap order, sign and fill it
             const paraswapOrder = new ParaswapOrder({
