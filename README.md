@@ -43,12 +43,12 @@ This section presents detailed gas usage data for various swapping scenarios acr
 ### Fusion
 ```
 ┌───────────────────────────────────────────┬──────────┬──────────┬──────────┐
-│ (index)                                   │ 1inch    │ uniswap  │ cowswap  │
+│                  (index)                  │  1inch   │ uniswap  │ cowswap  │
 ├───────────────────────────────────────────┼──────────┼──────────┼──────────┤
-│ WETH => DAI w/o callback by EOA           │ '116214' │ '128157' │ '131704' │
-│ WETH => DAI w/o callback by contract      │ '116574' │ '128618' │ '135778' │
-│ WETH => DAI with callback, resolver funds │ '120767' │ '132890' │ '140917' │
-│ WETH => DAI with callback, taker funds    │ '137624' │ '146413' │ '154587' │
+│ WETH => DAI w/o callback by EOA           │ '116226' │ '128157' │ '131704' │
+│ WETH => DAI w/o callback by contract      │ '116586' │ '128618' │ '135778' │
+│ WETH => DAI with callback, resolver funds │ '120779' │ '132890' │ '140917' │
+│ WETH => DAI with callback, taker funds    │ '137624' │ '146425' │ '154587' │
 └───────────────────────────────────────────┴──────────┴──────────┴──────────┘
 ```
 
