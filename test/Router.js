@@ -2,50 +2,10 @@ const hre = require('hardhat');
 const { ethers } = hre;
 const axios = require('axios');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
-const { ether, constants } = require('@1inch/solidity-utils');
+const { ether, constants, trackReceivedTokenAndTx } = require('@1inch/solidity-utils');
 const { constructFullSDK, constructAxiosFetcher, constructEthersContractCaller } = require('@paraswap/sdk');
-
-const PARASWAP_TOKEN_TRANSFER_PROXY = '0x216B4B4Ba9F3e719726886d34a177484278Bfcae';
-
-const makeAndBroadcastParaswapTx = async ({
-    paraswap,
-    srcTokenSymbol,
-    dstTokenSymbol,
-    amount,
-    user,
-}) => {
-    const paraTokens = (await paraswap.swap.getTokens())
-        .filter(t => [srcTokenSymbol, dstTokenSymbol].indexOf(t.symbol) !== -1)
-        .reduce((acc, token) => {
-            acc[token.symbol] = token;
-            return acc;
-        }, {});
-    const priceRoute = await paraswap.swap.getRate({
-        srcToken: paraTokens[srcTokenSymbol].address,
-        destToken: paraTokens[dstTokenSymbol].address,
-        amount,
-    });
-    const txParams = await paraswap.swap.buildTx({
-        srcToken: paraTokens[srcTokenSymbol].address,
-        destToken: paraTokens[dstTokenSymbol].address,
-        srcAmount: amount.toString(),
-        slippage: 1,
-        priceRoute,
-        userAddress: user.address,
-        receiver: user.address,
-        ignoreChecks: true,
-    });
-    const filteredTxParams = ['from', 'to', 'value', 'data'].reduce((acc, key) => {
-        acc[key] = txParams[key];
-        return acc;
-    }, {});
-
-    if (srcTokenSymbol !== 'ETH') {
-        const srcToken = await ethers.getContractAt('IERC20', paraTokens[srcTokenSymbol].address);
-        await srcToken.approve(PARASWAP_TOKEN_TRANSFER_PROXY, amount);
-    }
-    return await user.sendTransaction(filteredTxParams);
-};
+const { ProtocolKey, makeAndBroadcastParaswapTx } = require('./helpers/utils');
+const { expect } = require('chai');
 
 describe('Router', async function () {
     const gasUsed = {};
@@ -101,214 +61,359 @@ describe('Router', async function () {
         return { addr1, tokens, inch, matcha, paraswap, uniswap };
     }
 
-    it('ETH => DAI', async function () {
-        const { addr1, tokens, inch, matcha, paraswap, uniswap } = await loadFixture(initContracts);
-        const inchTx = await inch.ethUnoswapTo(
-            addr1.address,
-            '10000000000',
-            938967527125595836475317159035754667655090662161n,
-            { value: ether('1') },
-        );
-        const matchaTx = await matcha.sellToUniswap(
-            [tokens.EEE, tokens.DAI],
-            ether('1'),
-            '1',
-            false,
-            { value: ether('1') },
-        );
-        const uniTx = await uniswap.swapExactETHForTokens(
-            ether('1'),
-            [tokens.WETH, tokens.DAI],
-            addr1.address,
-            '10000000000',
-            { value: ether('1') },
-        );
-        const paraTx = await makeAndBroadcastParaswapTx({
-            paraswap,
-            srcTokenSymbol: 'ETH',
-            dstTokenSymbol: 'DAI',
-            amount: ether('0.01'),
-            user: addr1,
+    describe('ETH => DAI', async function () {
+        async function initContractsWithCaseSettings () {
+            const fixtureData = await initContracts();
+
+            const GAS_USED_KEY = 'ETH => DAI';
+            gasUsed[GAS_USED_KEY] = gasUsed[GAS_USED_KEY] || {};
+
+            return {
+                ...fixtureData,
+                settings: {
+                    GAS_USED_KEY,
+                    amount: ether('1'),
+                },
+            };
+        }
+
+        it('1inch', async function () {
+            const { addr1, inch, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const tx = await inch.ethUnoswapTo(
+                addr1.address,
+                '1',
+                938967527125595836475317159035754667655090662161n,
+                { value: amount },
+            );
+            gasUsed[GAS_USED_KEY][ProtocolKey.INCH] = (await tx.wait()).gasUsed.toString();
         });
 
-        gasUsed['ETH => DAI'] = {
-            '1inch': (await inchTx.wait()).gasUsed.toString(),
-            '0x': (await matchaTx.wait()).gasUsed.toString(),
-            paraswap: (await paraTx.wait()).gasUsed.toString(),
-            uniswap: (await uniTx.wait()).gasUsed.toString(),
-        };
-    });
-
-    it('ETH => USDC => DAI', async function () {
-        const { addr1, tokens, inch, matcha, uniswap } = await loadFixture(initContracts);
-        const inchTx = await inch.ethUnoswapTo2(
-            addr1.address,
-            ether('0'),
-            1032645502136839097869158895333537673945117411804n,
-            994927942081732774077955121581421418523584542933n,
-            { value: ether('1') },
-        );
-        const matchaTx = await matcha.sellToUniswap(
-            [tokens.EEE, tokens.USDC, tokens.DAI],
-            ether('1'),
-            '1',
-            false,
-            { value: ether('1') },
-        );
-        const uniTx = await uniswap.swapExactETHForTokens(
-            ether('1'),
-            [tokens.WETH, tokens.USDC, tokens.DAI],
-            addr1.address,
-            '10000000000',
-            { value: ether('1') },
-        );
-
-        gasUsed['ETH => USDC => DAI'] = {
-            '1inch': (await inchTx.wait()).gasUsed.toString(),
-            '0x': (await matchaTx.wait()).gasUsed.toString(),
-            uniswap: (await uniTx.wait()).gasUsed.toString(),
-        };
-    });
-
-    it('DAI => ETH', async function () {
-        const { addr1, tokens, inch, matcha, paraswap, uniswap } = await loadFixture(initContracts);
-        const inchTx = await inch.unoswapTo(
-            addr1.address,
-            await tokens.DAI.getAddress(),
-            ether('1'),
-            ether('0'),
-            7463162001623895408159848644077055337980887816877931638141419261915116595985n,
-            { gasLimit: '300000' },
-        );
-        const matchaTx = await matcha.sellToUniswap(
-            [tokens.DAI, tokens.EEE],
-            ether('1'),
-            '1',
-            false,
-            { gasLimit: '300000' },
-        );
-        const uniTx = await uniswap.swapExactTokensForETH(
-            ether('1'),
-            ether('0'),
-            [tokens.DAI, tokens.WETH],
-            addr1.address,
-            '10000000000',
-            { gasLimit: '300000' },
-        );
-        const paraTx = await makeAndBroadcastParaswapTx({
-            paraswap,
-            srcTokenSymbol: 'DAI',
-            dstTokenSymbol: 'ETH',
-            amount: ether('0.1'),
-            user: addr1,
+        it('matcha', async function () {
+            const { tokens, matcha, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const tx = await matcha.sellToUniswap(
+                [tokens.EEE, tokens.DAI],
+                amount,
+                '1',
+                false,
+                { value: amount },
+            );
+            gasUsed[GAS_USED_KEY][ProtocolKey.MATCHA] = (await tx.wait()).gasUsed.toString();
         });
 
-        gasUsed['DAI => ETH'] = {
-            '1inch': (await inchTx.wait()).gasUsed.toString(),
-            '0x': (await matchaTx.wait()).gasUsed.toString(),
-            paraswap: (await paraTx.wait()).gasUsed.toString(),
-            uniswap: (await uniTx.wait()).gasUsed.toString(),
-        };
-    });
-
-    it('DAI => WETH', async function () {
-        const { addr1, tokens, inch, matcha, paraswap, uniswap } = await loadFixture(initContracts);
-        const inchTx = await inch.unoswapTo(
-            addr1.address,
-            await tokens.DAI.getAddress(),
-            ether('1'),
-            ether('0'),
-            226156424291633194186662081034061097151513775275396385675320261420545993489n,
-        );
-        const matchaTx = await matcha.sellToUniswap(
-            [tokens.DAI, tokens.WETH],
-            ether('1'),
-            '1',
-            false,
-        );
-        const uniTx = await uniswap.swapExactTokensForTokens(
-            ether('1'),
-            ether('0'),
-            [tokens.DAI, tokens.WETH],
-            addr1.address,
-            '10000000000',
-        );
-        const paraTx = await makeAndBroadcastParaswapTx({
-            paraswap,
-            srcTokenSymbol: 'DAI',
-            dstTokenSymbol: 'WETH',
-            amount: ether('0.1'),
-            user: addr1,
+        it('uniswap', async function () {
+            const { addr1, tokens, uniswap, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const tx = await uniswap.swapExactETHForTokens(
+                amount,
+                [tokens.WETH, tokens.DAI],
+                addr1.address,
+                '0xffffffffff',
+                { value: amount },
+            );
+            gasUsed[GAS_USED_KEY][ProtocolKey.UNISWAP] = (await tx.wait()).gasUsed.toString();
         });
 
-        gasUsed['DAI => WETH'] = {
-            '1inch': (await inchTx.wait()).gasUsed.toString(),
-            '0x': (await matchaTx.wait()).gasUsed.toString(),
-            paraswap: (await paraTx.wait()).gasUsed.toString(),
-            uniswap: (await uniTx.wait()).gasUsed.toString(),
-        };
+        it('paraswap', async function () {
+            const { addr1, paraswap, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const tx = await makeAndBroadcastParaswapTx({
+                paraswap,
+                srcTokenSymbol: 'ETH',
+                dstTokenSymbol: 'DAI',
+                amount,
+                user: addr1,
+            });
+            gasUsed[GAS_USED_KEY][ProtocolKey.PARASWAP] = (await tx.wait()).gasUsed.toString();
+        });
     });
 
-    it('DAI => WETH => USDC', async function () {
-        const { addr1, tokens, inch, matcha, uniswap } = await loadFixture(initContracts);
-        const inchTx = await inch.unoswapTo2(
-            addr1.address,
-            await tokens.DAI.getAddress(),
-            ether('1'),
-            ether('0'),
-            226156424291633194186662081034061097151513775275396385675320261420545993489n,
-            1032645502136839097869158895333537673945117411804n,
-        );
-        const matchaTx = await matcha.sellToUniswap(
-            [tokens.DAI, tokens.WETH, tokens.USDC],
-            ether('1'),
-            '1',
-            false,
-        );
-        const uniTx = await uniswap.swapExactTokensForTokens(
-            ether('1'),
-            ether('0'),
-            [tokens.DAI, tokens.WETH, tokens.USDC],
-            addr1.address,
-            '10000000000',
-        );
+    describe('ETH => USDC => DAI', async function () {
+        async function initContractsWithCaseSettings () {
+            const fixtureData = await initContracts();
 
-        gasUsed['DAI => WETH => USDC'] = {
-            '1inch': (await inchTx.wait()).gasUsed.toString(),
-            '0x': (await matchaTx.wait()).gasUsed.toString(),
-            uniswap: (await uniTx.wait()).gasUsed.toString(),
-        };
+            const GAS_USED_KEY = 'ETH => USDC => DAI';
+            gasUsed[GAS_USED_KEY] = gasUsed[GAS_USED_KEY] || {};
+
+            return {
+                ...fixtureData,
+                settings: {
+                    GAS_USED_KEY,
+                    amount: ether('1'),
+                },
+            };
+        }
+
+        it('1inch', async function () {
+            const { addr1, inch, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const tx = await inch.ethUnoswapTo2(
+                addr1.address,
+                '1',
+                1032645502136839097869158895333537673945117411804n,
+                994927942081732774077955121581421418523584542933n,
+                { value: amount },
+            );
+            gasUsed[GAS_USED_KEY][ProtocolKey.INCH] = (await tx.wait()).gasUsed.toString();
+        });
+
+        it('matcha', async function () {
+            const { tokens, matcha, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const tx = await matcha.sellToUniswap(
+                [tokens.EEE, tokens.USDC, tokens.DAI],
+                amount,
+                '1',
+                false,
+                { value: amount },
+            );
+            gasUsed[GAS_USED_KEY][ProtocolKey.MATCHA] = (await tx.wait()).gasUsed.toString();
+        });
+
+        it('uniswap', async function () {
+            const { addr1, tokens, uniswap, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const tx = await uniswap.swapExactETHForTokens(
+                amount,
+                [tokens.WETH, tokens.USDC, tokens.DAI],
+                addr1.address,
+                '0xffffffffff',
+                { value: amount },
+            );
+            gasUsed[GAS_USED_KEY][ProtocolKey.UNISWAP] = (await tx.wait()).gasUsed.toString();
+        });
     });
 
-    it('DAI => WETH => USDC => USDT', async function () {
-        const { addr1, tokens, inch, matcha, uniswap } = await loadFixture(initContracts);
-        const inchTx = await inch.unoswapTo3(
-            addr1.address,
-            await tokens.DAI.getAddress(),
-            ether('1'),
-            ether('0'),
-            226156424291633194186662081034061097151513775275396385675320261420545993489n,
-            1032645502136839097869158895333537673945117411804n,
-            226156424291633194186662080370592431195940027908611666024061324202391007071n,
-        );
-        const matchaTx = await matcha.sellToUniswap(
-            [tokens.DAI, tokens.WETH, tokens.USDC, tokens.USDT],
-            ether('1'),
-            '1',
-            false,
-        );
-        const uniTx = await uniswap.swapExactTokensForTokens(
-            ether('1'),
-            ether('0'),
-            [tokens.DAI, tokens.WETH, tokens.USDC, tokens.USDT],
-            addr1.address,
-            '10000000000',
-        );
+    describe('DAI => ETH', async function () {
+        async function initContractsWithCaseSettings () {
+            const fixtureData = await initContracts();
 
-        gasUsed['DAI => WETH => USDC => USDT'] = {
-            '1inch': (await inchTx.wait()).gasUsed.toString(),
-            '0x': (await matchaTx.wait()).gasUsed.toString(),
-            uniswap: (await uniTx.wait()).gasUsed.toString(),
-        };
+            const GAS_USED_KEY = 'DAI => ETH';
+            gasUsed[GAS_USED_KEY] = gasUsed[GAS_USED_KEY] || {};
+
+            return {
+                ...fixtureData,
+                settings: {
+                    GAS_USED_KEY,
+                    amount: ether('1'),
+                    gasLimit: '300000',
+                },
+            };
+        }
+
+        it('1inch', async function () {
+            const { addr1, tokens, inch, settings: { GAS_USED_KEY, amount, gasLimit } } = await loadFixture(initContractsWithCaseSettings);
+            const tx = await inch.unoswapTo(
+                addr1.address,
+                await tokens.DAI.getAddress(),
+                amount,
+                '1',
+                7463162001623895408159848644077055337980887816877931638141419261915116595985n,
+                { gasLimit },
+            );
+            gasUsed[GAS_USED_KEY][ProtocolKey.INCH] = (await tx.wait()).gasUsed.toString();
+        });
+
+        it('matcha', async function () {
+            const { tokens, matcha, settings: { GAS_USED_KEY, amount, gasLimit } } = await loadFixture(initContractsWithCaseSettings);
+            const tx = await matcha.sellToUniswap(
+                [tokens.DAI, tokens.EEE],
+                amount,
+                '1',
+                false,
+                { gasLimit },
+            );
+            gasUsed[GAS_USED_KEY][ProtocolKey.MATCHA] = (await tx.wait()).gasUsed.toString();
+        });
+
+        it('uniswap', async function () {
+            const { addr1, tokens, uniswap, settings: { GAS_USED_KEY, amount, gasLimit } } = await loadFixture(initContractsWithCaseSettings);
+            const tx = await uniswap.swapExactTokensForETH(
+                amount,
+                '1',
+                [tokens.DAI, tokens.WETH],
+                addr1.address,
+                '0xffffffffff',
+                { gasLimit },
+            );
+            gasUsed[GAS_USED_KEY][ProtocolKey.UNISWAP] = (await tx.wait()).gasUsed.toString();
+        });
+
+        it('paraswap', async function () {
+            const { addr1, paraswap, settings: { GAS_USED_KEY, amount, gasLimit } } = await loadFixture(initContractsWithCaseSettings);
+            const tx = await makeAndBroadcastParaswapTx({
+                paraswap,
+                srcTokenSymbol: 'DAI',
+                dstTokenSymbol: 'ETH',
+                amount: amount,
+                user: addr1,
+            });
+            gasUsed[GAS_USED_KEY][ProtocolKey.PARASWAP] = (await tx.wait()).gasUsed.toString();
+        });
+    });
+
+    describe('DAI => WETH', async function () {
+        async function initContractsWithCaseSettings () {
+            const fixtureData = await initContracts();
+
+            const GAS_USED_KEY = 'DAI => WETH';
+            gasUsed[GAS_USED_KEY] = gasUsed[GAS_USED_KEY] || {};
+
+            return {
+                ...fixtureData,
+                settings: {
+                    GAS_USED_KEY,
+                    amount: ether('1'),
+                },
+            };
+        }
+
+        it('1inch', async function () {
+            const { addr1, tokens, inch, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const tx = await inch.unoswapTo(
+                addr1.address,
+                await tokens.DAI.getAddress(),
+                amount,
+                '1',
+                226156424291633194186662081034061097151513775275396385675320261420545993489n,
+            );
+            gasUsed[GAS_USED_KEY][ProtocolKey.INCH] = (await tx.wait()).gasUsed.toString();
+        });
+
+        it('matcha', async function () {
+            const { tokens, matcha, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const tx = await matcha.sellToUniswap(
+                [tokens.DAI, tokens.WETH],
+                amount,
+                '1',
+                false,
+            );
+            gasUsed[GAS_USED_KEY][ProtocolKey.MATCHA] = (await tx.wait()).gasUsed.toString();
+        });
+
+        it('uniswap', async function () {
+            const { addr1, tokens, uniswap, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const tx = await uniswap.swapExactTokensForTokens(
+                amount,
+                '1',
+                [tokens.DAI, tokens.WETH],
+                addr1.address,
+                '0xffffffffff',
+            );
+            gasUsed[GAS_USED_KEY][ProtocolKey.UNISWAP] = (await tx.wait()).gasUsed.toString();
+        });
+
+        it('paraswap', async function () {
+            const { addr1, paraswap, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const tx = await makeAndBroadcastParaswapTx({
+                paraswap,
+                srcTokenSymbol: 'DAI',
+                dstTokenSymbol: 'WETH',
+                amount: amount,
+                user: addr1,
+            });
+            gasUsed[GAS_USED_KEY][ProtocolKey.PARASWAP] = (await tx.wait()).gasUsed.toString();
+        });
+    });
+
+    describe('DAI => WETH => USDC', async function () {
+        async function initContractsWithCaseSettings () {
+            const fixtureData = await initContracts();
+
+            const GAS_USED_KEY = 'DAI => WETH => USDC';
+            gasUsed[GAS_USED_KEY] = gasUsed[GAS_USED_KEY] || {};
+
+            return {
+                ...fixtureData,
+                settings: {
+                    GAS_USED_KEY,
+                    amount: ether('1'),
+                },
+            };
+        }
+
+        it('1inch', async function () {
+            const { addr1, tokens, inch, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const tx = await inch.unoswapTo2(
+                addr1.address,
+                await tokens.DAI.getAddress(),
+                amount,
+                '1',
+                226156424291633194186662081034061097151513775275396385675320261420545993489n,
+                1032645502136839097869158895333537673945117411804n,
+            );
+            gasUsed[GAS_USED_KEY][ProtocolKey.INCH] = (await tx.wait()).gasUsed.toString();
+        });
+
+        it('matcha', async function () {
+            const { tokens, matcha, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const tx = await matcha.sellToUniswap(
+                [tokens.DAI, tokens.WETH, tokens.USDC],
+                amount,
+                '1',
+                false,
+            );
+            gasUsed[GAS_USED_KEY][ProtocolKey.MATCHA] = (await tx.wait()).gasUsed.toString();
+        });
+
+        it('uniswap', async function () {
+            const { addr1, tokens, uniswap, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const tx = await uniswap.swapExactTokensForTokens(
+                amount,
+                '1',
+                [tokens.DAI, tokens.WETH, tokens.USDC],
+                addr1.address,
+                '0xffffffffff',
+            )
+            gasUsed[GAS_USED_KEY][ProtocolKey.UNISWAP] = (await tx.wait()).gasUsed.toString();
+        });
+    });
+
+    describe('DAI => WETH => USDC => USDT', async function () {
+        async function initContractsWithCaseSettings () {
+            const fixtureData = await initContracts();
+
+            const GAS_USED_KEY = 'DAI => WETH => USDC => USDT';
+            gasUsed[GAS_USED_KEY] = gasUsed[GAS_USED_KEY] || {};
+
+            return {
+                ...fixtureData,
+                settings: {
+                    GAS_USED_KEY,
+                    amount: ether('1'),
+                },
+            };
+        }
+
+        it('1inch', async function () {
+            const { addr1, tokens, inch, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const tx = await inch.unoswapTo3(
+                addr1.address,
+                await tokens.DAI.getAddress(),
+                amount,
+                '1',
+                226156424291633194186662081034061097151513775275396385675320261420545993489n,
+                1032645502136839097869158895333537673945117411804n,
+                226156424291633194186662080370592431195940027908611666024061324202391007071n,
+            );
+            gasUsed[GAS_USED_KEY][ProtocolKey.INCH] = (await tx.wait()).gasUsed.toString();
+        });
+
+        it('matcha', async function () {
+            const { tokens, matcha, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const tx = await matcha.sellToUniswap(
+                [tokens.DAI, tokens.WETH, tokens.USDC, tokens.USDT],
+                amount,
+                '1',
+                false,
+            );
+            gasUsed[GAS_USED_KEY][ProtocolKey.MATCHA] = (await tx.wait()).gasUsed.toString();
+        });
+
+        it('uniswap', async function () {
+            const { addr1, tokens, uniswap, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const tx = await uniswap.swapExactTokensForTokens(
+                amount,
+                '1',
+                [tokens.DAI, tokens.WETH, tokens.USDC, tokens.USDT],
+                addr1.address,
+                '0xffffffffff',
+            );
+            gasUsed[GAS_USED_KEY][ProtocolKey.UNISWAP] = (await tx.wait()).gasUsed.toString();
+        });
     });
 });
