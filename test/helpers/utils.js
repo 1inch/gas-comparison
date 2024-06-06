@@ -2,6 +2,8 @@ const ProtocolKey = {
     INCH: '1inch',
     UNISWAP: 'uniswap',
     COWSWAP: 'cowswap',
+    MATCHA: '0x',
+    PARASWAP: 'paraswap',
 }
 
 function percentageOf(number, percentage) {

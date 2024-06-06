@@ -19,7 +19,7 @@
     "@nomicfoundation/hardhat-ethers": "3.0.5",
     "@nomicfoundation/hardhat-network-helpers": "1.0.10",
     "@nomicfoundation/hardhat-verify": "2.0.6",
-    "@paraswap/sdk": "6.6.0",
+    "@paraswap/sdk": "6.7.0",
     "@uniswap/uniswapx-sdk": "2.0.1-alpha.10",
     "chai": "4.4.1",
     "dotenv": "16.4.5",

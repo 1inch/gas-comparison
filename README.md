@@ -55,10 +55,10 @@ This section presents detailed gas usage data for various swapping scenarios acr
 ### Limit Orders
 ```
 ┌─────────────┬──────────┬──────────┬──────────┬──────────┐
-│ (index)     │ 1inch    │ uniswap  │ 0x       │ paraswap │
+│   (index)   │  1inch   │ uniswap  │    0x    │ paraswap │
 ├─────────────┼──────────┼──────────┼──────────┼──────────┤
-│ ETH => DAI  │ '90345'  │ '96419'  │          │          │
-│ WETH => DAI │ '102560' │ '111045' │ '113389' │ '153684' │
+│ ETH => DAI  │ '90345'  │ '113519' │          │          │
+│ WETH => DAI │ '102560' │ '128145' │ '113389' │ '153709' │
 └─────────────┴──────────┴──────────┴──────────┴──────────┘
 ```
 
