@@ -234,9 +234,6 @@ describe('LimitOrders', async function () {
                 makerAmount: makingAmount.toString(),
                 takerAmount: takingAmount.toString(),
             });
-            // First swap to clean up PARASWAP_TOKEN_TRANSFER_PROXY from extra amounts
-            await taker.sendTransaction(await paraswapOrder.buildTxParams(await paraswapOrder.sign(maker), taker.address));
-            // Main tx
             const tx = await taker.sendTransaction(await paraswapOrder.buildTxParams(await paraswapOrder.sign(maker), taker.address));
             await expect(tx).to.changeTokenBalances(makerToken, [maker, taker], [-BigInt(paraswapOrder.order.makerAmount), BigInt(paraswapOrder.order.makerAmount)]);
             await expect(tx).to.changeTokenBalances(takerToken, [maker, taker], [BigInt(paraswapOrder.order.takerAmount), -BigInt(paraswapOrder.order.takerAmount)]);
