@@ -83,7 +83,7 @@ describe('Router', async function () {
                 const tx = await inch.ethUnoswapTo(
                     addr1.address,
                     '1',
-                    938967527125595836475317159035754667655090662161n,
+                    '0xa478c2975ab1ea89e8196811f51a7b7ade33eb11',
                     { value: amount },
                 );
                 gasUsed[GAS_USED_KEY][ProtocolKey.INCH] = (await tx.wait()).gasUsed.toString();
@@ -148,8 +148,8 @@ describe('Router', async function () {
                 const tx = await inch.ethUnoswapTo2(
                     addr1.address,
                     '1',
-                    1032645502136839097869158895333537673945117411804n,
-                    994927942081732774077955121581421418523584542933n,
+                    '0xb4e16d0168e52d35cacd2c6185b44281ec28c9dc',
+                    '0xae461ca67b15dc8dc81ce7615e0320da1a9ab8d5',
                     { value: amount },
                 );
                 gasUsed[GAS_USED_KEY][ProtocolKey.INCH] = (await tx.wait()).gasUsed.toString();
@@ -220,7 +220,7 @@ describe('Router', async function () {
                     await tokens.DAI.getAddress(),
                     amount,
                     '1',
-                    7463162001623895408159848644077055337980887816877931638141419261915116595985n,
+                    BigInt('0xa478c2975ab1ea89e8196811f51a7b7ade33eb11') | (1n << 252n) | (1n << 247n),
                     { gasLimit },
                 );
                 gasUsed[GAS_USED_KEY][ProtocolKey.INCH] = (await tx.wait()).gasUsed.toString();
@@ -288,7 +288,7 @@ describe('Router', async function () {
                     await tokens.DAI.getAddress(),
                     amount,
                     '1',
-                    226156424291633194186662081034061097151513775275396385675320261420545993489n,
+                    BigInt('0xa478c2975ab1ea89e8196811f51a7b7ade33eb11') | (1n << 247n),
                 );
                 gasUsed[GAS_USED_KEY][ProtocolKey.INCH] = (await tx.wait()).gasUsed.toString();
             });
@@ -352,8 +352,8 @@ describe('Router', async function () {
                     await tokens.DAI.getAddress(),
                     amount,
                     '1',
-                    226156424291633194186662081034061097151513775275396385675320261420545993489n,
-                    1032645502136839097869158895333537673945117411804n,
+                    BigInt('0xa478c2975ab1ea89e8196811f51a7b7ade33eb11') | (1n << 247n),
+                    '0xb4e16d0168e52d35cacd2c6185b44281ec28c9dc',
                 );
                 gasUsed[GAS_USED_KEY][ProtocolKey.INCH] = (await tx.wait()).gasUsed.toString();
             });
@@ -420,9 +420,9 @@ describe('Router', async function () {
                     await tokens.DAI.getAddress(),
                     amount,
                     '1',
-                    226156424291633194186662081034061097151513775275396385675320261420545993489n,
-                    1032645502136839097869158895333537673945117411804n,
-                    226156424291633194186662080370592431195940027908611666024061324202391007071n,
+                    BigInt('0xa478c2975ab1ea89e8196811f51a7b7ade33eb11') | (1n << 247n),
+                    '0xb4e16d0168e52d35cacd2c6185b44281ec28c9dc',
+                    BigInt('0x3041cbd36888becc7bbcbc0045e3b1f144466f5f') | (1n << 247n),
                 );
                 gasUsed[GAS_USED_KEY][ProtocolKey.INCH] = (await tx.wait()).gasUsed.toString();
             });
