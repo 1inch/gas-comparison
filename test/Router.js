@@ -208,58 +208,53 @@ describe('Router', async function () {
                     settings: {
                         GAS_USED_KEY,
                         amount: ether('1'),
-                        gasLimit: '300000',
                     },
                 };
             }
 
             it('1inch', async function () {
-                const { addr1, tokens, inch, settings: { GAS_USED_KEY, amount, gasLimit } } = await loadFixture(initContractsWithCaseSettings);
+                const { addr1, tokens, inch, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
                 const tx = await inch.unoswapTo(
                     addr1.address,
                     await tokens.DAI.getAddress(),
                     amount,
                     '1',
                     BigInt('0xa478c2975ab1ea89e8196811f51a7b7ade33eb11') | (1n << 252n) | (1n << 247n),
-                    { gasLimit },
                 );
                 gasUsed[GAS_USED_KEY][ProtocolKey.INCH] = (await tx.wait()).gasUsed.toString();
             });
 
             it('matcha', async function () {
-                const { tokens, matcha, settings: { GAS_USED_KEY, amount, gasLimit } } = await loadFixture(initContractsWithCaseSettings);
+                const { tokens, matcha, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
                 const tx = await matcha.sellToUniswap(
                     [tokens.DAI, tokens.EEE],
                     amount,
                     '1',
                     false,
-                    { gasLimit },
                 );
                 gasUsed[GAS_USED_KEY][ProtocolKey.MATCHA] = (await tx.wait()).gasUsed.toString();
             });
 
             it('uniswap', async function () {
-                const { addr1, tokens, uniswap, settings: { GAS_USED_KEY, amount, gasLimit } } = await loadFixture(initContractsWithCaseSettings);
+                const { addr1, tokens, uniswap, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
                 const tx = await uniswap.swapExactTokensForETH(
                     amount,
                     '1',
                     [tokens.DAI, tokens.WETH],
                     addr1.address,
                     '0xffffffffff',
-                    { gasLimit },
                 );
                 gasUsed[GAS_USED_KEY][ProtocolKey.UNISWAP] = (await tx.wait()).gasUsed.toString();
             });
 
             it('paraswap', async function () {
-                const { tokens, pools, paraswap, settings: { GAS_USED_KEY, amount, gasLimit } } = await loadFixture(initContractsWithCaseSettings);
+                const { tokens, pools, paraswap, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
                 const tx = await paraswap.swapOnUniswapV2Fork(
                     tokens.DAI,
                     amount,
                     '1',
                     tokens.WETH,
                     [ethers.concat(['0x4de4', pools.uniV2.WETH_DAI])],
-                    { gasLimit },
                 )
                 gasUsed[GAS_USED_KEY][ProtocolKey.PARASWAP] = (await tx.wait()).gasUsed.toString();
             });
