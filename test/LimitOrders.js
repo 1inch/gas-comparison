@@ -6,6 +6,7 @@ const { ether, constants } = require('@1inch/solidity-utils');
 const { fillWithMakingAmount, buildMakerTraits } = require('@1inch/limit-order-protocol-contract/test/helpers/orderUtils');
 const { InchOrder, MatchaOrder, UniswapOrder, ParaswapOrder } = require('./helpers/orders');
 const { expect } = require('chai');
+const { ProtocolKey } = require('./helpers/utils');
 
 const PARASWAP_TOKEN_TRANSFER_PROXY = '0x216B4B4Ba9F3e719726886d34a177484278Bfcae';
 const PARASWAP_LIMIT_ORDERS = '0xe92b586627ccA7a83dC919cc7127196d70f55a06';
@@ -55,123 +56,188 @@ describe('LimitOrders', async function () {
         return { maker, taker, tokens, inch, matcha, uniswap };
     }
 
-    it('ETH => DAI', async function () {
-        const { maker, taker, tokens, inch, uniswap } = await loadFixture(initContracts);
+    describe('ETH => DAI', async function () {
+        async function initContractsWithCaseSettings () {
+            const fixtureData = await initContracts();
 
-        // Create 1inch order, sign and fill it
-        const inchOrder = new InchOrder({
-            makerAsset: await tokens.DAI.getAddress(),
-            takerAsset: await tokens.WETH.getAddress(),
-            makingAmount: ether('0.1'),
-            takingAmount: ether('0.01'),
-            maker,
-            verifyingContract: await inch.getAddress(),
-            makerTraits: buildMakerTraits({ unwrapWeth: true }),
+            const GAS_USED_KEY = 'ETH => DAI';
+            gasUsed[GAS_USED_KEY] = gasUsed[GAS_USED_KEY] || {};
+
+            return {
+                ...fixtureData,
+                settings: {
+                    GAS_USED_KEY,
+                    makerToken: fixtureData.tokens.DAI,
+                    takerToken: fixtureData.tokens.ETH,
+                    makingAmount: ether('0.1'),
+                    takingAmount: ether('0.01'),
+                },
+            };
+        }
+
+        it('1inch', async function () {
+            const {
+                maker, taker, tokens, inch,
+                settings: { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount },
+            } = await loadFixture(initContractsWithCaseSettings);
+
+            // Create 1inch order, sign and fill it
+            const inchOrder = new InchOrder({
+                makerAsset: await makerToken.getAddress(),
+                takerAsset: await takerToken.getAddress() !== await tokens.ETH.getAddress() ? await takerToken.getAddress() : await tokens.WETH.getAddress(),
+                makingAmount,
+                takingAmount,
+                maker,
+                verifyingContract: await inch.getAddress(),
+                makerTraits: buildMakerTraits({ unwrapWeth: true }),
+            });
+            const { r, vs } = await inchOrder.sign(maker);
+            const tx = await inch.connect(taker).fillOrder(
+                inchOrder.order, r, vs, inchOrder.order.makingAmount, fillWithMakingAmount(inchOrder.order.makingAmount),
+                { value: inchOrder.order.takingAmount },
+            );
+            await expect(tx).to.changeTokenBalances(makerToken, [maker, taker], [-inchOrder.order.makingAmount, inchOrder.order.makingAmount]);
+            await expect(tx).to.changeEtherBalances([maker, taker], [inchOrder.order.takingAmount, -inchOrder.order.takingAmount], { includeFee: false });
+            gasUsed[GAS_USED_KEY][ProtocolKey.INCH] = (await tx.wait()).gasUsed.toString();
         });
-        const { r, vs } = await inchOrder.sign(maker);
-        const inchTx = await inch.connect(taker).fillOrder(
-            inchOrder.order, r, vs, inchOrder.order.makingAmount, fillWithMakingAmount(inchOrder.order.makingAmount),
-            { value: inchOrder.order.takingAmount },
-        );
-        await expect(inchTx).to.changeTokenBalances(tokens.DAI, [maker, taker], [-inchOrder.order.makingAmount, inchOrder.order.makingAmount]);
-        await expect(inchTx).to.changeEtherBalances([maker, taker], [inchOrder.order.takingAmount, -inchOrder.order.takingAmount], { includeFee: false });
 
-        // Create Uniswap order, sign and fill it
-        const uniswapOrder = new UniswapOrder({
-            chainId: await getChainId(),
-            verifyingContract: await uniswap.getAddress(),
-            deadline: Math.floor(Date.now() / 1000) + 1000,
-            maker,
-            nonce: await (new NonceManager(maker)).getNonce(),
-            inputTokenAddress: await tokens.DAI.getAddress(),
-            outputTokenAddress: await tokens.ETH.getAddress(),
-            inputAmount: ether('0.1'),
-            outputAmount: ether('0.01'),
-            permit2contractAddress: PERMIT2CONTRACT,
+        it('uniswap', async function () {
+            const {
+                maker, taker, uniswap,
+                settings: { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount },
+            } = await loadFixture(initContractsWithCaseSettings);
+
+            // Create Uniswap order, sign and fill it
+            const uniswapOrder = new UniswapOrder({
+                chainId: await getChainId(),
+                verifyingContract: await uniswap.getAddress(),
+                deadline: Math.floor(Date.now() / 1000) + 1000,
+                maker,
+                nonce: await (new NonceManager(maker)).getNonce(),
+                inputTokenAddress: await makerToken.getAddress(),
+                outputTokenAddress: await takerToken.getAddress(),
+                inputAmount: makingAmount,
+                outputAmount: takingAmount,
+                permit2contractAddress: PERMIT2CONTRACT,
+            });
+            const signedOrder = await uniswapOrder.sign(maker);
+            const tx = await uniswap.connect(taker).execute(signedOrder, { value: uniswapOrder.order.info.outputs[0].startAmount });
+            await expect(tx).to.changeTokenBalances(makerToken, [maker, taker], [-uniswapOrder.order.info.input.startAmount, uniswapOrder.order.info.input.startAmount]);
+            await expect(tx).to.changeEtherBalances([maker, taker], [uniswapOrder.order.info.outputs[0].startAmount, -uniswapOrder.order.info.outputs[0].startAmount], { includeFee: false });
+            gasUsed[GAS_USED_KEY][ProtocolKey.UNISWAP] = (await tx.wait()).gasUsed.toString();
         });
-        const signedOrder = await uniswapOrder.sign(maker);
-        const uniTx = await uniswap.connect(taker).execute(signedOrder, { value: uniswapOrder.order.info.outputs[0].startAmount });
-        await expect(uniTx).to.changeTokenBalances(tokens.DAI, [maker, taker], [-uniswapOrder.order.info.input.startAmount, uniswapOrder.order.info.input.startAmount]);
-        await expect(uniTx).to.changeEtherBalances([maker, taker], [uniswapOrder.order.info.outputs[0].startAmount, -uniswapOrder.order.info.outputs[0].startAmount], { includeFee: false });
-
-        gasUsed['ETH => DAI'] = {
-            '1inch': (await inchTx.wait()).gasUsed.toString(),
-            uniswap: (await uniTx.wait()).gasUsed.toString(),
-        };
     });
 
-    it('WETH => DAI', async function () {
-        const { maker, taker, tokens, inch, matcha, uniswap } = await loadFixture(initContracts);
+    describe('WETH => DAI', async function () {
+        async function initContractsWithCaseSettings () {
+            const fixtureData = await initContracts();
 
-        // Create 1inch order, sign and fill it
-        const inchOrder = new InchOrder({
-            makerAsset: await tokens.DAI.getAddress(),
-            takerAsset: await tokens.WETH.getAddress(),
-            makingAmount: ether('0.1'),
-            takingAmount: ether('0.01'),
-            maker,
-            verifyingContract: await inch.getAddress(),
+            const GAS_USED_KEY = 'WETH => DAI';
+            gasUsed[GAS_USED_KEY] = gasUsed[GAS_USED_KEY] || {};
+
+            return {
+                ...fixtureData,
+                settings: {
+                    GAS_USED_KEY,
+                    makerToken: fixtureData.tokens.DAI,
+                    takerToken: fixtureData.tokens.WETH,
+                    makingAmount: ether('0.1'),
+                    takingAmount: ether('0.01'),
+                },
+            };
+        }
+
+        it('1inch', async function () {
+            const {
+                maker, taker, inch,
+                settings: { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount },
+            } = await loadFixture(initContractsWithCaseSettings);
+
+            // Create 1inch order, sign and fill it
+            const inchOrder = new InchOrder({
+                makerAsset: await makerToken.getAddress(),
+                takerAsset: await takerToken.getAddress(),
+                makingAmount,
+                takingAmount,
+                maker,
+                verifyingContract: await inch.getAddress(),
+            });
+            const { r, vs } = await inchOrder.sign(maker);
+            const tx = await inch.connect(taker).fillOrder(inchOrder.order, r, vs, inchOrder.order.makingAmount, fillWithMakingAmount(inchOrder.order.makingAmount));
+            await expect(tx).to.changeTokenBalances(makerToken, [maker, taker], [-inchOrder.order.makingAmount, inchOrder.order.makingAmount]);
+            await expect(tx).to.changeTokenBalances(takerToken, [maker, taker], [inchOrder.order.takingAmount, -inchOrder.order.takingAmount]);
+            gasUsed[GAS_USED_KEY][ProtocolKey.INCH] = (await tx.wait()).gasUsed.toString();
         });
-        const { r, vs } = await inchOrder.sign(maker);
-        const inchTx = await inch.connect(taker).fillOrder(inchOrder.order, r, vs, inchOrder.order.makingAmount, fillWithMakingAmount(inchOrder.order.makingAmount));
-        await expect(inchTx).to.changeTokenBalances(tokens.DAI, [maker, taker], [-inchOrder.order.makingAmount, inchOrder.order.makingAmount]);
-        await expect(inchTx).to.changeTokenBalances(tokens.WETH, [maker, taker], [inchOrder.order.takingAmount, -inchOrder.order.takingAmount]);
 
-        // Create 0xProtocol order, sign and fill it
-        const matchaOrder = new MatchaOrder({
-            chainId: await getChainId(),
-            verifyingContract: await matcha.getAddress(),
-            maker: maker.address,
-            taker: taker.address,
-            makerToken: await tokens.DAI.getAddress(),
-            takerToken: await tokens.WETH.getAddress(),
-            makerAmount: ether('0.1'),
-            takerAmount: ether('0.01'),
+        it('matcha', async function () {
+            const {
+                maker, taker, matcha,
+                settings: { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount },
+            } = await loadFixture(initContractsWithCaseSettings);
+
+            // Create 0xProtocol order, sign and fill it
+            const matchaOrder = new MatchaOrder({
+                chainId: await getChainId(),
+                verifyingContract: await matcha.getAddress(),
+                maker: maker.address,
+                taker: taker.address,
+                makerToken: await makerToken.getAddress(),
+                takerToken: await takerToken.getAddress(),
+                makerAmount: makingAmount,
+                takerAmount: takingAmount,
+            });
+            const signature = await matchaOrder.sign(maker);
+            const tx = await matcha.connect(taker).fillLimitOrder(matchaOrder.order, signature, matchaOrder.order.takerAmount);
+            await expect(tx).to.changeTokenBalances(makerToken, [maker, taker], [-matchaOrder.order.makerAmount, matchaOrder.order.makerAmount]);
+            await expect(tx).to.changeTokenBalances(takerToken, [maker, taker], [matchaOrder.order.takerAmount, -matchaOrder.order.takerAmount]);
+            gasUsed[GAS_USED_KEY][ProtocolKey.MATCHA] = (await tx.wait()).gasUsed.toString();
         });
-        const signature = await matchaOrder.sign(maker);
-        const matchaTx = await matcha.connect(taker).fillLimitOrder(matchaOrder.order, signature, matchaOrder.order.takerAmount);
-        await expect(matchaTx).to.changeTokenBalances(tokens.DAI, [maker, taker], [-matchaOrder.order.makerAmount, matchaOrder.order.makerAmount]);
-        await expect(matchaTx).to.changeTokenBalances(tokens.WETH, [maker, taker], [matchaOrder.order.takerAmount, -matchaOrder.order.takerAmount]);
 
-        // Create Uniswap order, sign and fill it
-        const uniswapOrder = new UniswapOrder({
-            chainId: await getChainId(),
-            verifyingContract: await uniswap.getAddress(),
-            deadline: Math.floor(Date.now() / 1000) + 1000,
-            maker,
-            nonce: await (new NonceManager(maker)).getNonce(),
-            inputTokenAddress: await tokens.DAI.getAddress(),
-            outputTokenAddress: await tokens.WETH.getAddress(),
-            inputAmount: ether('0.1'),
-            outputAmount: ether('0.01'),
-            permit2contractAddress: PERMIT2CONTRACT,
+        it('uniswap', async function () {
+            const {
+                maker, taker, uniswap,
+                settings: { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount },
+            } = await loadFixture(initContractsWithCaseSettings);
+
+            // Create Uniswap order, sign and fill it
+            const uniswapOrder = new UniswapOrder({
+                chainId: await getChainId(),
+                verifyingContract: await uniswap.getAddress(),
+                deadline: Math.floor(Date.now() / 1000) + 1000,
+                maker,
+                nonce: await (new NonceManager(maker)).getNonce(),
+                inputTokenAddress: await makerToken.getAddress(),
+                outputTokenAddress: await takerToken.getAddress(),
+                inputAmount: makingAmount,
+                outputAmount: takingAmount,
+                permit2contractAddress: PERMIT2CONTRACT,
+            });
+            const signedOrder = await uniswapOrder.sign(maker);
+            const tx = await uniswap.connect(taker).execute(signedOrder);
+            await expect(tx).to.changeTokenBalances(makerToken, [maker, taker], [-uniswapOrder.order.info.input.startAmount, uniswapOrder.order.info.input.startAmount]);
+            await expect(tx).to.changeTokenBalances(takerToken, [maker, taker], [uniswapOrder.order.info.outputs[0].startAmount, -uniswapOrder.order.info.outputs[0].startAmount]);
+            gasUsed[GAS_USED_KEY][ProtocolKey.UNISWAP] = (await tx.wait()).gasUsed.toString();
         });
-        const signedOrder = await uniswapOrder.sign(maker);
-        const uniTx = await uniswap.connect(taker).execute(signedOrder);
-        await expect(uniTx).to.changeTokenBalances(tokens.DAI, [maker, taker], [-uniswapOrder.order.info.input.startAmount, uniswapOrder.order.info.input.startAmount]);
-        await expect(uniTx).to.changeTokenBalances(tokens.WETH, [maker, taker], [uniswapOrder.order.info.outputs[0].startAmount, -uniswapOrder.order.info.outputs[0].startAmount]);
 
-        // Create Paraswap order, sign and fill it
-        const paraswapOrder = new ParaswapOrder({
-            maker,
-            taker,
-            makerAssetAddress: await tokens.DAI.getAddress(),
-            takerAssetAddress: await tokens.WETH.getAddress(),
-            makerAmount: ether('0.1').toString(),
-            takerAmount: ether('0.01').toString(),
+        it('paraswap', async function () {
+            const {
+                maker, taker,
+                settings: { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount },
+            } = await loadFixture(initContractsWithCaseSettings);
+
+            // Create Paraswap order, sign and fill it
+            const paraswapOrder = new ParaswapOrder({
+                maker,
+                taker,
+                makerAssetAddress: await makerToken.getAddress(),
+                takerAssetAddress: await takerToken.getAddress(),
+                makerAmount: makingAmount.toString(),
+                takerAmount: takingAmount.toString(),
+            });
+            const tx = await taker.sendTransaction(await paraswapOrder.buildTxParams(await paraswapOrder.sign(maker), taker.address));
+            await expect(tx).to.changeTokenBalances(makerToken, [maker, taker], [-BigInt(paraswapOrder.order.makerAmount), BigInt(paraswapOrder.order.makerAmount)]);
+            await expect(tx).to.changeTokenBalances(takerToken, [maker, taker], [BigInt(paraswapOrder.order.takerAmount), -BigInt(paraswapOrder.order.takerAmount)]);
+            gasUsed[GAS_USED_KEY][ProtocolKey.PARASWAP] = (await tx.wait()).gasUsed.toString();
         });
-        // First swap to clean up PARASWAP_TOKEN_TRANSFER_PROXY from extra amounts
-        await taker.sendTransaction(await paraswapOrder.buildTxParams(await paraswapOrder.sign(maker), taker.address));
-        // Main tx
-        const paraTx = await taker.sendTransaction(await paraswapOrder.buildTxParams(await paraswapOrder.sign(maker), taker.address));
-        await expect(paraTx).to.changeTokenBalances(tokens.DAI, [maker, taker], [-BigInt(paraswapOrder.order.makerAmount), BigInt(paraswapOrder.order.makerAmount)]);
-        await expect(paraTx).to.changeTokenBalances(tokens.WETH, [maker, taker], [BigInt(paraswapOrder.order.takerAmount), -BigInt(paraswapOrder.order.takerAmount)]);
-
-        gasUsed['WETH => DAI'] = {
-            '1inch': (await inchTx.wait()).gasUsed.toString(),
-            '0x': (await matchaTx.wait()).gasUsed.toString(),
-            paraswap: (await paraTx.wait()).gasUsed.toString(),
-            uniswap: (await uniTx.wait()).gasUsed.toString(),
-        };
     });
 });
