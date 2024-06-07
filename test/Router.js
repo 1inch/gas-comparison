@@ -1,7 +1,5 @@
 const hre = require('hardhat');
 const { ethers } = hre;
-// const axios = require('axios');
-// const { constructFullSDK, constructAxiosFetcher, constructEthersContractCaller } = require('@paraswap/sdk');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 const { ether, constants } = require('@1inch/solidity-utils');
 const { ProtocolKey } = require('./helpers/utils');
@@ -21,14 +19,6 @@ describe('Router', async function () {
         const uniswap = await ethers.getContractAt('IUniswapV2Router', '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D');
         const paraswap = await ethers.getContractAt('IParaswapRouter', '0xDEF171Fe48CF0115B1d80b88dc8eAB59176FEe57');
         const paraswapTokenTransferProxy = '0x216B4B4Ba9F3e719726886d34a177484278Bfcae';
-        // const paraswap = constructFullSDK({
-        //     chainId: 1,
-        //     fetcher: constructAxiosFetcher(axios),
-        //     contractCaller: constructEthersContractCaller({
-        //         ethersProviderOrSigner: ethers.provider,
-        //         EthersContract: ethers.Contract,
-        //     }, addr1),
-        // });
 
         const tokens = {
             ETH: {
