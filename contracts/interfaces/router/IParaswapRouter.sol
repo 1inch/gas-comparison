@@ -4,8 +4,6 @@ pragma solidity 0.8.23;
 import { IERC20 } from "@openzeppelin/contracts/interfaces/IERC20.sol";
 
 interface IParaswapRouter {
-    function swapOnUniswapV2Fork(address tokenIn, uint256 amountIn, uint256 amountOutMin, address weth, uint256[] memory pools) external;
-
     /// @notice Struct for UniswapV2 swapExactAmountIn/swapExactAmountOut data
     /// @param srcToken The token to swap from
     /// @param destToken The token to swap to
