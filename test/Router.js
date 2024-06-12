@@ -1,8 +1,8 @@
 const hre = require('hardhat');
 const { ethers } = hre;
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
-const { ether, constants } = require('@1inch/solidity-utils');
-const { ProtocolKey } = require('./helpers/utils');
+const { ether, constants, getEthPrice } = require('@1inch/solidity-utils');
+const { ProtocolKey, paraswapUniV2PoolData, percentageOf } = require('./helpers/utils');
 
 describe('Router', async function () {
     const gasUsed = {};
@@ -17,8 +17,7 @@ describe('Router', async function () {
         const inch = await ethers.getContractAt('IAggregationRouter', '0x111111125421ca6dc452d289314280a0f8842a65');
         const matcha = await ethers.getContractAt('IMatchaRouter', '0xdef1c0ded9bec7f1a1670819833240f027b25eff');
         const uniswap = await ethers.getContractAt('IUniswapV2Router', '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D');
-        const paraswap = await ethers.getContractAt('IParaswapRouter', '0xDEF171Fe48CF0115B1d80b88dc8eAB59176FEe57');
-        const paraswapTokenTransferProxy = '0x216B4B4Ba9F3e719726886d34a177484278Bfcae';
+        const paraswap = await ethers.getContractAt('IParaswapRouter', '0x000dB803A70511E09dA650D4C0506d0000100000');
 
         const tokens = {
             ETH: {
@@ -32,19 +31,11 @@ describe('Router', async function () {
             USDC: await ethers.getContractAt('IERC20', '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'),
             USDT: await ethers.getContractAt('IERC20', '0xdAC17F958D2ee523a2206206994597C13D831ec7'),
         };
-        const pools = {
-            uniV2: {
-                WETH_DAI: '0xA478c2975Ab1Ea89e8196811F51A7B7Ade33eB11',
-                WETH_USDC: '0xB4e16d0168e52d35CaCD2c6185b44281Ec28C9Dc',
-                USDC_DAI: '0xAE461cA67B15dc8dc81CE7615e0320dA1A9aB8D5',
-                USDC_USDT: '0x3041CbD36888bECc7bbCBc0045E3B1f144466f5f',
-            },
-        };
 
         await tokens.DAI.approve(inch, ether('1'));
         await tokens.DAI.approve(matcha, ether('1'));
         await tokens.DAI.approve(uniswap, ether('1'));
-        await tokens.DAI.approve(paraswapTokenTransferProxy, ether('1'));
+        await tokens.DAI.approve(paraswap, ether('1'));
 
         // Buy some tokens for warmup address and exchanges
         await addr1.sendTransaction({ to: '0x2a1530c4c41db0b0b2bb646cb5eb1a67b7158667', value: ether('1') }); // DAI
@@ -58,7 +49,9 @@ describe('Router', async function () {
         ); // USDT
         await tokens.WETH.deposit({ value: ether('1') }); // WETH
 
-        return { addr1, tokens, pools, inch, matcha, paraswap, uniswap };
+        const ethPrice = await getEthPrice();
+
+        return { addr1, tokens, inch, matcha, paraswap, uniswap, ethPrice };
     }
 
     describe('UniV2', async function () {
@@ -114,15 +107,21 @@ describe('Router', async function () {
             });
 
             it('paraswap', async function () {
-                const { tokens, pools, paraswap, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
-                const tx = await paraswap.swapOnUniswapV2Fork(
-                    tokens.EEE,
-                    amount,
-                    '1',
-                    tokens.WETH,
-                    [ethers.concat(['0x4de5', pools.uniV2.WETH_DAI])],
+                const { tokens, paraswap, ethPrice, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+                const tx = await paraswap.swapExactAmountInOnUniswapV2([
+                        tokens.EEE,
+                        tokens.DAI,
+                        amount,
+                        percentageOf(amount * ethPrice / BigInt(1e18), 95),
+                        percentageOf(amount * ethPrice / BigInt(1e18), 95),
+                        constants.ZERO_BYTES32,
+                        constants.ZERO_ADDRESS,
+                        paraswapUniV2PoolData([[tokens.WETH.target, tokens.DAI.target]]),
+                    ],
+                    0n,
+                    '0x',
                     { value: amount },
-                )
+                );
                 gasUsed[GAS_USED_KEY][ProtocolKey.PARASWAP] = (await tx.wait()).gasUsed.toString();
             });
         });
@@ -180,18 +179,24 @@ describe('Router', async function () {
             });
 
             it('paraswap', async function () {
-                const { tokens, pools, paraswap, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
-                const tx = await paraswap.swapOnUniswapV2Fork(
-                    tokens.EEE,
-                    amount,
-                    '1',
-                    tokens.WETH,
-                    [
-                        ethers.concat(['0x4de5', pools.uniV2.WETH_USDC]),
-                        ethers.concat(['0x4de5', pools.uniV2.USDC_DAI]),
+                const { tokens, paraswap, ethPrice, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+                const tx = await paraswap.swapExactAmountInOnUniswapV2([
+                        tokens.EEE,
+                        tokens.DAI,
+                        amount,
+                        percentageOf(amount * ethPrice / BigInt(1e18), 95),
+                        percentageOf(amount * ethPrice / BigInt(1e18), 95),
+                        constants.ZERO_BYTES32,
+                        constants.ZERO_ADDRESS,
+                        paraswapUniV2PoolData([
+                            [tokens.WETH.target, tokens.USDC.target],
+                            [tokens.USDC.target, tokens.DAI.target],
+                        ]),
                     ],
+                    0n,
+                    '0x',
                     { value: amount },
-                )
+                );
                 gasUsed[GAS_USED_KEY][ProtocolKey.PARASWAP] = (await tx.wait()).gasUsed.toString();
             });
         });
@@ -248,14 +253,20 @@ describe('Router', async function () {
             });
 
             it('paraswap', async function () {
-                const { tokens, pools, paraswap, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
-                const tx = await paraswap.swapOnUniswapV2Fork(
-                    tokens.DAI,
-                    amount,
-                    '1',
-                    tokens.WETH,
-                    [ethers.concat(['0x4de4', pools.uniV2.WETH_DAI])],
-                )
+                const { tokens, paraswap, ethPrice, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+                const tx = await paraswap.swapExactAmountInOnUniswapV2([
+                        tokens.DAI,
+                        tokens.EEE,
+                        amount,
+                        percentageOf(amount * BigInt(1e18) / ethPrice, 95),
+                        percentageOf(amount * BigInt(1e18) / ethPrice, 95),
+                        constants.ZERO_BYTES32,
+                        constants.ZERO_ADDRESS,
+                        paraswapUniV2PoolData([[tokens.DAI.target, tokens.WETH.target]]),
+                    ],
+                    0n,
+                    '0x',
+                );
                 gasUsed[GAS_USED_KEY][ProtocolKey.PARASWAP] = (await tx.wait()).gasUsed.toString();
             });
         });
@@ -312,14 +323,20 @@ describe('Router', async function () {
             });
 
             it('paraswap', async function () {
-                const { tokens, pools, paraswap, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
-                const tx = await paraswap.swapOnUniswapV2Fork(
-                    tokens.DAI,
-                    amount,
-                    '1',
-                    constants.ZERO_ADDRESS,
-                    [ethers.concat(['0x4de4', pools.uniV2.WETH_DAI])],
-                )
+                const { tokens, paraswap, ethPrice, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+                const tx = await paraswap.swapExactAmountInOnUniswapV2([
+                        tokens.DAI,
+                        tokens.WETH,
+                        amount,
+                        percentageOf(amount * BigInt(1e18) / ethPrice, 95),
+                        percentageOf(amount * BigInt(1e18) / ethPrice, 95),
+                        constants.ZERO_BYTES32,
+                        constants.ZERO_ADDRESS,
+                        paraswapUniV2PoolData([[tokens.DAI.target, tokens.WETH.target]]),
+                    ],
+                    0n,
+                    '0x',
+                );
                 gasUsed[GAS_USED_KEY][ProtocolKey.PARASWAP] = (await tx.wait()).gasUsed.toString();
             });
         });
@@ -377,17 +394,23 @@ describe('Router', async function () {
             });
 
             it('paraswap', async function () {
-                const { tokens, pools, paraswap, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
-                const tx = await paraswap.swapOnUniswapV2Fork(
-                    tokens.DAI,
-                    amount,
-                    '1',
-                    constants.ZERO_ADDRESS,
-                    [
-                        ethers.concat(['0x4de4', pools.uniV2.WETH_DAI]),
-                        ethers.concat(['0x4de5', pools.uniV2.WETH_USDC]),
+                const { tokens, paraswap, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+                const tx = await paraswap.swapExactAmountInOnUniswapV2([
+                        tokens.DAI,
+                        tokens.USDC,
+                        amount,
+                        percentageOf(amount / BigInt(1e12), 95),
+                        percentageOf(amount / BigInt(1e12), 95),
+                        constants.ZERO_BYTES32,
+                        constants.ZERO_ADDRESS,
+                        paraswapUniV2PoolData([
+                            [tokens.DAI.target, tokens.WETH.target],
+                            [tokens.WETH.target, tokens.USDC.target],
+                        ]),
                     ],
-                )
+                    0n,
+                    '0x',
+                );
                 gasUsed[GAS_USED_KEY][ProtocolKey.PARASWAP] = (await tx.wait()).gasUsed.toString();
             });
         });
@@ -446,18 +469,24 @@ describe('Router', async function () {
             });
 
             it('paraswap', async function () {
-                const { tokens, pools, paraswap, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
-                const tx = await paraswap.swapOnUniswapV2Fork(
-                    tokens.DAI,
-                    amount,
-                    '1',
-                    constants.ZERO_ADDRESS,
-                    [
-                        ethers.concat(['0x4de4', pools.uniV2.WETH_DAI]),
-                        ethers.concat(['0x4de5', pools.uniV2.WETH_USDC]),
-                        ethers.concat(['0x4de4', pools.uniV2.USDC_USDT]),
+                const { tokens, paraswap, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+                const tx = await paraswap.swapExactAmountInOnUniswapV2([
+                        tokens.DAI,
+                        tokens.USDT,
+                        amount,
+                        percentageOf(amount / BigInt(1e12), 95),
+                        percentageOf(amount / BigInt(1e12), 95),
+                        constants.ZERO_BYTES32,
+                        constants.ZERO_ADDRESS,
+                        paraswapUniV2PoolData([
+                            [tokens.DAI.target, tokens.WETH.target],
+                            [tokens.WETH.target, tokens.USDC.target],
+                            [tokens.USDC.target, tokens.USDT.target],
+                        ]),
                     ],
-                )
+                    0n,
+                    '0x',
+                );
                 gasUsed[GAS_USED_KEY][ProtocolKey.PARASWAP] = (await tx.wait()).gasUsed.toString();
             });
         });
