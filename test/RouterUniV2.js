@@ -1,6 +1,6 @@
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 const { ether, constants } = require('@1inch/solidity-utils');
-const { ProtocolKey, paraswapUniV2PoolData, percentageOf } = require('./helpers/utils');
+const { ProtocolKey, paraswapUniV2PoolData } = require('./helpers/utils');
 const { initRouterContracts } = require('./helpers/fixtures');
 
 describe('Router [UniV2]', async function () {
@@ -69,13 +69,21 @@ describe('Router [UniV2]', async function () {
         });
 
         it('paraswap', async function () {
-            const { tokens, paraswap, ethPrice, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const { addr1, tokens, uniswapv2, paraswap, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            // Get `quotedAmount` to avoid positive slippage which makes the transaction significantly more expensive
+            const [,quotedAmount] = await uniswapv2.swapExactETHForTokens.staticCall(
+                amount,
+                [tokens.WETH, tokens.DAI],
+                addr1.address,
+                '0xffffffffff',
+                { value: amount },
+            );
             const tx = await paraswap.swapExactAmountInOnUniswapV2([
                     tokens.EEE,
                     tokens.DAI,
                     amount,
-                    percentageOf(amount * ethPrice / BigInt(1e18), 95),
-                    percentageOf(amount * ethPrice / BigInt(1e18), 95),
+                    '1',
+                    quotedAmount,
                     constants.ZERO_BYTES32,
                     constants.ZERO_ADDRESS,
                     paraswapUniV2PoolData([[tokens.WETH.target, tokens.DAI.target]]),
@@ -141,13 +149,21 @@ describe('Router [UniV2]', async function () {
         });
 
         it('paraswap', async function () {
-            const { tokens, paraswap, ethPrice, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const { addr1, tokens, uniswapv2, paraswap, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            // Get `quotedAmount` to avoid positive slippage which makes the transaction significantly more expensive
+            const [,,quotedAmount] = await uniswapv2.swapExactETHForTokens.staticCall(
+                amount,
+                [tokens.WETH, tokens.USDC, tokens.DAI],
+                addr1.address,
+                '0xffffffffff',
+                { value: amount },
+            );
             const tx = await paraswap.swapExactAmountInOnUniswapV2([
                     tokens.EEE,
                     tokens.DAI,
                     amount,
-                    percentageOf(amount * ethPrice / BigInt(1e18), 95),
-                    percentageOf(amount * ethPrice / BigInt(1e18), 95),
+                    '1',
+                    quotedAmount,
                     constants.ZERO_BYTES32,
                     constants.ZERO_ADDRESS,
                     paraswapUniV2PoolData([
@@ -215,13 +231,21 @@ describe('Router [UniV2]', async function () {
         });
 
         it('paraswap', async function () {
-            const { tokens, paraswap, ethPrice, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const { addr1, tokens, uniswapv2, paraswap, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            // Get `quotedAmount` to avoid positive slippage which makes the transaction significantly more expensive
+            const [,quotedAmount] = await uniswapv2.swapExactTokensForETH.staticCall(
+                amount,
+                '1',
+                [tokens.DAI, tokens.WETH],
+                addr1.address,
+                '0xffffffffff',
+            );
             const tx = await paraswap.swapExactAmountInOnUniswapV2([
                     tokens.DAI,
                     tokens.EEE,
                     amount,
-                    percentageOf(amount * BigInt(1e18) / ethPrice, 95),
-                    percentageOf(amount * BigInt(1e18) / ethPrice, 95),
+                    '1',
+                    quotedAmount,
                     constants.ZERO_BYTES32,
                     constants.ZERO_ADDRESS,
                     paraswapUniV2PoolData([[tokens.DAI.target, tokens.WETH.target]]),
@@ -285,13 +309,21 @@ describe('Router [UniV2]', async function () {
         });
 
         it('paraswap', async function () {
-            const { tokens, paraswap, ethPrice, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const { addr1, tokens, uniswapv2, paraswap, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            // Get `quotedAmount` to avoid positive slippage which makes the transaction significantly more expensive
+            const [,quotedAmount] = await uniswapv2.swapExactTokensForTokens.staticCall(
+                amount,
+                '1',
+                [tokens.DAI, tokens.WETH],
+                addr1.address,
+                '0xffffffffff',
+            );
             const tx = await paraswap.swapExactAmountInOnUniswapV2([
                     tokens.DAI,
                     tokens.WETH,
                     amount,
-                    percentageOf(amount * BigInt(1e18) / ethPrice, 95),
-                    percentageOf(amount * BigInt(1e18) / ethPrice, 95),
+                    '1',
+                    quotedAmount,
                     constants.ZERO_BYTES32,
                     constants.ZERO_ADDRESS,
                     paraswapUniV2PoolData([[tokens.DAI.target, tokens.WETH.target]]),
@@ -351,18 +383,26 @@ describe('Router [UniV2]', async function () {
                 [tokens.DAI, tokens.WETH, tokens.USDC],
                 addr1.address,
                 '0xffffffffff',
-            )
+            );
             gasUsed[GAS_USED_KEY][ProtocolKey.UNISWAP] = (await tx.wait()).gasUsed.toString();
         });
 
         it('paraswap', async function () {
-            const { tokens, paraswap, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const { addr1, tokens, uniswapv2, paraswap, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            // Get `quotedAmount` to avoid positive slippage which makes the transaction significantly more expensive
+            const [,,quotedAmount] = await uniswapv2.swapExactTokensForTokens.staticCall(
+                amount,
+                '1',
+                [tokens.DAI, tokens.WETH, tokens.USDC],
+                addr1.address,
+                '0xffffffffff',
+            );
             const tx = await paraswap.swapExactAmountInOnUniswapV2([
                     tokens.DAI,
                     tokens.USDC,
                     amount,
-                    percentageOf(amount / BigInt(1e12), 95),
-                    percentageOf(amount / BigInt(1e12), 95),
+                    '1',
+                    quotedAmount,
                     constants.ZERO_BYTES32,
                     constants.ZERO_ADDRESS,
                     paraswapUniV2PoolData([
@@ -431,13 +471,21 @@ describe('Router [UniV2]', async function () {
         });
 
         it('paraswap', async function () {
-            const { tokens, paraswap, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const { addr1, tokens, uniswapv2, paraswap, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            // Get `quotedAmount` to avoid positive slippage which makes the transaction significantly more expensive
+            const [,,,quotedAmount] = await uniswapv2.swapExactTokensForTokens.staticCall(
+                amount,
+                '1',
+                [tokens.DAI, tokens.WETH, tokens.USDC, tokens.USDT],
+                addr1.address,
+                '0xffffffffff',
+            );
             const tx = await paraswap.swapExactAmountInOnUniswapV2([
                     tokens.DAI,
                     tokens.USDT,
                     amount,
-                    percentageOf(amount / BigInt(1e12), 95),
-                    percentageOf(amount / BigInt(1e12), 95),
+                    '1',
+                    quotedAmount,
                     constants.ZERO_BYTES32,
                     constants.ZERO_ADDRESS,
                     paraswapUniV2PoolData([
