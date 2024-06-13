@@ -1,6 +1,6 @@
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 const { ether, constants } = require('@1inch/solidity-utils');
-const { ProtocolKey, paraswapUniV2PoolData, percentageOf, paraswapUniV3PoolData } = require('./helpers/utils');
+const { ProtocolKey } = require('./helpers/utils');
 const { initRouterContracts } = require('./helpers/fixtures');
 const { ethers } = require('hardhat');
 
@@ -74,13 +74,26 @@ describe('Router [UniV3]', async function () {
         });
 
         it('paraswap', async function () {
-            const { addr1, tokens, paraswap, ethPrice, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const { addr1, tokens, uniswapv3, paraswap, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            // Get `quotedAmount` to avoid positive slippage which makes the transaction significantly more expensive
+            const quotedAmount = await uniswapv3.exactInputSingle.staticCall([
+                    tokens.WETH,
+                    tokens.DAI,
+                    pools.WETH_DAI.fee,
+                    addr1.address,
+                    '0xffffffff',
+                    amount,
+                    '1',
+                    '0',
+                ],
+                { value: amount },
+            );
             const tx = await paraswap.swapExactAmountInOnUniswapV3([
                     tokens.EEE,
                     tokens.DAI,
                     amount,
-                    percentageOf(amount * ethPrice / BigInt(1e18), 95),
-                    percentageOf(amount * ethPrice / BigInt(1e18), 95),
+                    '1',
+                    quotedAmount,
                     constants.ZERO_BYTES32,
                     constants.ZERO_ADDRESS,
                     ethers.concat([
@@ -160,13 +173,27 @@ describe('Router [UniV3]', async function () {
         });
 
         it('paraswap', async function () {
-            const { tokens, paraswap, ethPrice, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const { addr1, tokens, uniswapv3, paraswap, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            // Get `quotedAmount` to avoid positive slippage which makes the transaction significantly more expensive
+            const quotedAmount = await uniswapv3.exactInput.staticCall([
+                    ethers.concat([
+                        tokens.WETH.target, ethers.toBeHex(pools.WETH_USDC.fee, 3),
+                        tokens.USDC.target, ethers.toBeHex(pools.USDC_DAI.fee, 3),
+                        tokens.DAI.target,
+                    ]),
+                    addr1.address,
+                    '0xffffffff',
+                    amount,
+                    '1',
+                ],
+                { value: amount },
+            );
             const tx = await paraswap.swapExactAmountInOnUniswapV3([
                     tokens.EEE,
                     tokens.DAI,
                     amount,
-                    percentageOf(amount * ethPrice / BigInt(1e18), 95),
-                    percentageOf(amount * ethPrice / BigInt(1e18), 95),
+                    '1',
+                    quotedAmount,
                     constants.ZERO_BYTES32,
                     constants.ZERO_ADDRESS,
                     ethers.concat([
@@ -245,13 +272,24 @@ describe('Router [UniV3]', async function () {
         });
 
         it('paraswap', async function () {
-            const { tokens, paraswap, ethPrice, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const { addr1, tokens, uniswapv3, paraswap, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            // Get `quotedAmount` to avoid positive slippage which makes the transaction significantly more expensive
+            const quotedAmount = await uniswapv3.exactInputSingle.staticCall([
+                tokens.DAI,
+                tokens.WETH,
+                pools.WETH_DAI.fee,
+                addr1.address,
+                '0xffffffff',
+                amount,
+                '1',
+                '0',
+            ]);
             const tx = await paraswap.swapExactAmountInOnUniswapV3([
                     tokens.DAI,
                     tokens.EEE,
                     amount,
-                    percentageOf(amount * BigInt(1e18) / ethPrice, 95),
-                    percentageOf(amount * BigInt(1e18) / ethPrice, 95),
+                    '1',
+                    quotedAmount,
                     constants.ZERO_BYTES32,
                     constants.ZERO_ADDRESS,
                     ethers.concat([
@@ -323,13 +361,24 @@ describe('Router [UniV3]', async function () {
         });
 
         it('paraswap', async function () {
-            const { tokens, paraswap, ethPrice, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const { addr1, tokens, uniswapv3, paraswap, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            // Get `quotedAmount` to avoid positive slippage which makes the transaction significantly more expensive
+            const quotedAmount = await uniswapv3.exactInputSingle.staticCall([
+                tokens.DAI,
+                tokens.WETH,
+                pools.WETH_DAI.fee,
+                addr1.address,
+                '0xffffffff',
+                amount,
+                '1',
+                '0',
+            ]);
             const tx = await paraswap.swapExactAmountInOnUniswapV3([
                     tokens.DAI,
                     tokens.WETH,
                     amount,
-                    percentageOf(amount * BigInt(1e18) / ethPrice, 95),
-                    percentageOf(amount * BigInt(1e18) / ethPrice, 95),
+                    '1',
+                    quotedAmount,
                     constants.ZERO_BYTES32,
                     constants.ZERO_ADDRESS,
                     ethers.concat([
@@ -407,13 +456,25 @@ describe('Router [UniV3]', async function () {
         });
 
         it('paraswap', async function () {
-            const { tokens, paraswap, settings: { GAS_USED_KEY, amount }, ethPrice } = await loadFixture(initContractsWithCaseSettings);
+            const { addr1, tokens, uniswapv3, paraswap, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            // Get `quotedAmount` to avoid positive slippage which makes the transaction significantly more expensive
+            const quotedAmount = await uniswapv3.exactInput.staticCall({
+                path: ethers.concat([
+                    tokens.DAI.target, ethers.toBeHex(pools.WETH_DAI.fee, 3),
+                    tokens.WETH.target, ethers.toBeHex(pools.WETH_USDC.fee, 3),
+                    tokens.USDC.target,
+                ]),
+                recipient: addr1.address,
+                deadline: '0xffffffff',
+                amountIn: amount,
+                amountOutMinimum: '1',
+            });
             const tx = await paraswap.swapExactAmountInOnUniswapV3([
                     tokens.DAI,
                     tokens.USDC,
                     amount,
-                    percentageOf(amount / BigInt(1e12), 95),
-                    percentageOf(amount / BigInt(1e12), 95),
+                    '1',
+                    quotedAmount,
                     constants.ZERO_BYTES32,
                     constants.ZERO_ADDRESS,
                     ethers.concat([
@@ -498,13 +559,26 @@ describe('Router [UniV3]', async function () {
         });
 
         it('paraswap', async function () {
-            const { tokens, paraswap, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const { addr1, tokens, uniswapv3, paraswap, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            // Get `quotedAmount` to avoid positive slippage which makes the transaction significantly more expensive
+            const quotedAmount = await uniswapv3.exactInput.staticCall({
+                path: ethers.concat([
+                    tokens.DAI.target, ethers.toBeHex(pools.WETH_DAI.fee, 3),
+                    tokens.WETH.target, ethers.toBeHex(pools.WETH_USDC.fee, 3),
+                    tokens.USDC.target, ethers.toBeHex(pools.USDT_USDC.fee, 3),
+                    tokens.USDT.target,
+                ]),
+                recipient: addr1.address,
+                deadline: '0xffffffff',
+                amountIn: amount,
+                amountOutMinimum: '1',
+            });
             const tx = await paraswap.swapExactAmountInOnUniswapV3([
                     tokens.DAI,
                     tokens.USDT,
                     amount,
-                    percentageOf(amount / BigInt(1e12), 95),
-                    percentageOf(amount / BigInt(1e12), 95),
+                    '1',
+                    quotedAmount,
                     constants.ZERO_BYTES32,
                     constants.ZERO_ADDRESS,
                     ethers.concat([

@@ -1,4 +1,4 @@
-const { ether, getEthPrice, constants } = require("@1inch/solidity-utils");
+const { ether, constants } = require("@1inch/solidity-utils");
 const { ethers } = require("hardhat");
 
 async function initRouterContracts () {
@@ -41,9 +41,7 @@ async function initRouterContracts () {
     ); // USDT
     await tokens.WETH.deposit({ value: ether('1') }); // WETH
 
-    const ethPrice = await getEthPrice();
-
-    return { addr1, tokens, inch, matcha, paraswap, uniswapv2, uniswapv3, ethPrice };
+    return { addr1, tokens, inch, matcha, paraswap, uniswapv2, uniswapv3 };
 }
 
 module.exports = {
