@@ -1,4 +1,4 @@
-const { ether, getEthPrice } = require("@1inch/solidity-utils");
+const { ether, getEthPrice, constants } = require("@1inch/solidity-utils");
 const { ethers } = require("hardhat");
 
 async function initRouterContracts () {
@@ -7,6 +7,7 @@ async function initRouterContracts () {
     const inch = await ethers.getContractAt('IAggregationRouter', '0x111111125421ca6dc452d289314280a0f8842a65');
     const matcha = await ethers.getContractAt('IMatchaRouter', '0xdef1c0ded9bec7f1a1670819833240f027b25eff');
     const uniswapv2 = await ethers.getContractAt('IUniswapV2Router', '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D');
+    const uniswapv3 = await ethers.getContractAt('IUniswapV3Router', '0xE592427A0AEce92De3Edee1F18E0157C05861564');
     const paraswap = await ethers.getContractAt('IParaswapRouter', '0x000dB803A70511E09dA650D4C0506d0000100000');
 
     const tokens = {
@@ -25,6 +26,7 @@ async function initRouterContracts () {
     await tokens.DAI.approve(inch, ether('1'));
     await tokens.DAI.approve(matcha, ether('1'));
     await tokens.DAI.approve(uniswapv2, ether('1'));
+    await tokens.DAI.approve(uniswapv3, ether('1'));
     await tokens.DAI.approve(paraswap, ether('1'));
 
     // Buy some tokens for warmup address and exchanges
@@ -41,7 +43,7 @@ async function initRouterContracts () {
 
     const ethPrice = await getEthPrice();
 
-    return { addr1, tokens, inch, matcha, paraswap, uniswapv2, ethPrice };
+    return { addr1, tokens, inch, matcha, paraswap, uniswapv2, uniswapv3, ethPrice };
 }
 
 module.exports = {
