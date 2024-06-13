@@ -1,3 +1,4 @@
+const { ethers } = require('hardhat');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 const { ether, constants } = require('@1inch/solidity-utils');
 const { ProtocolKey, paraswapUniV2PoolData } = require('./helpers/utils');
@@ -13,13 +14,33 @@ describe('Router [UniV2]', async function () {
         USDC_USDT: '0x3041cbd36888becc7bbcbc0045e3b1f144466f5f',
     };
 
+    async function initContracts () {
+        const fixtureData = await initRouterContracts();
+
+        // Set `blockTimestampLast` in uniswapv2 pools and next block timestamp to avoid oracle slot updates
+        const latestBlockTimestamp = (await ethers.provider.getBlock('latest')).timestamp;
+        const nextBlockTimestamp = latestBlockTimestamp + 3600*1000;
+
+        for (const pool of Object.values(pools)) {
+            const slotData = await ethers.provider.getStorage(pool, '0x8');
+            await ethers.provider.send("hardhat_setStorageAt", [
+                pool,
+                '0x8',
+                ethers.toBeHex(nextBlockTimestamp, 4) + slotData.slice(10),
+            ]);
+        }
+        await ethers.provider.send('evm_setNextBlockTimestamp', [nextBlockTimestamp]);
+
+        return fixtureData;
+    }
+
     after(async function () {
         console.table(gasUsed);
     });
 
     describe('ETH => DAI', async function () {
         async function initContractsWithCaseSettings () {
-            const fixtureData = await initRouterContracts();
+            const fixtureData = await initContracts();
 
             const GAS_USED_KEY = 'ETH => DAI';
             gasUsed[GAS_USED_KEY] = gasUsed[GAS_USED_KEY] || {};
@@ -98,7 +119,7 @@ describe('Router [UniV2]', async function () {
 
     describe('ETH => USDC => DAI', async function () {
         async function initContractsWithCaseSettings () {
-            const fixtureData = await initRouterContracts();
+            const fixtureData = await initContracts();
 
             const GAS_USED_KEY = 'ETH => USDC => DAI';
             gasUsed[GAS_USED_KEY] = gasUsed[GAS_USED_KEY] || {};
@@ -181,7 +202,7 @@ describe('Router [UniV2]', async function () {
 
     describe('DAI => ETH', async function () {
         async function initContractsWithCaseSettings () {
-            const fixtureData = await initRouterContracts();
+            const fixtureData = await initContracts();
 
             const GAS_USED_KEY = 'DAI => ETH';
             gasUsed[GAS_USED_KEY] = gasUsed[GAS_USED_KEY] || {};
@@ -259,7 +280,7 @@ describe('Router [UniV2]', async function () {
 
     describe('DAI => WETH', async function () {
         async function initContractsWithCaseSettings () {
-            const fixtureData = await initRouterContracts();
+            const fixtureData = await initContracts();
 
             const GAS_USED_KEY = 'DAI => WETH';
             gasUsed[GAS_USED_KEY] = gasUsed[GAS_USED_KEY] || {};
@@ -337,7 +358,7 @@ describe('Router [UniV2]', async function () {
 
     describe('DAI => WETH => USDC', async function () {
         async function initContractsWithCaseSettings () {
-            const fixtureData = await initRouterContracts();
+            const fixtureData = await initContracts();
 
             const GAS_USED_KEY = 'DAI => WETH => USDC';
             gasUsed[GAS_USED_KEY] = gasUsed[GAS_USED_KEY] || {};
@@ -419,7 +440,7 @@ describe('Router [UniV2]', async function () {
 
     describe('DAI => WETH => USDC => USDT', async function () {
         async function initContractsWithCaseSettings () {
-            const fixtureData = await initRouterContracts();
+            const fixtureData = await initContracts();
 
             const GAS_USED_KEY = 'DAI => WETH => USDC => USDT';
             gasUsed[GAS_USED_KEY] = gasUsed[GAS_USED_KEY] || {};
