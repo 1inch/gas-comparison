@@ -22,6 +22,7 @@
     "@paraswap/sdk": "6.7.0",
     "@uniswap/uniswapx-sdk": "2.0.1-alpha.10",
     "chai": "4.4.1",
+    "cli-table3": "0.6.5",
     "dotenv": "16.4.5",
     "eslint": "9.2.0",
     "eslint-config-standard": "17.1.0",
@@ -51,7 +52,6 @@
     "lint:js:fix": "eslint . --fix",
     "lint:sol": "solhint --max-warnings 0 \"contracts/**/*.sol\"",
     "lint:sol:fix": "solhint --max-warnings 0 \"contracts/**/*.sol\" --fix",
-    "test": "hardhat test --parallel",
     "test:ci": "hardhat test"
   }
 }

@@ -7,16 +7,17 @@ const { fillWithMakingAmount, buildMakerTraits } = require('@1inch/limit-order-p
 const { InchOrder, MatchaOrder, UniswapOrder, ParaswapOrder } = require('./helpers/orders');
 const { expect } = require('chai');
 const { ProtocolKey } = require('./helpers/utils');
+const { createGasUsedTable } = require('./helpers/table');
 
 const PARASWAP_TOKEN_TRANSFER_PROXY = '0x216B4B4Ba9F3e719726886d34a177484278Bfcae';
 const PARASWAP_LIMIT_ORDERS = '0xe92b586627ccA7a83dC919cc7127196d70f55a06';
 const PERMIT2CONTRACT = '0x000000000022D473030F116dDEE9F6B43aC78BA3';
 
 describe('LimitOrders', async function () {
-    const gasUsed = {};
+    const gasUsedTable = createGasUsedTable("Limit Orders", "case");
 
     after(async function () {
-        console.table(gasUsed);
+        console.log(gasUsedTable.toString());
     });
 
     async function initContracts () {
@@ -59,14 +60,10 @@ describe('LimitOrders', async function () {
     describe('ETH => DAI', async function () {
         async function initContractsWithCaseSettings () {
             const fixtureData = await initContracts();
-
-            const GAS_USED_KEY = 'ETH => DAI';
-            gasUsed[GAS_USED_KEY] = gasUsed[GAS_USED_KEY] || {};
-
             return {
                 ...fixtureData,
                 settings: {
-                    GAS_USED_KEY,
+                    gasUsedTableRow: gasUsedTable.addRow(['ETH => DAI']),
                     makerToken: fixtureData.tokens.DAI,
                     takerToken: fixtureData.tokens.ETH,
                     makingAmount: ether('0.1'),
@@ -78,7 +75,7 @@ describe('LimitOrders', async function () {
         it('1inch', async function () {
             const {
                 maker, taker, tokens, inch,
-                settings: { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount },
+                settings: { gasUsedTableRow, makerToken, takerToken, makingAmount, takingAmount },
             } = await loadFixture(initContractsWithCaseSettings);
 
             // Create 1inch order, sign and fill it
@@ -98,13 +95,13 @@ describe('LimitOrders', async function () {
             );
             await expect(tx).to.changeTokenBalances(makerToken, [maker, taker], [-inchOrder.order.makingAmount, inchOrder.order.makingAmount]);
             await expect(tx).to.changeEtherBalances([maker, taker], [inchOrder.order.takingAmount, -inchOrder.order.takingAmount], { includeFee: false });
-            gasUsed[GAS_USED_KEY][ProtocolKey.INCH] = (await tx.wait()).gasUsed.toString();
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.INCH, (await tx.wait()).gasUsed);
         });
 
         it('uniswap', async function () {
             const {
                 maker, taker, uniswap,
-                settings: { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount },
+                settings: { gasUsedTableRow, makerToken, takerToken, makingAmount, takingAmount },
             } = await loadFixture(initContractsWithCaseSettings);
 
             // Create Uniswap order, sign and fill it
@@ -124,21 +121,17 @@ describe('LimitOrders', async function () {
             const tx = await uniswap.connect(taker).execute(signedOrder, { value: uniswapOrder.order.info.outputs[0].startAmount });
             await expect(tx).to.changeTokenBalances(makerToken, [maker, taker], [-uniswapOrder.order.info.input.startAmount, uniswapOrder.order.info.input.startAmount]);
             await expect(tx).to.changeEtherBalances([maker, taker], [uniswapOrder.order.info.outputs[0].startAmount, -uniswapOrder.order.info.outputs[0].startAmount], { includeFee: false });
-            gasUsed[GAS_USED_KEY][ProtocolKey.UNISWAP] = (await tx.wait()).gasUsed.toString();
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP, (await tx.wait()).gasUsed);
         });
     });
 
     describe('WETH => DAI', async function () {
         async function initContractsWithCaseSettings () {
             const fixtureData = await initContracts();
-
-            const GAS_USED_KEY = 'WETH => DAI';
-            gasUsed[GAS_USED_KEY] = gasUsed[GAS_USED_KEY] || {};
-
             return {
                 ...fixtureData,
                 settings: {
-                    GAS_USED_KEY,
+                    gasUsedTableRow: gasUsedTable.addRow(['WETH => DAI']),
                     makerToken: fixtureData.tokens.DAI,
                     takerToken: fixtureData.tokens.WETH,
                     makingAmount: ether('0.1'),
@@ -150,7 +143,7 @@ describe('LimitOrders', async function () {
         it('1inch', async function () {
             const {
                 maker, taker, inch,
-                settings: { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount },
+                settings: { gasUsedTableRow, makerToken, takerToken, makingAmount, takingAmount },
             } = await loadFixture(initContractsWithCaseSettings);
 
             // Create 1inch order, sign and fill it
@@ -166,13 +159,13 @@ describe('LimitOrders', async function () {
             const tx = await inch.connect(taker).fillOrder(inchOrder.order, r, vs, inchOrder.order.makingAmount, fillWithMakingAmount(inchOrder.order.makingAmount));
             await expect(tx).to.changeTokenBalances(makerToken, [maker, taker], [-inchOrder.order.makingAmount, inchOrder.order.makingAmount]);
             await expect(tx).to.changeTokenBalances(takerToken, [maker, taker], [inchOrder.order.takingAmount, -inchOrder.order.takingAmount]);
-            gasUsed[GAS_USED_KEY][ProtocolKey.INCH] = (await tx.wait()).gasUsed.toString();
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.INCH, (await tx.wait()).gasUsed);
         });
 
         it('matcha', async function () {
             const {
                 maker, taker, matcha,
-                settings: { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount },
+                settings: { gasUsedTableRow, makerToken, takerToken, makingAmount, takingAmount },
             } = await loadFixture(initContractsWithCaseSettings);
 
             // Create 0xProtocol order, sign and fill it
@@ -190,13 +183,13 @@ describe('LimitOrders', async function () {
             const tx = await matcha.connect(taker).fillLimitOrder(matchaOrder.order, signature, matchaOrder.order.takerAmount);
             await expect(tx).to.changeTokenBalances(makerToken, [maker, taker], [-matchaOrder.order.makerAmount, matchaOrder.order.makerAmount]);
             await expect(tx).to.changeTokenBalances(takerToken, [maker, taker], [matchaOrder.order.takerAmount, -matchaOrder.order.takerAmount]);
-            gasUsed[GAS_USED_KEY][ProtocolKey.MATCHA] = (await tx.wait()).gasUsed.toString();
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA, (await tx.wait()).gasUsed);
         });
 
         it('uniswap', async function () {
             const {
                 maker, taker, uniswap,
-                settings: { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount },
+                settings: { gasUsedTableRow, makerToken, takerToken, makingAmount, takingAmount },
             } = await loadFixture(initContractsWithCaseSettings);
 
             // Create Uniswap order, sign and fill it
@@ -216,13 +209,13 @@ describe('LimitOrders', async function () {
             const tx = await uniswap.connect(taker).execute(signedOrder);
             await expect(tx).to.changeTokenBalances(makerToken, [maker, taker], [-uniswapOrder.order.info.input.startAmount, uniswapOrder.order.info.input.startAmount]);
             await expect(tx).to.changeTokenBalances(takerToken, [maker, taker], [uniswapOrder.order.info.outputs[0].startAmount, -uniswapOrder.order.info.outputs[0].startAmount]);
-            gasUsed[GAS_USED_KEY][ProtocolKey.UNISWAP] = (await tx.wait()).gasUsed.toString();
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP, (await tx.wait()).gasUsed);
         });
 
         it('paraswap', async function () {
             const {
                 maker, taker,
-                settings: { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount },
+                settings: { gasUsedTableRow, makerToken, takerToken, makingAmount, takingAmount },
             } = await loadFixture(initContractsWithCaseSettings);
 
             // Create Paraswap order, sign and fill it
@@ -237,7 +230,7 @@ describe('LimitOrders', async function () {
             const tx = await taker.sendTransaction(await paraswapOrder.buildTxParams(await paraswapOrder.sign(maker), taker.address));
             await expect(tx).to.changeTokenBalances(makerToken, [maker, taker], [-BigInt(paraswapOrder.order.makerAmount), BigInt(paraswapOrder.order.makerAmount)]);
             await expect(tx).to.changeTokenBalances(takerToken, [maker, taker], [BigInt(paraswapOrder.order.takerAmount), -BigInt(paraswapOrder.order.takerAmount)]);
-            gasUsed[GAS_USED_KEY][ProtocolKey.PARASWAP] = (await tx.wait()).gasUsed.toString();
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.PARASWAP, (await tx.wait()).gasUsed);
         });
     });
 });
