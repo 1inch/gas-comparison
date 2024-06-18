@@ -1,11 +1,12 @@
+const { ethers } = require('hardhat');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 const { ether, constants } = require('@1inch/solidity-utils');
 const { ProtocolKey } = require('./helpers/utils');
 const { initRouterContracts } = require('./helpers/fixtures');
-const { ethers } = require('hardhat');
+const { createGasUsedTable } = require('./helpers/table');
 
 describe('Router [UniV3]', async function () {
-    const gasUsed = {};
+    const gasUsedTable = createGasUsedTable("UniswapV3 pools", "path");
 
     const pools = {
         WETH_DAI: { address: '0xc2e9f25be6257c210d7adf0d4cd6e3e881ba25f8', fee: 3000 },
@@ -15,49 +16,44 @@ describe('Router [UniV3]', async function () {
     }
 
     after(async function () {
-        console.table(gasUsed);
+        console.log(gasUsedTable.toString());
     });
 
     describe('ETH => DAI', async function () {
-        async function initContractsWithCaseSettings () {
-            const fixtureData = await initRouterContracts();
-
-            const GAS_USED_KEY = 'ETH => DAI';
-            gasUsed[GAS_USED_KEY] = gasUsed[GAS_USED_KEY] || {};
-
+        async function initRouterContractsWithCaseSettings () {
             return {
-                ...fixtureData,
+                ...(await initRouterContracts()),
                 settings: {
-                    GAS_USED_KEY,
+                    gasUsedTableRow: gasUsedTable.addRow(['ETH => DAI']),
                     amount: ether('1'),
                 },
             };
         }
 
         it('1inch', async function () {
-            const { addr1, inch, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const { addr1, inch, settings: { gasUsedTableRow, amount } } = await loadFixture(initRouterContractsWithCaseSettings);
             const tx = await inch.ethUnoswapTo(
                 addr1.address,
                 '1',
                 BigInt(pools.WETH_DAI.address) | (1n << 253n),
                 { value: amount },
             );
-            gasUsed[GAS_USED_KEY][ProtocolKey.INCH] = (await tx.wait()).gasUsed.toString();
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.INCH, (await tx.wait()).gasUsed);
         });
 
         it('matcha', async function () {
-            const { addr1, tokens, matcha, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const { addr1, tokens, matcha, settings: { gasUsedTableRow, amount } } = await loadFixture(initRouterContractsWithCaseSettings);
             const tx = await matcha.sellEthForTokenToUniswapV3(
                 ethers.concat([tokens.WETH.target, ethers.toBeHex(pools.WETH_DAI.fee, 3), tokens.DAI.target]),
                 '1',
                 addr1.address,
                 { value: amount },
             );
-            gasUsed[GAS_USED_KEY][ProtocolKey.MATCHA] = (await tx.wait()).gasUsed.toString();
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA, (await tx.wait()).gasUsed);
         });
 
         it('uniswap', async function () {
-            const { addr1, tokens, uniswapv3, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const { addr1, tokens, uniswapv3, settings: { gasUsedTableRow, amount } } = await loadFixture(initRouterContractsWithCaseSettings);
             const tx = await uniswapv3.exactInputSingle([
                     tokens.WETH,
                     tokens.DAI,
@@ -70,11 +66,11 @@ describe('Router [UniV3]', async function () {
                 ],
                 { value: amount },
             );
-            gasUsed[GAS_USED_KEY][ProtocolKey.UNISWAP] = (await tx.wait()).gasUsed.toString();
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP, (await tx.wait()).gasUsed);
         });
 
         it('paraswap', async function () {
-            const { addr1, tokens, uniswapv3, paraswap, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const { addr1, tokens, uniswapv3, paraswap, settings: { gasUsedTableRow, amount } } = await loadFixture(initRouterContractsWithCaseSettings);
             // Get `quotedAmount` to avoid positive slippage which makes the transaction significantly more expensive
             const quotedAmount = await uniswapv3.exactInputSingle.staticCall([
                     tokens.WETH,
@@ -107,28 +103,23 @@ describe('Router [UniV3]', async function () {
                 '0x',
                 { value: amount },
             );
-            gasUsed[GAS_USED_KEY][ProtocolKey.PARASWAP] = (await tx.wait()).gasUsed.toString();
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.PARASWAP, (await tx.wait()).gasUsed);
         });
     });
 
     describe('ETH => USDC => DAI', async function () {
-        async function initContractsWithCaseSettings () {
-            const fixtureData = await initRouterContracts();
-
-            const GAS_USED_KEY = 'ETH => USDC => DAI';
-            gasUsed[GAS_USED_KEY] = gasUsed[GAS_USED_KEY] || {};
-
+        async function initRouterContractsWithCaseSettings () {
             return {
-                ...fixtureData,
+                ...(await initRouterContracts()),
                 settings: {
-                    GAS_USED_KEY,
+                    gasUsedTableRow: gasUsedTable.addRow(['ETH => USDC => DAI']),
                     amount: ether('1'),
                 },
             };
         }
 
         it('1inch', async function () {
-            const { addr1, inch, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const { addr1, inch, settings: { gasUsedTableRow, amount } } = await loadFixture(initRouterContractsWithCaseSettings);
             const tx = await inch.ethUnoswapTo2(
                 addr1.address,
                 '1',
@@ -136,11 +127,11 @@ describe('Router [UniV3]', async function () {
                 BigInt(pools.USDC_DAI.address) | (1n << 253n),
                 { value: amount },
             );
-            gasUsed[GAS_USED_KEY][ProtocolKey.INCH] = (await tx.wait()).gasUsed.toString();
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.INCH, (await tx.wait()).gasUsed);
         });
 
         it('matcha', async function () {
-            const { addr1, tokens, matcha, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const { addr1, tokens, matcha, settings: { gasUsedTableRow, amount } } = await loadFixture(initRouterContractsWithCaseSettings);
             const tx = await matcha.sellEthForTokenToUniswapV3(
                 ethers.concat([
                     tokens.WETH.target, ethers.toBeHex(pools.WETH_USDC.fee, 3),
@@ -151,11 +142,11 @@ describe('Router [UniV3]', async function () {
                 addr1.address,
                 { value: amount },
             );
-            gasUsed[GAS_USED_KEY][ProtocolKey.MATCHA] = (await tx.wait()).gasUsed.toString();
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA, (await tx.wait()).gasUsed);
         });
 
         it('uniswap', async function () {
-            const { addr1, tokens, uniswapv3, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const { addr1, tokens, uniswapv3, settings: { gasUsedTableRow, amount } } = await loadFixture(initRouterContractsWithCaseSettings);
             const tx = await uniswapv3.exactInput([
                     ethers.concat([
                         tokens.WETH.target, ethers.toBeHex(pools.WETH_USDC.fee, 3),
@@ -169,11 +160,11 @@ describe('Router [UniV3]', async function () {
                 ],
                 { value: amount },
             );
-            gasUsed[GAS_USED_KEY][ProtocolKey.UNISWAP] = (await tx.wait()).gasUsed.toString();
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP, (await tx.wait()).gasUsed);
         });
 
         it('paraswap', async function () {
-            const { addr1, tokens, uniswapv3, paraswap, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const { addr1, tokens, uniswapv3, paraswap, settings: { gasUsedTableRow, amount } } = await loadFixture(initRouterContractsWithCaseSettings);
             // Get `quotedAmount` to avoid positive slippage which makes the transaction significantly more expensive
             const quotedAmount = await uniswapv3.exactInput.staticCall([
                     ethers.concat([
@@ -211,28 +202,23 @@ describe('Router [UniV3]', async function () {
                 '0x',
                 { value: amount },
             );
-            gasUsed[GAS_USED_KEY][ProtocolKey.PARASWAP] = (await tx.wait()).gasUsed.toString();
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.PARASWAP, (await tx.wait()).gasUsed);
         });
     });
 
     describe('DAI => ETH', async function () {
-        async function initContractsWithCaseSettings () {
-            const fixtureData = await initRouterContracts();
-
-            const GAS_USED_KEY = 'DAI => ETH';
-            gasUsed[GAS_USED_KEY] = gasUsed[GAS_USED_KEY] || {};
-
+        async function initRouterContractsWithCaseSettings () {
             return {
-                ...fixtureData,
+                ...(await initRouterContracts()),
                 settings: {
-                    GAS_USED_KEY,
+                    gasUsedTableRow: gasUsedTable.addRow(['DAI => ETH']),
                     amount: ether('1'),
                 },
             };
         }
 
         it('1inch', async function () {
-            const { addr1, tokens, inch, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const { addr1, tokens, inch, settings: { gasUsedTableRow, amount } } = await loadFixture(initRouterContractsWithCaseSettings);
             const tx = await inch.unoswapTo(
                 addr1.address,
                 await tokens.DAI.getAddress(),
@@ -240,22 +226,22 @@ describe('Router [UniV3]', async function () {
                 '1',
                 BigInt(pools.WETH_DAI.address) | (1n << 253n) | (1n << 252n) | (1n << 247n),
             );
-            gasUsed[GAS_USED_KEY][ProtocolKey.INCH] = (await tx.wait()).gasUsed.toString();
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.INCH, (await tx.wait()).gasUsed);
         });
 
         it('matcha', async function () {
-            const { addr1, tokens, matcha, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const { addr1, tokens, matcha, settings: { gasUsedTableRow, amount } } = await loadFixture(initRouterContractsWithCaseSettings);
             const tx = await matcha.sellTokenForEthToUniswapV3(
                 ethers.concat([tokens.DAI.target, ethers.toBeHex(pools.WETH_DAI.fee, 3), tokens.WETH.target]),
                 amount,
                 '1',
                 addr1.address,
             );
-            gasUsed[GAS_USED_KEY][ProtocolKey.MATCHA] = (await tx.wait()).gasUsed.toString();
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA, (await tx.wait()).gasUsed);
         });
 
         it('uniswap', async function () {
-            const { addr1, tokens, uniswapv3, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const { addr1, tokens, uniswapv3, settings: { gasUsedTableRow, amount } } = await loadFixture(initRouterContractsWithCaseSettings);
             const swapData = uniswapv3.interface.encodeFunctionData('exactInputSingle', [[
                 await tokens.DAI.getAddress(),
                 await tokens.WETH.getAddress(),
@@ -268,11 +254,11 @@ describe('Router [UniV3]', async function () {
             ]]);
             const unwrapData = uniswapv3.interface.encodeFunctionData('unwrapWETH9', ['1', addr1.address]);
             const tx = await uniswapv3.multicall([swapData, unwrapData]);
-            gasUsed[GAS_USED_KEY][ProtocolKey.UNISWAP] = (await tx.wait()).gasUsed.toString();
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP, (await tx.wait()).gasUsed);
         });
 
         it('paraswap', async function () {
-            const { addr1, tokens, uniswapv3, paraswap, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const { addr1, tokens, uniswapv3, paraswap, settings: { gasUsedTableRow, amount } } = await loadFixture(initRouterContractsWithCaseSettings);
             // Get `quotedAmount` to avoid positive slippage which makes the transaction significantly more expensive
             const quotedAmount = await uniswapv3.exactInputSingle.staticCall([
                 tokens.DAI,
@@ -302,28 +288,23 @@ describe('Router [UniV3]', async function () {
                 0n,
                 '0x',
             );
-            gasUsed[GAS_USED_KEY][ProtocolKey.PARASWAP] = (await tx.wait()).gasUsed.toString();
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.PARASWAP, (await tx.wait()).gasUsed);
         });
     });
 
     describe('DAI => WETH', async function () {
-        async function initContractsWithCaseSettings () {
-            const fixtureData = await initRouterContracts();
-
-            const GAS_USED_KEY = 'DAI => WETH';
-            gasUsed[GAS_USED_KEY] = gasUsed[GAS_USED_KEY] || {};
-
+        async function initRouterContractsWithCaseSettings () {
             return {
-                ...fixtureData,
+                ...(await initRouterContracts()),
                 settings: {
-                    GAS_USED_KEY,
+                    gasUsedTableRow: gasUsedTable.addRow(['DAI => WETH']),
                     amount: ether('1'),
                 },
             };
         }
 
         it('1inch', async function () {
-            const { addr1, tokens, inch, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const { addr1, tokens, inch, settings: { gasUsedTableRow, amount } } = await loadFixture(initRouterContractsWithCaseSettings);
             const tx = await inch.unoswapTo(
                 addr1.address,
                 await tokens.DAI.getAddress(),
@@ -331,22 +312,22 @@ describe('Router [UniV3]', async function () {
                 '1',
                 BigInt(pools.WETH_DAI.address) | (1n << 253n) | (1n << 247n),
             );
-            gasUsed[GAS_USED_KEY][ProtocolKey.INCH] = (await tx.wait()).gasUsed.toString();
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.INCH, (await tx.wait()).gasUsed);
         });
 
         it('matcha', async function () {
-            const { addr1, tokens, matcha, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const { addr1, tokens, matcha, settings: { gasUsedTableRow, amount } } = await loadFixture(initRouterContractsWithCaseSettings);
             const tx = await matcha.sellTokenForTokenToUniswapV3(
                 ethers.concat([tokens.DAI.target, ethers.toBeHex(pools.WETH_DAI.fee, 3), tokens.WETH.target]),
                 amount,
                 '1',
                 addr1.address,
             );
-            gasUsed[GAS_USED_KEY][ProtocolKey.MATCHA] = (await tx.wait()).gasUsed.toString();
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA, (await tx.wait()).gasUsed);
         });
 
         it('uniswap', async function () {
-            const { addr1, tokens, uniswapv3, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const { addr1, tokens, uniswapv3, settings: { gasUsedTableRow, amount } } = await loadFixture(initRouterContractsWithCaseSettings);
             const tx = await uniswapv3.exactInputSingle([
                 tokens.DAI,
                 tokens.WETH,
@@ -357,11 +338,11 @@ describe('Router [UniV3]', async function () {
                 '1',
                 '0',
             ]);
-            gasUsed[GAS_USED_KEY][ProtocolKey.UNISWAP] = (await tx.wait()).gasUsed.toString();
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP, (await tx.wait()).gasUsed);
         });
 
         it('paraswap', async function () {
-            const { addr1, tokens, uniswapv3, paraswap, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const { addr1, tokens, uniswapv3, paraswap, settings: { gasUsedTableRow, amount } } = await loadFixture(initRouterContractsWithCaseSettings);
             // Get `quotedAmount` to avoid positive slippage which makes the transaction significantly more expensive
             const quotedAmount = await uniswapv3.exactInputSingle.staticCall([
                 tokens.DAI,
@@ -391,28 +372,23 @@ describe('Router [UniV3]', async function () {
                 0n,
                 '0x',
             );
-            gasUsed[GAS_USED_KEY][ProtocolKey.PARASWAP] = (await tx.wait()).gasUsed.toString();
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.PARASWAP, (await tx.wait()).gasUsed);
         });
     });
 
     describe('DAI => WETH => USDC', async function () {
-        async function initContractsWithCaseSettings () {
-            const fixtureData = await initRouterContracts();
-
-            const GAS_USED_KEY = 'DAI => WETH => USDC';
-            gasUsed[GAS_USED_KEY] = gasUsed[GAS_USED_KEY] || {};
-
+        async function initRouterContractsWithCaseSettings () {
             return {
-                ...fixtureData,
+                ...(await initRouterContracts()),
                 settings: {
-                    GAS_USED_KEY,
+                    gasUsedTableRow: gasUsedTable.addRow(['DAI => WETH => USDC']),
                     amount: ether('1'),
                 },
             };
         }
 
         it('1inch', async function () {
-            const { addr1, tokens, inch, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const { addr1, tokens, inch, settings: { gasUsedTableRow, amount } } = await loadFixture(initRouterContractsWithCaseSettings);
             const tx = await inch.unoswapTo2(
                 addr1.address,
                 await tokens.DAI.getAddress(),
@@ -421,11 +397,11 @@ describe('Router [UniV3]', async function () {
                 BigInt(pools.WETH_DAI.address) | (1n << 253n) | (1n << 247n),
                 BigInt(pools.WETH_USDC.address) | (1n << 253n),
             );
-            gasUsed[GAS_USED_KEY][ProtocolKey.INCH] = (await tx.wait()).gasUsed.toString();
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.INCH, (await tx.wait()).gasUsed);
         });
 
         it('matcha', async function () {
-            const { addr1, tokens, matcha, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const { addr1, tokens, matcha, settings: { gasUsedTableRow, amount } } = await loadFixture(initRouterContractsWithCaseSettings);
             const tx = await matcha.sellTokenForTokenToUniswapV3(
                 ethers.concat([
                     tokens.DAI.target, ethers.toBeHex(pools.WETH_DAI.fee, 3),
@@ -436,11 +412,11 @@ describe('Router [UniV3]', async function () {
                 '1',
                 addr1.address,
             );
-            gasUsed[GAS_USED_KEY][ProtocolKey.MATCHA] = (await tx.wait()).gasUsed.toString();
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA, (await tx.wait()).gasUsed);
         });
 
         it('uniswap', async function () {
-            const { addr1, tokens, uniswapv3, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const { addr1, tokens, uniswapv3, settings: { gasUsedTableRow, amount } } = await loadFixture(initRouterContractsWithCaseSettings);
             const tx = await uniswapv3.exactInput({
                 path: ethers.concat([
                     tokens.DAI.target, ethers.toBeHex(pools.WETH_DAI.fee, 3),
@@ -452,11 +428,11 @@ describe('Router [UniV3]', async function () {
                 amountIn: amount,
                 amountOutMinimum: '1',
             });
-            gasUsed[GAS_USED_KEY][ProtocolKey.UNISWAP] = (await tx.wait()).gasUsed.toString();
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP, (await tx.wait()).gasUsed);
         });
 
         it('paraswap', async function () {
-            const { addr1, tokens, uniswapv3, paraswap, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const { addr1, tokens, uniswapv3, paraswap, settings: { gasUsedTableRow, amount } } = await loadFixture(initRouterContractsWithCaseSettings);
             // Get `quotedAmount` to avoid positive slippage which makes the transaction significantly more expensive
             const quotedAmount = await uniswapv3.exactInput.staticCall({
                 path: ethers.concat([
@@ -491,28 +467,23 @@ describe('Router [UniV3]', async function () {
                 0n,
                 '0x',
             );
-            gasUsed[GAS_USED_KEY][ProtocolKey.PARASWAP] = (await tx.wait()).gasUsed.toString();
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.PARASWAP, (await tx.wait()).gasUsed);
         });
     });
 
     describe('DAI => WETH => USDC => USDT', async function () {
-        async function initContractsWithCaseSettings () {
-            const fixtureData = await initRouterContracts();
-
-            const GAS_USED_KEY = 'DAI => WETH => USDC => USDT';
-            gasUsed[GAS_USED_KEY] = gasUsed[GAS_USED_KEY] || {};
-
+        async function initRouterContractsWithCaseSettings () {
             return {
-                ...fixtureData,
+                ...(await initRouterContracts()),
                 settings: {
-                    GAS_USED_KEY,
+                    gasUsedTableRow: gasUsedTable.addRow(['DAI => WETH => USDC => USDT']),
                     amount: ether('1'),
                 },
             };
         }
 
         it('1inch', async function () {
-            const { addr1, tokens, inch, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const { addr1, tokens, inch, settings: { gasUsedTableRow, amount } } = await loadFixture(initRouterContractsWithCaseSettings);
             const tx = await inch.unoswapTo3(
                 addr1.address,
                 await tokens.DAI.getAddress(),
@@ -522,11 +493,11 @@ describe('Router [UniV3]', async function () {
                 BigInt(pools.WETH_USDC.address) | (1n << 253n),
                 BigInt(pools.USDT_USDC.address) | (1n << 253n) | (1n << 247n),
             );
-            gasUsed[GAS_USED_KEY][ProtocolKey.INCH] = (await tx.wait()).gasUsed.toString();
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.INCH, (await tx.wait()).gasUsed);
         });
 
         it('matcha', async function () {
-            const { addr1, tokens, matcha, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const { addr1, tokens, matcha, settings: { gasUsedTableRow, amount } } = await loadFixture(initRouterContractsWithCaseSettings);
             const tx = await matcha.sellTokenForTokenToUniswapV3(
                 ethers.concat([
                     tokens.DAI.target, ethers.toBeHex(pools.WETH_DAI.fee, 3),
@@ -538,11 +509,11 @@ describe('Router [UniV3]', async function () {
                 '1',
                 addr1.address,
             );
-            gasUsed[GAS_USED_KEY][ProtocolKey.MATCHA] = (await tx.wait()).gasUsed.toString();
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA, (await tx.wait()).gasUsed);
         });
 
         it('uniswap', async function () {
-            const { addr1, tokens, uniswapv3, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const { addr1, tokens, uniswapv3, settings: { gasUsedTableRow, amount } } = await loadFixture(initRouterContractsWithCaseSettings);
             const tx = await uniswapv3.exactInput({
                 path: ethers.concat([
                     tokens.DAI.target, ethers.toBeHex(pools.WETH_DAI.fee, 3),
@@ -555,11 +526,11 @@ describe('Router [UniV3]', async function () {
                 amountIn: amount,
                 amountOutMinimum: '1',
             });
-            gasUsed[GAS_USED_KEY][ProtocolKey.UNISWAP] = (await tx.wait()).gasUsed.toString();
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP, (await tx.wait()).gasUsed);
         });
 
         it('paraswap', async function () {
-            const { addr1, tokens, uniswapv3, paraswap, settings: { GAS_USED_KEY, amount } } = await loadFixture(initContractsWithCaseSettings);
+            const { addr1, tokens, uniswapv3, paraswap, settings: { gasUsedTableRow, amount } } = await loadFixture(initRouterContractsWithCaseSettings);
             // Get `quotedAmount` to avoid positive slippage which makes the transaction significantly more expensive
             const quotedAmount = await uniswapv3.exactInput.staticCall({
                 path: ethers.concat([
@@ -599,7 +570,7 @@ describe('Router [UniV3]', async function () {
                 0n,
                 '0x',
             );
-            gasUsed[GAS_USED_KEY][ProtocolKey.PARASWAP] = (await tx.wait()).gasUsed.toString();
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.PARASWAP, (await tx.wait()).gasUsed);
         });
     });
 });

@@ -7,16 +7,17 @@ const { buildAuctionDetails, buildExtensionsBitmapData } = require('@1inch/limit
 const { buildMakerTraits, buildTakerTraits } = require('@1inch/limit-order-protocol-contract/test/helpers/orderUtils');
 const { InchOrder, UniswapOrder, CowswapOrder } = require('./helpers/orders');
 const { percentageOf, ProtocolKey } = require('./helpers/utils');
+const { createGasUsedTable } = require('./helpers/table');
 
 const COWSWAP_VAULT_RELAYER_MAINNET_ADDRESS = '0xC92E8bdf79f0507f65a392b0ab4667716BFE0110';
 const PERMIT2CONTRACT = '0x000000000022D473030F116dDEE9F6B43aC78BA3';
 const abiCoder = ethers.AbiCoder.defaultAbiCoder();
 
 describe('Fusion', async function () {
-    const gasUsed = {};
+    const gasUsedTable = createGasUsedTable("Fusion", "case");
 
     after(async function () {
-        console.table(gasUsed);
+        console.log(gasUsedTable.toString());
     });
 
     async function initContracts () {
@@ -90,14 +91,10 @@ describe('Fusion', async function () {
     describe('WETH => DAI by EOA', async function () {
         async function initContractsWithCaseSettings () {
             const fixtureData = await initContracts();
-
-            const GAS_USED_KEY = 'WETH => DAI w/o callback by EOA';
-            gasUsed[GAS_USED_KEY] = gasUsed[GAS_USED_KEY] || {};
-
             return {
                 ...fixtureData,
                 settings: {
-                    GAS_USED_KEY,
+                    gasUsedTableRow: gasUsedTable.addRow(['WETH => DAI w/o callback by EOA']),
                     makerToken: fixtureData.tokens.DAI,
                     takerToken: fixtureData.tokens.WETH,
                     makingAmount: ether('0.1'),
@@ -109,7 +106,7 @@ describe('Fusion', async function () {
         it('1inch', async function () {
             const {
                 maker, taker, inch, settlement, maxPriorityFeePerGas,
-                settings: { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount },
+                settings: { gasUsedTableRow, makerToken, takerToken, makingAmount, takingAmount },
             } = await loadFixture(initContractsWithCaseSettings);
 
             // Create 1inch settlement order, sign and fill it
@@ -147,13 +144,13 @@ describe('Fusion', async function () {
                     maxPriorityFeePerGas,
                 },
             );
-            gasUsed[GAS_USED_KEY][ProtocolKey.INCH] = (await tx.wait()).gasUsed.toString();
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.INCH, (await tx.wait()).gasUsed);
         });
 
         it('uniswap', async function () {
             const {
                 maker, taker, uniswap,
-                settings: { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount },
+                settings: { gasUsedTableRow, makerToken, takerToken, makingAmount, takingAmount },
             } = await loadFixture(initContractsWithCaseSettings);
 
             // Create Uniswap settlement order, sign and fill it
@@ -172,13 +169,13 @@ describe('Fusion', async function () {
             });
             const signedOrder = await uniswapOrder.sign(maker);
             const tx = await uniswap.connect(taker).execute(signedOrder);
-            gasUsed[GAS_USED_KEY][ProtocolKey.UNISWAP] = (await tx.wait()).gasUsed.toString();
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP, (await tx.wait()).gasUsed);
         });
 
         it('cowswap', async function () {
             const {
                 maker, taker, cowswap,
-                settings: { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount },
+                settings: { gasUsedTableRow, makerToken, takerToken, makingAmount, takingAmount },
             } = await loadFixture(initContractsWithCaseSettings);
 
             // Create Cowswap settlement order, sign and fill it
@@ -210,21 +207,17 @@ describe('Fusion', async function () {
                     [],
                 ],
             );
-            gasUsed[GAS_USED_KEY][ProtocolKey.COWSWAP] = (await tx.wait()).gasUsed.toString();
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.COWSWAP, (await tx.wait()).gasUsed);
         });
     });
 
     describe('WETH => DAI without callback by resolver contract', async function () {
         async function initContractsWithCaseSettings () {
             const fixtureData = await initContracts();
-
-            const GAS_USED_KEY = 'WETH => DAI w/o callback by contract';
-            gasUsed[GAS_USED_KEY] = gasUsed[GAS_USED_KEY] || {};
-
             return {
                 ...fixtureData,
                 settings: {
-                    GAS_USED_KEY,
+                    gasUsedTableRow: gasUsedTable.addRow(['WETH => DAI w/o callback by contract']),
                     makerToken: fixtureData.tokens.DAI,
                     takerToken: fixtureData.tokens.WETH,
                     makingAmount: ether('0.1'),
@@ -236,7 +229,7 @@ describe('Fusion', async function () {
         it('1inch', async function () {
             const {
                 maker, taker, inch, settlement, resolver, maxPriorityFeePerGas,
-                settings: { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount },
+                settings: { gasUsedTableRow, makerToken, takerToken, makingAmount, takingAmount },
             } = await loadFixture(initContractsWithCaseSettings);
 
             // Create 1inch settlement order, sign and fill it
@@ -275,13 +268,13 @@ describe('Fusion', async function () {
                     maxPriorityFeePerGas,
                 },
             );
-            gasUsed[GAS_USED_KEY][ProtocolKey.INCH] = (await tx.wait()).gasUsed.toString();
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.INCH, (await tx.wait()).gasUsed);
         });
 
         it('uniswap', async function () {
             const {
                 maker, taker, resolver, uniswap,
-                settings: { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount },
+                settings: { gasUsedTableRow, makerToken, takerToken, makingAmount, takingAmount },
             } = await loadFixture(initContractsWithCaseSettings);
 
             // Create Uniswap settlement order, sign and fill it
@@ -303,13 +296,13 @@ describe('Fusion', async function () {
                 0,
                 uniswap.interface.encodeFunctionData('execute', [signedOrder]),
             );
-            gasUsed[GAS_USED_KEY][ProtocolKey.UNISWAP] = (await tx.wait()).gasUsed.toString();
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP, (await tx.wait()).gasUsed);
         });
 
         it('cowswap', async function () {
             const {
                 maker, taker, resolver, cowswap,
-                settings: { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount },
+                settings: { gasUsedTableRow, makerToken, takerToken, makingAmount, takingAmount },
             } = await loadFixture(initContractsWithCaseSettings);
 
             // Create Cowswap settlement order, sign and fill it
@@ -344,21 +337,17 @@ describe('Fusion', async function () {
                     ],
                 ]),
             );
-            gasUsed[GAS_USED_KEY][ProtocolKey.COWSWAP] = (await tx.wait()).gasUsed.toString();
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.COWSWAP, (await tx.wait()).gasUsed);
         });
     });
 
     describe('WETH => DAI with callback when resolver has funds', async function () {
         async function initContractsWithCaseSettings () {
             const fixtureData = await initContracts();
-
-            const GAS_USED_KEY = 'WETH => DAI with callback, resolver funds';
-            gasUsed[GAS_USED_KEY] = gasUsed[GAS_USED_KEY] || {};
-
             return {
                 ...fixtureData,
                 settings: {
-                    GAS_USED_KEY,
+                    gasUsedTableRow: gasUsedTable.addRow(['WETH => DAI with callback, resolver funds']),
                     makerToken: fixtureData.tokens.DAI,
                     takerToken: fixtureData.tokens.WETH,
                     makingAmount: ether('0.1'),
@@ -370,7 +359,7 @@ describe('Fusion', async function () {
         it('1inch', async function () {
             const {
                 maker, taker, inch, settlement, resolver, maxPriorityFeePerGas,
-                settings: { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount },
+                settings: { gasUsedTableRow, makerToken, takerToken, makingAmount, takingAmount },
             } = await loadFixture(initContractsWithCaseSettings);
 
             // Create 1inch settlement order, sign and fill it
@@ -417,13 +406,13 @@ describe('Fusion', async function () {
                     maxPriorityFeePerGas,
                 },
             );
-            gasUsed[GAS_USED_KEY][ProtocolKey.INCH] = (await tx.wait()).gasUsed.toString();
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.INCH, (await tx.wait()).gasUsed);
         });
 
         it('uniswap', async function () {
             const {
                 maker, taker, resolver, uniswap,
-                settings: { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount },
+                settings: { gasUsedTableRow, makerToken, takerToken, makingAmount, takingAmount },
             } = await loadFixture(initContractsWithCaseSettings);
 
             // Create Uniswap settlement order, sign and fill it
@@ -449,13 +438,13 @@ describe('Fusion', async function () {
                     '0x' + abiCoder.encode(['bytes[]'], [[resolverCalldata]]).slice(66), // skip 0x and 32 bytes of location
                 ]),
             );
-            gasUsed[GAS_USED_KEY][ProtocolKey.UNISWAP] = (await tx.wait()).gasUsed.toString();
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP, (await tx.wait()).gasUsed);
         });
 
         it('cowswap', async function () {
             const {
                 maker, taker, resolver, cowswap,
-                settings: { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount },
+                settings: { gasUsedTableRow, makerToken, takerToken, makingAmount, takingAmount },
             } = await loadFixture(initContractsWithCaseSettings);
 
             // Create Cowswap settlement order, sign and fill it
@@ -500,21 +489,17 @@ describe('Fusion', async function () {
                     ],
                 ]),
             );
-            gasUsed[GAS_USED_KEY][ProtocolKey.COWSWAP] = (await tx.wait()).gasUsed.toString();
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.COWSWAP, (await tx.wait()).gasUsed);
         });
     });
 
     describe('WETH => DAI with callback when resolver use taker funds', async function () {
         async function initContractsWithCaseSettings () {
             const fixtureData = await initContracts();
-
-            const GAS_USED_KEY = 'WETH => DAI with callback, taker funds';
-            gasUsed[GAS_USED_KEY] = gasUsed[GAS_USED_KEY] || {};
-
             return {
                 ...fixtureData,
                 settings: {
-                    GAS_USED_KEY,
+                    gasUsedTableRow: gasUsedTable.addRow(['WETH => DAI with callback, taker funds']),
                     makerToken: fixtureData.tokens.DAI,
                     takerToken: fixtureData.tokens.WETH,
                     makingAmount: ether('0.1'),
@@ -526,7 +511,7 @@ describe('Fusion', async function () {
         it('1inch', async function () {
             const {
                 maker, taker, inch, settlement, resolver, maxPriorityFeePerGas,
-                settings: { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount },
+                settings: { gasUsedTableRow, makerToken, takerToken, makingAmount, takingAmount },
             } = await loadFixture(initContractsWithCaseSettings);
 
             // Create 1inch settlement order, sign and fill it
@@ -579,13 +564,13 @@ describe('Fusion', async function () {
                     maxPriorityFeePerGas,
                 },
             );
-            gasUsed[GAS_USED_KEY][ProtocolKey.INCH] = (await tx.wait()).gasUsed.toString();
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.INCH, (await tx.wait()).gasUsed);
         });
 
         it('uniswap', async function () {
             const {
                 maker, taker, resolver, uniswap,
-                settings: { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount },
+                settings: { gasUsedTableRow, makerToken, takerToken, makingAmount, takingAmount },
             } = await loadFixture(initContractsWithCaseSettings);
 
             // Create Uniswap settlement order, sign and fill it
@@ -618,13 +603,13 @@ describe('Fusion', async function () {
                     '0x' + abiCoder.encode(['bytes[]'], [[resolverCalldata]]).slice(66), // skip 0x and 32 bytes of location
                 ]),
             );
-            gasUsed[GAS_USED_KEY][ProtocolKey.UNISWAP] = (await tx.wait()).gasUsed.toString();
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP, (await tx.wait()).gasUsed);
         });
 
         it('cowswap', async function () {
             const {
                 maker, taker, resolver, cowswap,
-                settings: { GAS_USED_KEY, makerToken, takerToken, makingAmount, takingAmount },
+                settings: { gasUsedTableRow, makerToken, takerToken, makingAmount, takingAmount },
             } = await loadFixture(initContractsWithCaseSettings);
 
             // Create Cowswap settlement order, sign and fill it
@@ -675,7 +660,7 @@ describe('Fusion', async function () {
                     ],
                 ]),
             );
-            gasUsed[GAS_USED_KEY][ProtocolKey.COWSWAP] = (await tx.wait()).gasUsed.toString();
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.COWSWAP, (await tx.wait()).gasUsed);
         });
     });
 });
