@@ -4,21 +4,15 @@ const { ether, constants } = require('@1inch/solidity-utils');
 const { ProtocolKey, paraswapUniV2PoolData } = require('./helpers/utils');
 const { initRouterContracts, adjustV2PoolTimestamps } = require('./helpers/fixtures');
 const { createGasUsedTable } = require('./helpers/table');
+const { UniswapV2Pools } = require('./helpers/pools');
 
 describe('Router [UniV2]', async function () {
     const gasUsedTable = createGasUsedTable("UniswapV2 pools", "path");
 
-    const pools = {
-        WETH_DAI: '0xa478c2975ab1ea89e8196811f51a7b7ade33eb11',
-        WETH_USDC: '0xb4e16d0168e52d35cacd2c6185b44281ec28c9dc',
-        USDC_DAI: '0xae461ca67b15dc8dc81ce7615e0320da1a9ab8d5',
-        USDC_USDT: '0x3041cbd36888becc7bbcbc0045e3b1f144466f5f',
-    };
-
     async function initContracts () {
         const fixtureData = await initRouterContracts();
 
-        await adjustV2PoolTimestamps(ethers, pools);
+        await adjustV2PoolTimestamps(ethers, UniswapV2Pools);
 
         return fixtureData;
     }
@@ -43,7 +37,7 @@ describe('Router [UniV2]', async function () {
             const tx = await inch.ethUnoswapTo(
                 addr1.address,
                 '1',
-                pools.WETH_DAI,
+                UniswapV2Pools.WETH_DAI,
                 { value: amount },
             );
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.INCH, (await tx.wait()).gasUsed);
@@ -117,8 +111,8 @@ describe('Router [UniV2]', async function () {
             const tx = await inch.ethUnoswapTo2(
                 addr1.address,
                 '1',
-                pools.WETH_USDC,
-                pools.USDC_DAI,
+                UniswapV2Pools.WETH_USDC,
+                UniswapV2Pools.USDC_DAI,
                 { value: amount },
             );
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.INCH, (await tx.wait()).gasUsed);
@@ -197,7 +191,7 @@ describe('Router [UniV2]', async function () {
                 await tokens.DAI.getAddress(),
                 amount,
                 '1',
-                BigInt(pools.WETH_DAI) | (1n << 252n) | (1n << 247n),
+                BigInt(UniswapV2Pools.WETH_DAI) | (1n << 252n) | (1n << 247n),
             );
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.INCH, (await tx.wait()).gasUsed);
         });
@@ -270,7 +264,7 @@ describe('Router [UniV2]', async function () {
                 await tokens.DAI.getAddress(),
                 amount,
                 '1',
-                BigInt(pools.WETH_DAI) | (1n << 247n),
+                BigInt(UniswapV2Pools.WETH_DAI) | (1n << 247n),
             );
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.INCH, (await tx.wait()).gasUsed);
         });
@@ -343,8 +337,8 @@ describe('Router [UniV2]', async function () {
                 await tokens.DAI.getAddress(),
                 amount,
                 '1',
-                BigInt(pools.WETH_DAI) | (1n << 247n),
-                pools.WETH_USDC,
+                BigInt(UniswapV2Pools.WETH_DAI) | (1n << 247n),
+                UniswapV2Pools.WETH_USDC,
             );
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.INCH, (await tx.wait()).gasUsed);
         });
@@ -420,9 +414,9 @@ describe('Router [UniV2]', async function () {
                 await tokens.DAI.getAddress(),
                 amount,
                 '1',
-                BigInt(pools.WETH_DAI) | (1n << 247n),
-                pools.WETH_USDC,
-                BigInt(pools.USDC_USDT) | (1n << 247n),
+                BigInt(UniswapV2Pools.WETH_DAI) | (1n << 247n),
+                UniswapV2Pools.WETH_USDC,
+                BigInt(UniswapV2Pools.USDC_USDT) | (1n << 247n),
             );
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.INCH, (await tx.wait()).gasUsed);
         });
