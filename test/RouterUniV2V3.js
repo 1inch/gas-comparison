@@ -67,7 +67,7 @@ describe('Router [UniV2 => UniV3]', async function () {
             return {
                 ...(await initContracts()),
                 settings: {
-                    gasUsedTableRow: gasUsedTable.addRow(['ETH => DAI => USDC']),
+                    gasUsedTableRow: gasUsedTable.addRow(['ETH =[uniV2]=> DAI =[uniV3]=> USDC']),
                     amount: ether('1'),
                 },
             };
