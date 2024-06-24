@@ -29,14 +29,6 @@ describe('Router [UniV2 => UniV3]', async function () {
         USDT_USDC: { address: '0x7858e59e0c01ea06df3af3d20ac7b0003275d4bf', fee: 500 },
     }
 
-    const tokens = {
-        WETH: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
-        DAI: '0x6B175474E89094C44Da98b954EedeAC495271d0F',
-        USDC: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-        EEE: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
-        ETH: constants.ZERO_ADDRESS,
-    }
-
     after(async function () {
         console.log(gasUsedTable.toString());
     });
@@ -88,7 +80,7 @@ describe('Router [UniV2 => UniV3]', async function () {
         });
 
         it('uniswap', async function () {
-            const { addr1, uniswapUniversalRouter, settings: {gasUsedTableRow, amount} } = await loadFixture(initContractsWithCaseSettings);
+            const { addr1, uniswapUniversalRouter, tokens, settings: {gasUsedTableRow, amount} } = await loadFixture(initContractsWithCaseSettings);
             
             const coder = new ethers.AbiCoder();
             // we need slot0 from the uniswap v3 pool and reserves from the uniswap v2 pool
@@ -113,17 +105,17 @@ describe('Router [UniV2 => UniV3]', async function () {
                     [
                         new Pair(
                             CurrencyAmount.fromRawAmount(
-                                new Token(1, tokens.DAI, 18), 
+                                new Token(1, tokens.DAI.target, 18), 
                                 reserves[0].toString(10)
                             ),
                             CurrencyAmount.fromRawAmount(
-                                new Token(1, tokens.WETH, 18), 
+                                new Token(1, tokens.WETH.target, 18), 
                                 reserves[1].toString(10)
                             )
                         ),
                         new Pool(
-                            new Token(1, tokens.USDC, 6),
-                            new Token(1, tokens.DAI, 18),
+                            new Token(1, tokens.USDC.target, 6),
+                            new Token(1, tokens.DAI.target, 18),
                             poolsV3.USDC_DAI.fee, 
                             slot0[0].toString(10),
                             liquidity.toString(10),
@@ -131,14 +123,14 @@ describe('Router [UniV2 => UniV3]', async function () {
                         )
                     ],
                     new Ether(1),
-                    new Token(1, tokens.USDC, 6)
+                    new Token(1, tokens.USDC.target, 6)
                 )
 
             let trade = MixedRouteTrade.createUncheckedTrade(
                 {
                     route: mixedRoute,
                     inputAmount: CurrencyAmount.fromRawAmount(new Ether(1), amount.toString(10)),
-                    outputAmount: CurrencyAmount.fromRawAmount(new Token(1, tokens.USDC, 6), '0'),
+                    outputAmount: CurrencyAmount.fromRawAmount(new Token(1, tokens.USDC.target, 6), '0'),
                     tradeType: TradeType.EXACT_INPUT
                 }
             )
