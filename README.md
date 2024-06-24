@@ -116,7 +116,7 @@ This section presents detailed gas usage data for various swapping scenarios acr
 ├────────────────────┬─────────┬─────────┤
 │ path               │   1inch │ uniswap │
 ├────────────────────┼─────────┼─────────┤
-│ ETH => DAI => USDC │ 160,927 │ 177,236 │
+│ ETH =[uniV2]=> DAI =[uniV3]=> USDC │ 160,927 │ 177,236 │
 └────────────────────┴─────────┴─────────┘
 ```
 
