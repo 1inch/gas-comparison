@@ -62,7 +62,7 @@ describe('Router [UniV2 => UniV3]', async function () {
     }
 
 
-    describe('ETH => DAI => USDC', async function () {
+    describe('ETH =[uniV2]=> DAI =[uniV3]=> USDC', async function () {
         async function initContractsWithCaseSettings () {
             return {
                 ...(await initContracts()),
