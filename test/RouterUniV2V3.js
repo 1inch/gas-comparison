@@ -2,7 +2,7 @@ const { ethers } = require('hardhat');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 const { ether, constants } = require('@1inch/solidity-utils');
 const { ProtocolKey } = require('./helpers/utils');
-const { initRouterContracts } = require('./helpers/fixtures');
+const { initRouterContracts, adjustV2PoolTimestamps } = require('./helpers/fixtures');
 const { createGasUsedTable } = require('./helpers/table');
 const { MixedRouteTrade, MixedRouteSDK, Protocol, Trade, MixedRoute  } = require('@uniswap/router-sdk');
 const { SwapRouter, UniswapTrade } = require('@uniswap/universal-router-sdk');
@@ -36,19 +36,7 @@ describe('Router [UniV2 => UniV3]', async function () {
     async function initContracts () {
         const fixtureData = await initRouterContracts();
 
-        // Set `blockTimestampLast` in uniswapv2 pools and next block timestamp to avoid oracle slot updates
-        const latestBlockTimestamp = (await ethers.provider.getBlock('latest')).timestamp;
-        const nextBlockTimestamp = latestBlockTimestamp + 3600*1000;
-
-        for (const pool of Object.values(poolsV2)) {
-            const slotData = await ethers.provider.getStorage(pool, '0x8');
-            await ethers.provider.send("hardhat_setStorageAt", [
-                pool,
-                '0x8',
-                ethers.toBeHex(nextBlockTimestamp, 4) + slotData.slice(10),
-            ]);
-        }
-        await ethers.provider.send('evm_setNextBlockTimestamp', [nextBlockTimestamp]);
+        await adjustV2PoolTimestamps(ethers, poolsV2);
 
         return fixtureData
     }

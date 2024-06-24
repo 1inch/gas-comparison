@@ -45,6 +45,28 @@ async function initRouterContracts () {
     return { addr1, tokens, inch, matcha, paraswap, uniswapv2, uniswapv3, uniswapUniversalRouter };
 }
 
+/**
+ * Set `blockTimestampLast` in uniswapv2 pools and next block timestamp to avoid oracle slot updates
+ * @param {Object} ethers - An initialized ethers.js object with provider.
+ * @param {Object} poolsV2 - A key:value mapping where each key represents a logical identifier and the value is the corresponding pool address.
+ */
+async function adjustV2PoolTimestamps(ethers, poolsV2) {
+    const latestBlockTimestamp = (await ethers.provider.getBlock('latest')).timestamp;
+    const nextBlockTimestamp = latestBlockTimestamp + 3600 * 1000;
+
+    for (const pool of Object.values(poolsV2)) {
+        const slotData = await ethers.provider.getStorage(pool, '0x8');
+        await ethers.provider.send("hardhat_setStorageAt", [
+            pool,
+            '0x8',
+            ethers.toBeHex(nextBlockTimestamp, 4) + slotData.slice(10),
+        ]);
+    }
+    await ethers.provider.send('evm_setNextBlockTimestamp', [nextBlockTimestamp]);
+}
+
+
 module.exports = {
     initRouterContracts,
+    adjustV2PoolTimestamps,
 }
