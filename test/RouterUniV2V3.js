@@ -11,7 +11,6 @@ const { Pair } = require('@uniswap/v2-sdk');
 const { CurrencyAmount, Token, TradeType, Ether, Percent } = require('@uniswap/sdk-core');
 const { UniswapV2Pools, UniswapV3Pools} = require('./helpers/pools');
 
-Error.stackTraceLimit = 1000
 describe('Router [UniV2 => UniV3]', async function () {
     const gasUsedTable = createGasUsedTable("UniswapV2 => UniswapV3 pools", "path");
 
