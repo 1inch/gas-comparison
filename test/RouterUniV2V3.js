@@ -9,7 +9,7 @@ const { SwapRouter, UniswapTrade } = require('@uniswap/universal-router-sdk');
 const { Pool } = require('@uniswap/v3-sdk');
 const { Pair } = require('@uniswap/v2-sdk');
 const { CurrencyAmount, Token, TradeType, Ether, Percent } = require('@uniswap/sdk-core');
-const { UniswapV2Pools, UniswapV3Pools } = require('./helpers/pools');
+const { UniswapV2Pools, UniswapV3Pools, UNISWAP_V2_ABI, UNISWAP_V3_ABI } = require('./helpers/pools');
 
 describe('Router [UniV2 => UniV3]', async function () {
     const gasUsedTable = createGasUsedTable("UniswapV2 => UniswapV3 pools", "path");
@@ -58,16 +58,12 @@ describe('Router [UniV2 => UniV3]', async function () {
 
             const coder = new ethers.AbiCoder();
             // we need slot0 from the uniswap v3 pool and reserves from the uniswap v2 pool
-            const slot0 = await ethers.provider.call({
-                to: UniswapV3Pools.USDC_DAI.address,
-                data: '0x3850c7bd',
-            }).then(res => coder.decode(['uint160', 'int24', 'uint16', 'uint16', 'uint8'], res));
+            const UniswapV3Pool = new ethers.Contract(UniswapV3Pools.USDC_DAI.address, UNISWAP_V3_ABI, ethers.provider);
+            const slot0 = await UniswapV3Pool.slot0();
 
+            const UniswapV2Pool = new ethers.Contract(UniswapV2Pools.WETH_DAI, UNISWAP_V2_ABI, ethers.provider);
             const liquidity = await ethers.provider.getStorage(UniswapV3Pools.USDC_DAI.address, '0x04');
-            const reserves = await ethers.provider.call({
-                to: UniswapV2Pools.WETH_DAI,
-                data: '0x0902f1ac',
-            }).then(res => coder.decode(['uint112', 'uint112', 'uint32'], res));
+            const reserves = await UniswapV2Pool.getReserves();
 
             // for some reason the UniswapTrade SwapOptions constructor omits the "RouterSwapOptions" from the @uniswap/router-sdk
             // so instead of making a `new SwapOptions` we must make an object instead
