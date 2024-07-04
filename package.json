@@ -11,7 +11,10 @@
     "@1inch/limit-order-protocol-contract": "4.0.3",
     "@1inch/limit-order-settlement": "2.0.1",
     "@1inch/solidity-utils": "4.2.1",
-    "@openzeppelin/contracts": "5.0.2"
+    "@openzeppelin/contracts": "5.0.2",
+    "@uniswap/universal-router": "1.6.0",
+    "@uniswap/universal-router-sdk": "2.2.2",
+    "solmate": "6.2.0"
   },
   "devDependencies": {
     "@0x/protocol-utils": "11.24.2",
@@ -19,7 +22,7 @@
     "@nomicfoundation/hardhat-ethers": "3.0.5",
     "@nomicfoundation/hardhat-network-helpers": "1.0.10",
     "@nomicfoundation/hardhat-verify": "2.0.6",
-    "@paraswap/sdk": "6.7.0",
+    "@paraswap/sdk": "6.8.0",
     "@uniswap/uniswapx-sdk": "2.0.1-alpha.10",
     "chai": "4.4.1",
     "cli-table3": "0.6.5",
