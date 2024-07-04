@@ -28,7 +28,7 @@ class InchOrder {
         { name: 'makerTraits', type: 'uint256' },
     ];
 
-    constructor ({
+    constructor({
         makerAsset,
         takerAsset,
         makingAmount,
@@ -41,29 +41,36 @@ class InchOrder {
         postInteraction,
     }) {
         this.verifyingContract = verifyingContract;
-        this.order = buildOrder({
-            makerAsset,
-            takerAsset,
-            makingAmount,
-            takingAmount,
-            maker: maker.address,
-            makerTraits,
-        }, {
-            makingAmountData,
-            takingAmountData,
-            postInteraction,
-        });
+        this.order = buildOrder(
+            {
+                makerAsset,
+                takerAsset,
+                makingAmount,
+                takingAmount,
+                maker: maker.address,
+                makerTraits,
+            },
+            {
+                makingAmountData,
+                takingAmountData,
+                postInteraction,
+            },
+        );
     }
 
-    async sign (signer) {
-        const signature = await signer.signTypedData({
-            name: '1inch Aggregation Router',
-            version: '6',
-            chainId: await getChainId(),
-            verifyingContract: this.verifyingContract,
-        }, {
-            Order: this.OrderStruct,
-        }, this.order);
+    async sign(signer) {
+        const signature = await signer.signTypedData(
+            {
+                name: '1inch Aggregation Router',
+                version: '6',
+                chainId: await getChainId(),
+                verifyingContract: this.verifyingContract,
+            },
+            {
+                Order: this.OrderStruct,
+            },
+            this.order,
+        );
         const { r, yParityAndS: vs } = ethers.Signature.from(signature);
         return { r, vs };
     }
@@ -88,7 +95,7 @@ class MatchaOrder {
         { type: 'uint256', name: 'salt' },
     ];
 
-    constructor ({
+    constructor({
         chainId,
         verifyingContract,
         maker,
@@ -117,15 +124,19 @@ class MatchaOrder {
         });
     }
 
-    async sign (signer) {
-        const sig = await signer.signTypedData({
-            name: 'ZeroEx',
-            version: '1.0.0',
-            chainId: '1',
-            verifyingContract: this.verifyingContract,
-        }, {
-            LimitOrder: this.OrderStruct,
-        }, this.order);
+    async sign(signer) {
+        const sig = await signer.signTypedData(
+            {
+                name: 'ZeroEx',
+                version: '1.0.0',
+                chainId: '1',
+                verifyingContract: this.verifyingContract,
+            },
+            {
+                LimitOrder: this.OrderStruct,
+            },
+            this.order,
+        );
 
         const { r, s, yParity: v } = ethers.Signature.from(sig);
         return {
@@ -141,7 +152,7 @@ class UniswapOrder {
     order = {};
     verifyingContract = constants.ZERO_ADDRESS;
 
-    constructor ({
+    constructor({
         chainId,
         verifyingContract,
         deadline,
@@ -169,7 +180,10 @@ class UniswapOrder {
                 if (!builder.info.outputs) {
                     builder.info.outputs = [];
                 }
-                (0, tiny_invariant_1.default)(output.startAmount >= output.endAmount, `startAmount must be greater than endAmount: ${output.startAmount.toString()}`);
+                (0, tiny_invariant_1.default)(
+                    output.startAmount >= output.endAmount,
+                    `startAmount must be greater than endAmount: ${output.startAmount.toString()}`,
+                );
                 builder.info.outputs.push(output);
                 return builder;
             };
@@ -196,7 +210,7 @@ class UniswapOrder {
             .build();
     }
 
-    async sign (signer) {
+    async sign(signer) {
         const { domain, types, values } = this.order.permitData();
         return {
             order: this.order.serialize(),
@@ -210,34 +224,35 @@ class ParaswapOrder {
     maker = {};
     taker = {};
 
-    constructor ({
-        maker,
-        taker,
-        makerAssetAddress,
-        takerAssetAddress,
-        makerAmount,
-        takerAmount,
-    }) {
-        this.maker = constructPartialSDK({
-            chainId: 1,
-            fetcher: constructAxiosFetcher(axios),
-            contractCaller: constructEthersContractCaller({
-                ethersProviderOrSigner: ethers.provider,
-                EthersContract: ethers.Contract,
-            }, maker),
-        },
-        constructBuildLimitOrder,
-        constructSignLimitOrder,
+    constructor({ maker, taker, makerAssetAddress, takerAssetAddress, makerAmount, takerAmount }) {
+        this.maker = constructPartialSDK(
+            {
+                chainId: 1,
+                fetcher: constructAxiosFetcher(axios),
+                contractCaller: constructEthersContractCaller(
+                    {
+                        ethersProviderOrSigner: ethers.provider,
+                        EthersContract: ethers.Contract,
+                    },
+                    maker,
+                ),
+            },
+            constructBuildLimitOrder,
+            constructSignLimitOrder,
         );
-        this.taker = constructPartialSDK({
-            chainId: 1,
-            fetcher: constructAxiosFetcher(axios),
-            contractCaller: constructEthersContractCaller({
-                ethersProviderOrSigner: ethers.provider,
-                EthersContract: ethers.Contract,
-            }, taker),
-        },
-        constructBuildLimitOrderTx,
+        this.taker = constructPartialSDK(
+            {
+                chainId: 1,
+                fetcher: constructAxiosFetcher(axios),
+                contractCaller: constructEthersContractCaller(
+                    {
+                        ethersProviderOrSigner: ethers.provider,
+                        EthersContract: ethers.Contract,
+                    },
+                    taker,
+                ),
+            },
+            constructBuildLimitOrderTx,
         );
 
         this.order = {
@@ -251,7 +266,7 @@ class ParaswapOrder {
         };
     }
 
-    async sign (signer) {
+    async sign(signer) {
         const signableOrderData = await this.maker.buildLimitOrder(this.order);
         signableOrderData.domain.chainId = await getChainId();
         return {
@@ -260,7 +275,7 @@ class ParaswapOrder {
         };
     }
 
-    async buildTxParams (orderWithSignature, userAddress) {
+    async buildTxParams(orderWithSignature, userAddress) {
         const txParams = await this.taker.buildLimitOrderTx({
             srcDecimals: 18,
             destDecimals: 18,
@@ -337,24 +352,11 @@ class CowswapOrder {
         },
         signingScheme: {
             offset: 5,
-            options: [
-                this.SigningScheme.EIP712,
-                this.SigningScheme.ETHSIGN,
-                this.SigningScheme.EIP1271,
-                this.SigningScheme.PRESIGN,
-            ],
+            options: [this.SigningScheme.EIP712, this.SigningScheme.ETHSIGN, this.SigningScheme.EIP1271, this.SigningScheme.PRESIGN],
         },
     };
 
-    constructor ({
-        makingAmount,
-        takingAmount,
-        maker,
-        makerAsset,
-        takerAsset,
-        destination = maker.address,
-        verifyingContract,
-    }) {
+    constructor({ makingAmount, takingAmount, maker, makerAsset, takerAsset, destination = maker.address, verifyingContract }) {
         if (makerAsset == null || takerAsset == null || destination == null || makingAmount == null || takingAmount == null) {
             throw new Error('Missing required fields.');
         }
@@ -375,21 +377,25 @@ class CowswapOrder {
         this.verifyingContract = verifyingContract;
     }
 
-    async sign (signer) {
-        return await signer.signTypedData({
-            name: 'Gnosis Protocol',
-            version: 'v2',
-            chainId: '1',
-            verifyingContract: this.verifyingContract,
-        }, {
-            Order: this.ORDER_SRTUCT,
-        }, {
-            ...this.order,
-            appData: trim0x(this.order.appData).length > 0 ? this.order.appData : '0x0000000000000000000000000000000000000000000000000000000000000000',
-        });
+    async sign(signer) {
+        return await signer.signTypedData(
+            {
+                name: 'Gnosis Protocol',
+                version: 'v2',
+                chainId: '1',
+                verifyingContract: this.verifyingContract,
+            },
+            {
+                Order: this.ORDER_SRTUCT,
+            },
+            {
+                ...this.order,
+                appData: trim0x(this.order.appData).length > 0 ? this.order.appData : '0x0000000000000000000000000000000000000000000000000000000000000000',
+            },
+        );
     }
 
-    async buildTrade (signature, tokens = [this.order.sellToken, this.order.buyToken], executedAmount = this.order.buyAmount) {
+    async buildTrade(signature, tokens = [this.order.sellToken, this.order.buyToken], executedAmount = this.order.buyAmount) {
         return {
             sellTokenIndex: tokens.indexOf(this.order.sellToken),
             buyTokenIndex: tokens.indexOf(this.order.buyToken),
@@ -405,45 +411,37 @@ class CowswapOrder {
         };
     }
 
-    encodeFlag (key, flag) {
-        const index = this.FLAG_MASKS[key].options.findIndex(
-            (search) => search === flag,
-        );
+    encodeFlag(key, flag) {
+        const index = this.FLAG_MASKS[key].options.findIndex((search) => search === flag);
         if (index === undefined) {
             throw new Error(`Bad key/value pair to encode: ${key}/${flag}`);
         }
         return index << this.FLAG_MASKS[key].offset;
     }
 
-    encodeOrderFlags (flags) {
+    encodeOrderFlags(flags) {
         return (
             this.encodeFlag('kind', flags.kind) |
             this.encodeFlag('partiallyFillable', flags.partiallyFillable) |
-            this.encodeFlag(
-                'sellTokenBalance',
-                flags.sellTokenBalance ?? 'erc20',
-            ) |
-            this.encodeFlag(
-                'buyTokenBalance',
-                this.normalizeBuyTokenBalance(flags.buyTokenBalance),
-            )
+            this.encodeFlag('sellTokenBalance', flags.sellTokenBalance ?? 'erc20') |
+            this.encodeFlag('buyTokenBalance', this.normalizeBuyTokenBalance(flags.buyTokenBalance))
         );
     }
 
-    encodeTradeFlags (flags) {
+    encodeTradeFlags(flags) {
         return this.encodeOrderFlags(flags) | this.encodeFlag('signingScheme', this.SigningScheme.EIP712);
     }
 
-    normalizeBuyTokenBalance (balance) {
+    normalizeBuyTokenBalance(balance) {
         switch (balance) {
-        case undefined:
-        case this.OrderBalance.ERC20:
-        case this.OrderBalance.EXTERNAL:
-            return this.OrderBalance.ERC20;
-        case this.OrderBalance.INTERNAL:
-            return this.OrderBalance.INTERNAL;
-        default:
-            throw new Error(`invalid order balance ${balance}`);
+            case undefined:
+            case this.OrderBalance.ERC20:
+            case this.OrderBalance.EXTERNAL:
+                return this.OrderBalance.ERC20;
+            case this.OrderBalance.INTERNAL:
+                return this.OrderBalance.INTERNAL;
+            default:
+                throw new Error(`invalid order balance ${balance}`);
         }
     }
 }

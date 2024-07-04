@@ -14,21 +14,25 @@ const PERMIT2CONTRACT = '0x000000000022D473030F116dDEE9F6B43aC78BA3';
 const abiCoder = ethers.AbiCoder.defaultAbiCoder();
 
 describe('Fusion', async function () {
-    const gasUsedTable = createGasUsedTable("Fusion", "case");
+    const gasUsedTable = createGasUsedTable('Fusion', 'case');
 
     after(async function () {
         console.log(gasUsedTable.toString());
     });
 
-    async function initContracts () {
+    async function initContracts() {
         const [maker, taker] = await ethers.getSigners();
 
         const tokens = {
             ETH: {
-                async getAddress () { return constants.ZERO_ADDRESS; },
+                async getAddress() {
+                    return constants.ZERO_ADDRESS;
+                },
             },
             EEE: {
-                async getAddress () { return '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'; },
+                async getAddress() {
+                    return '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
+                },
             },
             '1INCH': await ethers.getContractAt('IERC20', '0x111111111117dC0aa78b770fA6A738034120C302'),
             WETH: await ethers.getContractAt('IWETH', '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'),
@@ -89,7 +93,7 @@ describe('Fusion', async function () {
     }
 
     describe('WETH => DAI by EOA', async function () {
-        async function initContractsWithCaseSettings () {
+        async function initContractsWithCaseSettings() {
             const fixtureData = await initContracts();
             return {
                 ...fixtureData,
@@ -105,13 +109,21 @@ describe('Fusion', async function () {
 
         it('1inch', async function () {
             const {
-                maker, taker, inch, settlement, maxPriorityFeePerGas,
+                maker,
+                taker,
+                inch,
+                settlement,
+                maxPriorityFeePerGas,
                 settings: { gasUsedTableRow, makerToken, takerToken, makingAmount, takingAmount },
             } = await loadFixture(initContractsWithCaseSettings);
 
             // Create 1inch settlement order, sign and fill it
             const auctionStartTime = await time.latest();
-            const { details: auctionDetails } = await buildAuctionDetails({ startTime: auctionStartTime, duration: time.duration.hours(1), initialRateBump: 1000000 });
+            const { details: auctionDetails } = await buildAuctionDetails({
+                startTime: auctionStartTime,
+                duration: time.duration.hours(1),
+                initialRateBump: 1000000,
+            });
             const inchOrder = new InchOrder({
                 makerAsset: await makerToken.getAddress(),
                 takerAsset: await takerToken.getAddress(),
@@ -120,12 +132,16 @@ describe('Fusion', async function () {
                 maker,
                 verifyingContract: await inch.getAddress(),
                 makerTraits: buildMakerTraits(),
-                makingAmountData: await settlement.getAddress() + trim0x(auctionDetails),
-                takingAmountData: await settlement.getAddress() + trim0x(auctionDetails),
-                postInteraction: await settlement.getAddress() + trim0x(ethers.solidityPacked(
-                    ['uint32', 'bytes10', 'uint16', 'bytes1'],
-                    [auctionStartTime, '0x' + taker.address.substring(22), 0, buildExtensionsBitmapData()],
-                )),
+                makingAmountData: (await settlement.getAddress()) + trim0x(auctionDetails),
+                takingAmountData: (await settlement.getAddress()) + trim0x(auctionDetails),
+                postInteraction:
+                    (await settlement.getAddress()) +
+                    trim0x(
+                        ethers.solidityPacked(
+                            ['uint32', 'bytes10', 'uint16', 'bytes1'],
+                            [auctionStartTime, '0x' + taker.address.substring(22), 0, buildExtensionsBitmapData()],
+                        ),
+                    ),
             });
             const { r, vs } = await inchOrder.sign(maker);
             const takerTraits = buildTakerTraits({
@@ -133,23 +149,17 @@ describe('Fusion', async function () {
                 minReturn: percentageOf(inchOrder.order.makingAmount, 90),
                 extension: inchOrder.order.extension,
             });
-            const tx = await inch.connect(taker).fillOrderArgs(
-                inchOrder.order,
-                r,
-                vs,
-                takingAmount,
-                takerTraits.traits,
-                takerTraits.args,
-                {
-                    maxPriorityFeePerGas,
-                },
-            );
+            const tx = await inch.connect(taker).fillOrderArgs(inchOrder.order, r, vs, takingAmount, takerTraits.traits, takerTraits.args, {
+                maxPriorityFeePerGas,
+            });
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.INCH, (await tx.wait()).gasUsed);
         });
 
         it('uniswap', async function () {
             const {
-                maker, taker, uniswap,
+                maker,
+                taker,
+                uniswap,
                 settings: { gasUsedTableRow, makerToken, takerToken, makingAmount, takingAmount },
             } = await loadFixture(initContractsWithCaseSettings);
 
@@ -159,7 +169,7 @@ describe('Fusion', async function () {
                 verifyingContract: await uniswap.getAddress(),
                 deadline: Math.floor(Date.now() / 1000) + 1000,
                 maker,
-                nonce: await (new NonceManager(maker)).getNonce(),
+                nonce: await new NonceManager(maker).getNonce(),
                 inputTokenAddress: await makerToken.getAddress(),
                 outputTokenAddress: await takerToken.getAddress(),
                 inputAmount: makingAmount,
@@ -174,7 +184,9 @@ describe('Fusion', async function () {
 
         it('cowswap', async function () {
             const {
-                maker, taker, cowswap,
+                maker,
+                taker,
+                cowswap,
                 settings: { gasUsedTableRow, makerToken, takerToken, makingAmount, takingAmount },
             } = await loadFixture(initContractsWithCaseSettings);
 
@@ -198,10 +210,7 @@ describe('Fusion', async function () {
                         {
                             value: 0,
                             target: cowswapOrder.order.sellToken,
-                            callData: makerToken.interface.encodeFunctionData('transfer', [
-                                taker.address,
-                                cowswapOrder.order.sellAmount,
-                            ]),
+                            callData: makerToken.interface.encodeFunctionData('transfer', [taker.address, cowswapOrder.order.sellAmount]),
                         },
                     ],
                     [],
@@ -212,7 +221,7 @@ describe('Fusion', async function () {
     });
 
     describe('WETH => DAI without callback by resolver contract', async function () {
-        async function initContractsWithCaseSettings () {
+        async function initContractsWithCaseSettings() {
             const fixtureData = await initContracts();
             return {
                 ...fixtureData,
@@ -228,13 +237,22 @@ describe('Fusion', async function () {
 
         it('1inch', async function () {
             const {
-                maker, taker, inch, settlement, resolver, maxPriorityFeePerGas,
+                maker,
+                taker,
+                inch,
+                settlement,
+                resolver,
+                maxPriorityFeePerGas,
                 settings: { gasUsedTableRow, makerToken, takerToken, makingAmount, takingAmount },
             } = await loadFixture(initContractsWithCaseSettings);
 
             // Create 1inch settlement order, sign and fill it
             const auctionStartTime = await time.latest();
-            const { details: auctionDetails } = await buildAuctionDetails({ startTime: auctionStartTime, duration: time.duration.hours(1), initialRateBump: 1000000 });
+            const { details: auctionDetails } = await buildAuctionDetails({
+                startTime: auctionStartTime,
+                duration: time.duration.hours(1),
+                initialRateBump: 1000000,
+            });
             const inchOrder = new InchOrder({
                 makerAsset: await makerToken.getAddress(),
                 takerAsset: await takerToken.getAddress(),
@@ -243,11 +261,16 @@ describe('Fusion', async function () {
                 maker,
                 verifyingContract: await inch.getAddress(),
                 makerTraits: buildMakerTraits(),
-                makingAmountData: await settlement.getAddress() + trim0x(auctionDetails),
-                takingAmountData: await settlement.getAddress() + trim0x(auctionDetails),
-                postInteraction: await settlement.getAddress() + trim0x(ethers.solidityPacked(
-                    ['uint32', 'bytes10', 'uint16', 'bytes1'], [auctionStartTime, '0x' + resolver.target.substring(22), 0, buildExtensionsBitmapData()],
-                )),
+                makingAmountData: (await settlement.getAddress()) + trim0x(auctionDetails),
+                takingAmountData: (await settlement.getAddress()) + trim0x(auctionDetails),
+                postInteraction:
+                    (await settlement.getAddress()) +
+                    trim0x(
+                        ethers.solidityPacked(
+                            ['uint32', 'bytes10', 'uint16', 'bytes1'],
+                            [auctionStartTime, '0x' + resolver.target.substring(22), 0, buildExtensionsBitmapData()],
+                        ),
+                    ),
             });
             const { r, vs } = await inchOrder.sign(maker);
             const takerTraits = buildTakerTraits({
@@ -255,25 +278,23 @@ describe('Fusion', async function () {
                 minReturn: percentageOf(inchOrder.order.makingAmount, 90),
                 extension: inchOrder.order.extension,
             });
-            const tx = await resolver.connect(taker).settleOrders(
-                inch.interface.encodeFunctionData('fillOrderArgs', [
-                    inchOrder.order,
-                    r,
-                    vs,
-                    takingAmount,
-                    takerTraits.traits,
-                    takerTraits.args,
-                ]),
-                {
-                    maxPriorityFeePerGas,
-                },
-            );
+            const tx = await resolver
+                .connect(taker)
+                .settleOrders(
+                    inch.interface.encodeFunctionData('fillOrderArgs', [inchOrder.order, r, vs, takingAmount, takerTraits.traits, takerTraits.args]),
+                    {
+                        maxPriorityFeePerGas,
+                    },
+                );
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.INCH, (await tx.wait()).gasUsed);
         });
 
         it('uniswap', async function () {
             const {
-                maker, taker, resolver, uniswap,
+                maker,
+                taker,
+                resolver,
+                uniswap,
                 settings: { gasUsedTableRow, makerToken, takerToken, makingAmount, takingAmount },
             } = await loadFixture(initContractsWithCaseSettings);
 
@@ -283,7 +304,7 @@ describe('Fusion', async function () {
                 verifyingContract: await uniswap.getAddress(),
                 deadline: Math.floor(Date.now() / 1000) + 1000,
                 maker,
-                nonce: await (new NonceManager(maker)).getNonce(),
+                nonce: await new NonceManager(maker).getNonce(),
                 inputTokenAddress: await makerToken.getAddress(),
                 outputTokenAddress: await takerToken.getAddress(),
                 inputAmount: makingAmount,
@@ -292,16 +313,16 @@ describe('Fusion', async function () {
                 permit2contractAddress: PERMIT2CONTRACT,
             });
             const signedOrder = await uniswapOrder.sign(maker);
-            const tx = await resolver.connect(taker).settleUniswapXOrders(
-                0,
-                uniswap.interface.encodeFunctionData('execute', [signedOrder]),
-            );
+            const tx = await resolver.connect(taker).settleUniswapXOrders(0, uniswap.interface.encodeFunctionData('execute', [signedOrder]));
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP, (await tx.wait()).gasUsed);
         });
 
         it('cowswap', async function () {
             const {
-                maker, taker, resolver, cowswap,
+                maker,
+                taker,
+                resolver,
+                cowswap,
                 settings: { gasUsedTableRow, makerToken, takerToken, makingAmount, takingAmount },
             } = await loadFixture(initContractsWithCaseSettings);
 
@@ -327,10 +348,7 @@ describe('Fusion', async function () {
                             {
                                 value: 0,
                                 target: cowswapOrder.order.sellToken,
-                                callData: makerToken.interface.encodeFunctionData('transfer', [
-                                    await resolver.getAddress(),
-                                    cowswapOrder.order.sellAmount,
-                                ]),
+                                callData: makerToken.interface.encodeFunctionData('transfer', [await resolver.getAddress(), cowswapOrder.order.sellAmount]),
                             },
                         ],
                         [],
@@ -342,7 +360,7 @@ describe('Fusion', async function () {
     });
 
     describe('WETH => DAI with callback when resolver has funds', async function () {
-        async function initContractsWithCaseSettings () {
+        async function initContractsWithCaseSettings() {
             const fixtureData = await initContracts();
             return {
                 ...fixtureData,
@@ -358,13 +376,22 @@ describe('Fusion', async function () {
 
         it('1inch', async function () {
             const {
-                maker, taker, inch, settlement, resolver, maxPriorityFeePerGas,
+                maker,
+                taker,
+                inch,
+                settlement,
+                resolver,
+                maxPriorityFeePerGas,
                 settings: { gasUsedTableRow, makerToken, takerToken, makingAmount, takingAmount },
             } = await loadFixture(initContractsWithCaseSettings);
 
             // Create 1inch settlement order, sign and fill it
             const auctionStartTime = await time.latest();
-            const { details: auctionDetails } = await buildAuctionDetails({ startTime: auctionStartTime, duration: time.duration.hours(1), initialRateBump: 1000000 });
+            const { details: auctionDetails } = await buildAuctionDetails({
+                startTime: auctionStartTime,
+                duration: time.duration.hours(1),
+                initialRateBump: 1000000,
+            });
             const inchOrder = new InchOrder({
                 makerAsset: await makerToken.getAddress(),
                 takerAsset: await takerToken.getAddress(),
@@ -373,45 +400,42 @@ describe('Fusion', async function () {
                 maker,
                 verifyingContract: await inch.getAddress(),
                 makerTraits: buildMakerTraits(),
-                makingAmountData: await settlement.getAddress() + trim0x(auctionDetails),
-                takingAmountData: await settlement.getAddress() + trim0x(auctionDetails),
-                postInteraction: await settlement.getAddress() + trim0x(ethers.solidityPacked(
-                    ['uint32', 'bytes10', 'uint16', 'bytes1'], [auctionStartTime, '0x' + resolver.target.substring(22), 0, buildExtensionsBitmapData()],
-                )),
+                makingAmountData: (await settlement.getAddress()) + trim0x(auctionDetails),
+                takingAmountData: (await settlement.getAddress()) + trim0x(auctionDetails),
+                postInteraction:
+                    (await settlement.getAddress()) +
+                    trim0x(
+                        ethers.solidityPacked(
+                            ['uint32', 'bytes10', 'uint16', 'bytes1'],
+                            [auctionStartTime, '0x' + resolver.target.substring(22), 0, buildExtensionsBitmapData()],
+                        ),
+                    ),
             });
             const { r, vs } = await inchOrder.sign(maker);
-            const resolverArgs = trim0x(abiCoder.encode(
-                ['bytes32', 'bytes[]'],
-                [
-                    constants.ZERO_BYTES32,
-                    [],
-                ],
-            ));
+            const resolverArgs = trim0x(abiCoder.encode(['bytes32', 'bytes[]'], [constants.ZERO_BYTES32, []]));
             const takerTraits = buildTakerTraits({
                 makingAmount: true,
                 minReturn: percentageOf(inchOrder.order.makingAmount, 90),
                 extension: inchOrder.order.extension,
-                interaction: await resolver.getAddress() + '01' + trim0x(resolverArgs),
+                interaction: (await resolver.getAddress()) + '01' + trim0x(resolverArgs),
             });
-            const tx = await resolver.connect(taker).settleOrders(
-                inch.interface.encodeFunctionData('fillOrderArgs', [
-                    inchOrder.order,
-                    r,
-                    vs,
-                    takingAmount,
-                    takerTraits.traits,
-                    takerTraits.args,
-                ]),
-                {
-                    maxPriorityFeePerGas,
-                },
-            );
+            const tx = await resolver
+                .connect(taker)
+                .settleOrders(
+                    inch.interface.encodeFunctionData('fillOrderArgs', [inchOrder.order, r, vs, takingAmount, takerTraits.traits, takerTraits.args]),
+                    {
+                        maxPriorityFeePerGas,
+                    },
+                );
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.INCH, (await tx.wait()).gasUsed);
         });
 
         it('uniswap', async function () {
             const {
-                maker, taker, resolver, uniswap,
+                maker,
+                taker,
+                resolver,
+                uniswap,
                 settings: { gasUsedTableRow, makerToken, takerToken, makingAmount, takingAmount },
             } = await loadFixture(initContractsWithCaseSettings);
 
@@ -421,7 +445,7 @@ describe('Fusion', async function () {
                 verifyingContract: await uniswap.getAddress(),
                 deadline: Math.floor(Date.now() / 1000) + 1000,
                 maker,
-                nonce: await (new NonceManager(maker)).getNonce(),
+                nonce: await new NonceManager(maker).getNonce(),
                 inputTokenAddress: await makerToken.getAddress(),
                 outputTokenAddress: await takerToken.getAddress(),
                 inputAmount: makingAmount,
@@ -443,7 +467,10 @@ describe('Fusion', async function () {
 
         it('cowswap', async function () {
             const {
-                maker, taker, resolver, cowswap,
+                maker,
+                taker,
+                resolver,
+                cowswap,
                 settings: { gasUsedTableRow, makerToken, takerToken, makingAmount, takingAmount },
             } = await loadFixture(initContractsWithCaseSettings);
 
@@ -469,20 +496,12 @@ describe('Fusion', async function () {
                             {
                                 value: 0,
                                 target: cowswapOrder.order.sellToken,
-                                callData: makerToken.interface.encodeFunctionData('transfer', [
-                                    await resolver.getAddress(),
-                                    cowswapOrder.order.sellAmount,
-                                ]),
+                                callData: makerToken.interface.encodeFunctionData('transfer', [await resolver.getAddress(), cowswapOrder.order.sellAmount]),
                             },
                             {
                                 value: 0,
                                 target: await resolver.getAddress(),
-                                callData: resolver.interface.encodeFunctionData('cowswapResolve', [
-                                    abiCoder.encode(
-                                        ['bytes[]'],
-                                        [[]],
-                                    ),
-                                ]),
+                                callData: resolver.interface.encodeFunctionData('cowswapResolve', [abiCoder.encode(['bytes[]'], [[]])]),
                             },
                         ],
                         [],
@@ -494,7 +513,7 @@ describe('Fusion', async function () {
     });
 
     describe('WETH => DAI with callback when resolver use taker funds', async function () {
-        async function initContractsWithCaseSettings () {
+        async function initContractsWithCaseSettings() {
             const fixtureData = await initContracts();
             return {
                 ...fixtureData,
@@ -510,7 +529,12 @@ describe('Fusion', async function () {
 
         it('1inch', async function () {
             const {
-                maker, taker, inch, settlement, resolver, maxPriorityFeePerGas,
+                maker,
+                taker,
+                inch,
+                settlement,
+                resolver,
+                maxPriorityFeePerGas,
                 settings: { gasUsedTableRow, makerToken, takerToken, makingAmount, takingAmount },
             } = await loadFixture(initContractsWithCaseSettings);
 
@@ -525,51 +549,48 @@ describe('Fusion', async function () {
                 maker,
                 verifyingContract: await inch.getAddress(),
                 makerTraits: buildMakerTraits(),
-                makingAmountData: await settlement.getAddress() + trim0x(auctionDetails),
-                takingAmountData: await settlement.getAddress() + trim0x(auctionDetails),
-                postInteraction: await settlement.getAddress() + trim0x(ethers.solidityPacked(
-                    ['uint32', 'bytes10', 'uint16', 'bytes1'], [auctionStartTime, '0x' + resolver.target.substring(22), 0, buildExtensionsBitmapData()],
-                )),
+                makingAmountData: (await settlement.getAddress()) + trim0x(auctionDetails),
+                takingAmountData: (await settlement.getAddress()) + trim0x(auctionDetails),
+                postInteraction:
+                    (await settlement.getAddress()) +
+                    trim0x(
+                        ethers.solidityPacked(
+                            ['uint32', 'bytes10', 'uint16', 'bytes1'],
+                            [auctionStartTime, '0x' + resolver.target.substring(22), 0, buildExtensionsBitmapData()],
+                        ),
+                    ),
             });
             const { r, vs } = await inchOrder.sign(maker);
             const resolverArgs = abiCoder.encode(
                 ['address[]', 'bytes[]'],
                 [
                     [await takerToken.getAddress()],
-                    [
-                        takerToken.interface.encodeFunctionData('transferFrom', [
-                            taker.address,
-                            await resolver.getAddress(),
-                            inchOrder.order.takingAmount,
-                        ]),
-                    ],
+                    [takerToken.interface.encodeFunctionData('transferFrom', [taker.address, await resolver.getAddress(), inchOrder.order.takingAmount])],
                 ],
             );
             const takerTraits = buildTakerTraits({
                 makingAmount: true,
                 minReturn: percentageOf(inchOrder.order.makingAmount, 90),
                 extension: inchOrder.order.extension,
-                interaction: await resolver.getAddress() + '01' + trim0x(resolverArgs),
+                interaction: (await resolver.getAddress()) + '01' + trim0x(resolverArgs),
             });
-            const tx = await resolver.connect(taker).settleOrders(
-                inch.interface.encodeFunctionData('fillOrderArgs', [
-                    inchOrder.order,
-                    r,
-                    vs,
-                    takingAmount,
-                    takerTraits.traits,
-                    takerTraits.args,
-                ]),
-                {
-                    maxPriorityFeePerGas,
-                },
-            );
+            const tx = await resolver
+                .connect(taker)
+                .settleOrders(
+                    inch.interface.encodeFunctionData('fillOrderArgs', [inchOrder.order, r, vs, takingAmount, takerTraits.traits, takerTraits.args]),
+                    {
+                        maxPriorityFeePerGas,
+                    },
+                );
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.INCH, (await tx.wait()).gasUsed);
         });
 
         it('uniswap', async function () {
             const {
-                maker, taker, resolver, uniswap,
+                maker,
+                taker,
+                resolver,
+                uniswap,
                 settings: { gasUsedTableRow, makerToken, takerToken, makingAmount, takingAmount },
             } = await loadFixture(initContractsWithCaseSettings);
 
@@ -579,7 +600,7 @@ describe('Fusion', async function () {
                 verifyingContract: await uniswap.getAddress(),
                 deadline: Math.floor(Date.now() / 1000) + 1000,
                 maker,
-                nonce: await (new NonceManager(maker)).getNonce(),
+                nonce: await new NonceManager(maker).getNonce(),
                 inputTokenAddress: await makerToken.getAddress(),
                 outputTokenAddress: await takerToken.getAddress(),
                 inputAmount: makingAmount,
@@ -591,9 +612,16 @@ describe('Fusion', async function () {
             const resolverCalldata = abiCoder.encode(
                 ['bytes[]'],
                 [
-                    [await takerToken.getAddress() + trim0x(takerToken.interface.encodeFunctionData('transferFrom', [
-                        taker.address, await resolver.getAddress(), uniswapOrder.order.info.outputs[0].startAmount,
-                    ]))],
+                    [
+                        (await takerToken.getAddress()) +
+                            trim0x(
+                                takerToken.interface.encodeFunctionData('transferFrom', [
+                                    taker.address,
+                                    await resolver.getAddress(),
+                                    uniswapOrder.order.info.outputs[0].startAmount,
+                                ]),
+                            ),
+                    ],
                 ],
             );
             const tx = await resolver.settleUniswapXOrders(
@@ -608,7 +636,10 @@ describe('Fusion', async function () {
 
         it('cowswap', async function () {
             const {
-                maker, taker, resolver, cowswap,
+                maker,
+                taker,
+                resolver,
+                cowswap,
                 settings: { gasUsedTableRow, makerToken, takerToken, makingAmount, takingAmount },
             } = await loadFixture(initContractsWithCaseSettings);
 
@@ -634,10 +665,7 @@ describe('Fusion', async function () {
                             {
                                 value: 0,
                                 target: cowswapOrder.order.sellToken,
-                                callData: makerToken.interface.encodeFunctionData('transfer', [
-                                    await resolver.getAddress(),
-                                    cowswapOrder.order.sellAmount,
-                                ]),
+                                callData: makerToken.interface.encodeFunctionData('transfer', [await resolver.getAddress(), cowswapOrder.order.sellAmount]),
                             },
                             {
                                 value: 0,
@@ -647,9 +675,14 @@ describe('Fusion', async function () {
                                         ['bytes[]'],
                                         [
                                             [
-                                                await takerToken.getAddress() + trim0x(takerToken.interface.encodeFunctionData('transferFrom', [
-                                                    taker.address, await cowswap.getAddress(), cowswapOrder.order.buyAmount,
-                                                ])),
+                                                (await takerToken.getAddress()) +
+                                                    trim0x(
+                                                        takerToken.interface.encodeFunctionData('transferFrom', [
+                                                            taker.address,
+                                                            await cowswap.getAddress(),
+                                                            cowswapOrder.order.buyAmount,
+                                                        ]),
+                                                    ),
                                             ],
                                         ],
                                     ),

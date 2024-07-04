@@ -9,17 +9,16 @@ const { SwapRouter, UniswapTrade } = require('@uniswap/universal-router-sdk');
 const { Pool } = require('@uniswap/v3-sdk');
 const { Pair } = require('@uniswap/v2-sdk');
 const { CurrencyAmount, Token, TradeType, Ether, Percent } = require('@uniswap/sdk-core');
-const { UniswapV2Pools, UniswapV3Pools} = require('./helpers/pools');
+const { UniswapV2Pools, UniswapV3Pools } = require('./helpers/pools');
 
 describe('Router [UniV2 => UniV3]', async function () {
-    const gasUsedTable = createGasUsedTable("UniswapV2 => UniswapV3 pools", "path");
-
+    const gasUsedTable = createGasUsedTable('UniswapV2 => UniswapV3 pools', 'path');
 
     after(async function () {
         console.log(gasUsedTable.toString());
     });
 
-    async function initContracts () {
+    async function initContracts() {
         const fixtureData = await initRouterContracts();
 
         await adjustV2PoolTimestamps(ethers, UniswapV2Pools);
@@ -27,9 +26,8 @@ describe('Router [UniV2 => UniV3]', async function () {
         return fixtureData;
     }
 
-
     describe('ETH =[uniV2]=> DAI =[uniV3]=> USDC', async function () {
-        async function initContractsWithCaseSettings () {
+        async function initContractsWithCaseSettings() {
             return {
                 ...(await initContracts()),
                 settings: {
@@ -40,21 +38,32 @@ describe('Router [UniV2 => UniV3]', async function () {
         }
 
         it('1inch', async function () {
-            const { addr1, inch, settings: {gasUsedTableRow, amount} } = await loadFixture(initContractsWithCaseSettings);
+            const {
+                addr1,
+                inch,
+                settings: { gasUsedTableRow, amount },
+            } = await loadFixture(initContractsWithCaseSettings);
 
             const tx = await inch.ethUnoswapTo2(
                 addr1.address,
                 '1',
                 BigInt(UniswapV2Pools.WETH_DAI),
                 BigInt(UniswapV3Pools.USDC_DAI.address) | (1n << 253n) | (1n << 247n),
-                { value: amount},
+                {
+                    value: amount,
+                },
             );
             console.log('Gas used:', (await tx.wait()).gasUsed.toString());
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.INCH, (await tx.wait()).gasUsed);
         });
 
         it('uniswap', async function () {
-            const { addr1, uniswapUniversalRouter, tokens, settings: {gasUsedTableRow, amount} } = await loadFixture(initContractsWithCaseSettings);
+            const {
+                addr1,
+                uniswapUniversalRouter,
+                tokens,
+                settings: { gasUsedTableRow, amount },
+            } = await loadFixture(initContractsWithCaseSettings);
 
             const UniswapV3Pool = await ethers.getContractAt('IUniswapV3Pool', UniswapV3Pools.USDC_DAI.address);
             const slot0 = await UniswapV3Pool.slot0();
@@ -72,14 +81,8 @@ describe('Router [UniV2 => UniV3]', async function () {
             let mixedRoute = new MixedRouteSDK(
                 [
                     new Pair(
-                        CurrencyAmount.fromRawAmount(
-                            new Token(1, tokens.DAI.target, 18),
-                            reserves.reserve0.toString(),
-                        ),
-                        CurrencyAmount.fromRawAmount(
-                            new Token(1, tokens.WETH.target, 18),
-                            reserves.reserve1.toString(),
-                        ),
+                        CurrencyAmount.fromRawAmount(new Token(1, tokens.DAI.target, 18), reserves.reserve0.toString()),
+                        CurrencyAmount.fromRawAmount(new Token(1, tokens.WETH.target, 18), reserves.reserve1.toString()),
                     ),
                     new Pool(
                         new Token(1, tokens.USDC.target, 6),
@@ -94,14 +97,12 @@ describe('Router [UniV2 => UniV3]', async function () {
                 new Token(1, tokens.USDC.target, 6),
             );
 
-            let trade = MixedRouteTrade.createUncheckedTrade(
-                {
-                    route: mixedRoute,
-                    inputAmount: CurrencyAmount.fromRawAmount(mixedRoute.input, amount.toString()),
-                    outputAmount: CurrencyAmount.fromRawAmount(mixedRoute.output, '0'),
-                    tradeType: TradeType.EXACT_INPUT,
-                },
-            );
+            let trade = MixedRouteTrade.createUncheckedTrade({
+                route: mixedRoute,
+                inputAmount: CurrencyAmount.fromRawAmount(mixedRoute.input, amount.toString()),
+                outputAmount: CurrencyAmount.fromRawAmount(mixedRoute.output, '0'),
+                tradeType: TradeType.EXACT_INPUT,
+            });
 
             // fix the object because building the unchecked trade doesn't create these fields
             trade.routes = [mixedRoute];
