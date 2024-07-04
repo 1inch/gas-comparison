@@ -24,7 +24,7 @@ function percentageOf(number, percentage) {
  */
 function paraswapUniV2PoolData(pools) {
     let result = '0x';
-    for (let pool of pools) {
+    for (const pool of pools) {
         const [token0, token1, reverse] = pool[0] < pool[1] ? [pool[0], pool[1], true] : [pool[1], pool[0], false];
         result += trim0x(token0) + trim0x(token1) + trim0x(ethers.zeroPadValue(reverse ? '0x01' : '0x00', 24));
     }

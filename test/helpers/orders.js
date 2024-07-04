@@ -171,6 +171,7 @@ class UniswapOrder {
         this.verifyingContract = verifyingContract;
         const builder = new DutchOrderBuilder(chainId, verifyingContract, permit2contractAddress);
 
+        /* eslint-disable */
         {
             // TODO: remove when @uniswap/uniswapx-sdk will move to ethers v6
             builder.output = function (output) {
@@ -189,6 +190,7 @@ class UniswapOrder {
             };
             builder.info.exclusivityOverrideBps = BigInt(builder.info.exclusivityOverrideBps);
         }
+        /* eslint-enable */
 
         this.order = builder
             .deadline(deadline)

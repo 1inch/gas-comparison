@@ -65,12 +65,12 @@ describe('Router [UniV2 => UniV3]', async function () {
                 settings: { gasUsedTableRow, amount },
             } = await loadFixture(initContractsWithCaseSettings);
 
-            const UniswapV3Pool = await ethers.getContractAt('IUniswapV3Pool', UniswapV3Pools.USDC_DAI.address);
-            const slot0 = await UniswapV3Pool.slot0();
+            const uniswapV3Pool = await ethers.getContractAt('IUniswapV3Pool', UniswapV3Pools.USDC_DAI.address);
+            const slot0 = await uniswapV3Pool.slot0();
             const liquidity = await uniswapV3Pool.liquidity();
 
-            const UniswapV2Pool = await ethers.getContractAt('IUniswapV2Pair', UniswapV2Pools.WETH_DAI);
-            const reserves = await UniswapV2Pool.getReserves();
+            const uniswapV2Pool = await ethers.getContractAt('IUniswapV2Pair', UniswapV2Pools.WETH_DAI);
+            const reserves = await uniswapV2Pool.getReserves();
 
             // for some reason the UniswapTrade SwapOptions constructor omits the "RouterSwapOptions" from the @uniswap/router-sdk
             // so instead of making a `new SwapOptions` we must make an object instead
@@ -78,7 +78,7 @@ describe('Router [UniV2 => UniV3]', async function () {
                 slippageTolerance: new Percent('9999', '10000'), // 99.99%
             };
 
-            let mixedRoute = new MixedRouteSDK(
+            const mixedRoute = new MixedRouteSDK(
                 [
                     new Pair(
                         CurrencyAmount.fromRawAmount(new Token(1, tokens.DAI.target, 18), reserves.reserve0.toString()),
@@ -97,7 +97,7 @@ describe('Router [UniV2 => UniV3]', async function () {
                 new Token(1, tokens.USDC.target, 6),
             );
 
-            let trade = MixedRouteTrade.createUncheckedTrade({
+            const trade = MixedRouteTrade.createUncheckedTrade({
                 route: mixedRoute,
                 inputAmount: CurrencyAmount.fromRawAmount(mixedRoute.input, amount.toString()),
                 outputAmount: CurrencyAmount.fromRawAmount(mixedRoute.output, '0'),
@@ -113,7 +113,7 @@ describe('Router [UniV2 => UniV3]', async function () {
             // finally addr1 can send the transaction
             const tx = await addr1.sendTransaction({
                 to: uniswapUniversalRouter.getAddress(),
-                value: value,
+                value,
                 data: calldata,
             });
 
