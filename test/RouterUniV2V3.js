@@ -58,7 +58,7 @@ describe('Router [UniV2 => UniV3]', async function () {
 
             const UniswapV3Pool = await ethers.getContractAt('IUniswapV3Pool', UniswapV3Pools.USDC_DAI.address);
             const slot0 = await UniswapV3Pool.slot0();
-            const liquidity = await uniswapV3Pool.liquidity();
+            const liquidity = await UniswapV3Pool.liquidity();
 
             const UniswapV2Pool = await ethers.getContractAt('IUniswapV2Pair', UniswapV2Pools.WETH_DAI);
             const reserves = await UniswapV2Pool.getReserves();
