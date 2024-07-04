@@ -56,13 +56,11 @@ describe('Router [UniV2 => UniV3]', async function () {
         it('uniswap', async function () {
             const { addr1, uniswapUniversalRouter, tokens, settings: {gasUsedTableRow, amount} } = await loadFixture(initContractsWithCaseSettings);
 
-            const coder = new ethers.AbiCoder();
-            // we need slot0 from the uniswap v3 pool and reserves from the uniswap v2 pool
             const UniswapV3Pool = await ethers.getContractAt('IUniswapV3Pool', UniswapV3Pools.USDC_DAI.address);
             const slot0 = await UniswapV3Pool.slot0();
+            const liquidity = await uniswapV3Pool.liquidity();
 
             const UniswapV2Pool = await ethers.getContractAt('IUniswapV2Pair', UniswapV2Pools.WETH_DAI);
-            const liquidity = await ethers.provider.getStorage(UniswapV3Pools.USDC_DAI.address, '0x04');
             const reserves = await UniswapV2Pool.getReserves();
 
             // for some reason the UniswapTrade SwapOptions constructor omits the "RouterSwapOptions" from the @uniswap/router-sdk
@@ -76,20 +74,20 @@ describe('Router [UniV2 => UniV3]', async function () {
                     new Pair(
                         CurrencyAmount.fromRawAmount(
                             new Token(1, tokens.DAI.target, 18),
-                            reserves[0].toString(10),
+                            reserves.reserve0.toString(),
                         ),
                         CurrencyAmount.fromRawAmount(
                             new Token(1, tokens.WETH.target, 18),
-                            reserves[1].toString(10),
-                        )
+                            reserves.reserve1.toString(),
+                        ),
                     ),
                     new Pool(
                         new Token(1, tokens.USDC.target, 6),
                         new Token(1, tokens.DAI.target, 18),
                         UniswapV3Pools.USDC_DAI.fee,
-                        slot0[0].toString(10),
-                        liquidity.toString(10),
-                        Number(slot0[1]),
+                        slot0.sqrtPriceX96.toString(),
+                        liquidity.toString(),
+                        Number(slot0.tick),
                     ),
                 ],
                 new Ether(1),
@@ -99,8 +97,8 @@ describe('Router [UniV2 => UniV3]', async function () {
             let trade = MixedRouteTrade.createUncheckedTrade(
                 {
                     route: mixedRoute,
-                    inputAmount: CurrencyAmount.fromRawAmount(new Ether(1), amount.toString(10)),
-                    outputAmount: CurrencyAmount.fromRawAmount(new Token(1, tokens.USDC.target, 6), '0'),
+                    inputAmount: CurrencyAmount.fromRawAmount(mixedRoute.input, amount.toString()),
+                    outputAmount: CurrencyAmount.fromRawAmount(mixedRoute.output, '0'),
                     tradeType: TradeType.EXACT_INPUT,
                 },
             );
@@ -121,7 +119,5 @@ describe('Router [UniV2 => UniV3]', async function () {
             console.log('Gas used:', (await tx.wait()).gasUsed.toString());
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP, (await tx.wait()).gasUsed);
         });
-
     });
-
 });
