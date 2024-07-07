@@ -68,8 +68,37 @@ async function adjustV2PoolTimestamps(ethers, poolsV2) {
     await ethers.provider.send('evm_setNextBlockTimestamp', [nextBlockTimestamp]);
 }
 
+function encodePathExactInput(tokens, feeAmounts) {
+    return encodePath(tokens, feeAmounts)
+}
+
+
+// @dev Encodes a path and fee amounts into a single string for uniswap v3 RoutePlanner
+// @param path - an array of token addresses
+// @param fees - an array of fee amounts associated with each pool
+// @returns the encoded path string
+// source: https://github.com/Uniswap/universal-router/blob/228f2d151a5fc99836d72ae00f81db92cdb44bd3/test/integration-tests/shared/swapRouter02Helpers.ts#L47
+function encodePath(path, fees) {
+    if (path.length != fees.length + 1) {
+      throw new Error('path/fee lengths do not match')
+    }
+  
+    let encoded = '0x'
+    for (let i = 0; i < fees.length; i++) {
+      // 20 byte encoding of the address
+      encoded += path[i].slice(2)
+      // 3 byte encoding of the fee
+      encoded += fees[i].toString(16).padStart(2 * 3, '0')
+    }
+    // encode the final token
+    encoded += path[path.length - 1].slice(2)
+  
+    return encoded.toLowerCase()
+  }
+
 
 module.exports = {
     initRouterContracts,
     adjustV2PoolTimestamps,
+    encodePathExactInput
 }
