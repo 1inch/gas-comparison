@@ -1,7 +1,7 @@
 const Table = require('cli-table3');
 const chalk = require('chalk');
 
-function createGasUsedTable (tableHeader, firstColumnHeader) {
+function createGasUsedTable(tableHeader, firstColumnHeader) {
     return new GasUsedTable({
         header: tableHeader,
         firstColumn: { content: firstColumnHeader },
@@ -10,11 +10,11 @@ function createGasUsedTable (tableHeader, firstColumnHeader) {
     });
 }
 
-function displayGasUsedElement (element) {
+function displayGasUsedElement(element) {
     return Number(element).toLocaleString('en');
 }
 
-function compareGasUsedElements (displayedElement1, displayedElement2) {
+function compareGasUsedElements(displayedElement1, displayedElement2) {
     return parseInt(displayedElement2.replace(/,/g, '')) - parseInt(displayedElement1.replace(/,/g, ''));
 }
 
@@ -25,8 +25,8 @@ class GasUsedTable {
     table = null;
     colors = null;
 
-    constructor ({header, firstColumn, modifyElementHook, compareElementsHook, colors}) {
-        this.createTable({header, firstColumn});
+    constructor({ header, firstColumn, modifyElementHook, compareElementsHook, colors }) {
+        this.createTable({ header, firstColumn });
         this.setColors(colors);
         if (modifyElementHook) {
             this.modifyElementHook = modifyElementHook;
@@ -36,29 +36,29 @@ class GasUsedTable {
         }
     }
 
-    createTable ({header, firstColumn}) {
+    createTable({ header, firstColumn }) {
         firstColumn = firstColumn || this.DEFAULT_FIRST_COLUMN;
         this.table = new Table({
             head: header ? [{ colSpan: 1, content: chalk.blue(header) }] : [],
             colAligns: [firstColumn.columnAlign],
         });
-        this.table.push([{ hAlign: firstColumn.headAlign, content: chalk.magenta(firstColumn.content) }])
+        this.table.push([{ hAlign: firstColumn.headAlign, content: chalk.magenta(firstColumn.content) }]);
     }
 
-    addRow (elements = []) {
+    addRow(elements = []) {
         const newRowIndex = this.table.length;
         this.table[newRowIndex] = elements;
         return newRowIndex;
     }
 
-    modifyElementHook (element) {
+    modifyElementHook(element) {
         return element;
     }
 
-    addElementToRow (rowIndex, headKey, element, align = 'right') {
+    addElementToRow(rowIndex, headKey, element, align = 'right') {
         headKey = chalk.magenta(headKey);
         let columnIndex = this.table[0].indexOf(headKey);
-        if(columnIndex === -1) {
+        if (columnIndex === -1) {
             this.table[0].push(headKey);
             columnIndex = this.table[0].length - 1;
             this.table.options.colAligns[columnIndex] = align;
@@ -67,11 +67,11 @@ class GasUsedTable {
         this.table[rowIndex].push(this.modifyElementHook(element));
     }
 
-    compareElementsHook (element1, element2) {
+    compareElementsHook(element1, element2) {
         return element1 - element2;
     }
 
-    toString () {
+    toString() {
         for (let i = 1; i < this.table.length; i++) {
             const row = this.table[i];
             const sortRow = row.slice(1).sort(this.compareElementsHook);
@@ -95,7 +95,7 @@ class GasUsedTable {
         return this.table.toString();
     }
 
-    setColors (colors) {
+    setColors(colors) {
         this.colors = colors || this.DEFAULT_COLORS;
     }
 }
@@ -105,4 +105,4 @@ module.exports = {
     compareGasUsedElements,
     displayGasUsedElement,
     GasUsedTable,
-}
+};
