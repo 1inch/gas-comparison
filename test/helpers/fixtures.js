@@ -1,23 +1,26 @@
-const { ether, constants } = require("@1inch/solidity-utils");
-const { ethers } = require("hardhat");
+const { ether, constants } = require('@1inch/solidity-utils');
+const { ethers } = require('hardhat');
 
-async function initRouterContracts () {
+async function initRouterContracts() {
     const [addr1] = await ethers.getSigners();
     const inch = await ethers.getContractAt('IAggregationRouter', '0x111111125421ca6dc452d289314280a0f8842a65');
     const matcha = await ethers.getContractAt('IMatchaRouter', '0xdef1c0ded9bec7f1a1670819833240f027b25eff');
     const uniswapv2 = await ethers.getContractAt('IUniswapV2Router', '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D');
     const uniswapv3 = await ethers.getContractAt('IUniswapV3Router', '0xE592427A0AEce92De3Edee1F18E0157C05861564');
-    const uniswapUniversalRouter = await ethers.getContractAt('IUniversalRouter', '0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD') // uniswap's latest router
+    const uniswapUniversalRouter = await ethers.getContractAt('IUniversalRouter', '0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD'); // uniswap's latest router
     const paraswap = await ethers.getContractAt('IParaswapRouter', '0x000dB803A70511E09dA650D4C0506d0000100000');
     const permit2 = await ethers.getContractAt('contracts/interfaces/IPermit2.sol:IPermit2', '0x000000000022d473030f116ddee9f6b43ac78ba3');
 
-
     const tokens = {
         ETH: {
-            async getAddress () { return constants.ZERO_ADDRESS; },
+            async getAddress() {
+                return constants.ZERO_ADDRESS;
+            },
         },
         EEE: {
-            async getAddress () { return '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'; },
+            async getAddress() {
+                return '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
+            },
         },
         WETH: await ethers.getContractAt('IWETH', '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'),
         DAI: await ethers.getContractAt('IERC20', '0x6B175474E89094C44Da98b954EedeAC495271d0F'),
@@ -36,13 +39,7 @@ async function initRouterContracts () {
     // Buy some tokens for warmup address and exchanges
     await addr1.sendTransaction({ to: '0x2a1530c4c41db0b0b2bb646cb5eb1a67b7158667', value: ether('1') }); // DAI
     await addr1.sendTransaction({ to: '0x97deC872013f6B5fB443861090ad931542878126', value: ether('1') }); // USDC
-    await uniswapv2.swapExactETHForTokens(
-        ether('0'),
-        [tokens.WETH, tokens.USDT],
-        addr1,
-        ether('1'),
-        { value: ether('1') },
-    ); // USDT
+    await uniswapv2.swapExactETHForTokens(ether('0'), [tokens.WETH, tokens.USDT], addr1, ether('1'), { value: ether('1') }); // USDT
     await tokens.WETH.deposit({ value: ether('1') }); // WETH
 
     return { addr1, tokens, inch, matcha, paraswap, uniswapv2, uniswapv3, uniswapUniversalRouter };
@@ -59,19 +56,14 @@ async function adjustV2PoolTimestamps(ethers, poolsV2) {
 
     for (const pool of Object.values(poolsV2)) {
         const slotData = await ethers.provider.getStorage(pool, '0x8');
-        await ethers.provider.send("hardhat_setStorageAt", [
-            pool,
-            '0x8',
-            ethers.toBeHex(nextBlockTimestamp, 4) + slotData.slice(10),
-        ]);
+        await ethers.provider.send('hardhat_setStorageAt', [pool, '0x8', ethers.toBeHex(nextBlockTimestamp, 4) + slotData.slice(10)]);
     }
     await ethers.provider.send('evm_setNextBlockTimestamp', [nextBlockTimestamp]);
 }
 
 function encodePathExactInput(tokens, feeAmounts) {
-    return encodePath(tokens, feeAmounts)
+    return encodePath(tokens, feeAmounts);
 }
-
 
 // @dev Encodes a path and fee amounts into a single string for uniswap v3 RoutePlanner
 // @param path - an array of token addresses
@@ -79,26 +71,25 @@ function encodePathExactInput(tokens, feeAmounts) {
 // @returns the encoded path string
 // source: https://github.com/Uniswap/universal-router/blob/228f2d151a5fc99836d72ae00f81db92cdb44bd3/test/integration-tests/shared/swapRouter02Helpers.ts#L47
 function encodePath(path, fees) {
-    if (path.length != fees.length + 1) {
-      throw new Error('path/fee lengths do not match')
+    if (path.length !== fees.length + 1) {
+        throw new Error('path/fee lengths do not match');
     }
-  
-    let encoded = '0x'
+
+    let encoded = '0x';
     for (let i = 0; i < fees.length; i++) {
-      // 20 byte encoding of the address
-      encoded += path[i].slice(2)
-      // 3 byte encoding of the fee
-      encoded += fees[i].toString(16).padStart(2 * 3, '0')
+        // 20 byte encoding of the address
+        encoded += path[i].slice(2);
+        // 3 byte encoding of the fee
+        encoded += fees[i].toString(16).padStart(2 * 3, '0');
     }
     // encode the final token
-    encoded += path[path.length - 1].slice(2)
-  
-    return encoded.toLowerCase()
-  }
+    encoded += path[path.length - 1].slice(2);
 
+    return encoded.toLowerCase();
+}
 
 module.exports = {
     initRouterContracts,
     adjustV2PoolTimestamps,
-    encodePathExactInput
-}
+    encodePathExactInput,
+};
