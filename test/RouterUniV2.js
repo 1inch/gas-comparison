@@ -149,6 +149,7 @@ describe('Router [UniV2]', async function () {
                 tokens,
                 uniswapUniversalRouter,
                 settings: { gasUsedTableRow, amount },
+                addr1,
             } = await loadFixture(initContractsWithCaseSettings);
 
             const planner = new RoutePlanner();
@@ -158,7 +159,7 @@ describe('Router [UniV2]', async function () {
             ]);
 
             planner.addCommand(CommandType.V2_SWAP_EXACT_IN, [
-                UniswapV2Pools.WETH_USDC, // recipient
+                addr1.address,
                 0, // amount 0 because pair already has wETH deposited
                 1, // minimum return
                 [tokens.WETH.target, tokens.USDC.target, tokens.DAI.target],
@@ -166,9 +167,7 @@ describe('Router [UniV2]', async function () {
             ]);
 
             const { commands, inputs } = planner;
-
             const tx = await uniswapUniversalRouter.execute(commands, inputs, Date.now(), { value: amount });
-
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP, (await tx.wait()).gasUsed);
         });
 
