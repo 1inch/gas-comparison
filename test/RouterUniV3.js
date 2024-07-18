@@ -57,28 +57,30 @@ describe('Router [UniV3]', async function () {
 
         it('uniswap', async function () {
             const {
+                addr1,
                 tokens,
                 uniswapUniversalRouter,
                 settings: { gasUsedTableRow, amount },
             } = await loadFixture(initRouterContractsWithCaseSettings);
-
+          
             const planner = new RoutePlanner();
             planner.addCommand(CommandType.WRAP_ETH, [uniswapUniversalRouter.target, amount]);
             planner.addCommand(CommandType.V3_SWAP_EXACT_IN, [
-                uniswapUniversalRouter.target,
+                addr1.address,
                 amount,
                 '1',
                 encodePathExactInput([tokens.WETH.target, tokens.DAI.target], [UniswapV3Pools.WETH_DAI.fee]),
                 false,
             ]);
-
+          
             const { commands, inputs } = planner;
-
+          
             const tx = await uniswapUniversalRouter.execute(commands, inputs, Date.now(), { value: amount });
-
-            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP, (await tx.wait()).gasUsed);
+            const receipt = await tx.wait();
+          
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP, receipt.gasUsed);
         });
-
+          
         it('paraswap', async function () {
             const {
                 addr1,
@@ -167,6 +169,7 @@ describe('Router [UniV3]', async function () {
 
         it('uniswap', async function () {
             const {
+                addr1,
                 tokens,
                 uniswapUniversalRouter,
                 settings: { gasUsedTableRow, amount },
@@ -177,7 +180,7 @@ describe('Router [UniV3]', async function () {
             planner.addCommand(CommandType.WRAP_ETH, [uniswapUniversalRouter.target, amount]);
 
             planner.addCommand(CommandType.V3_SWAP_EXACT_IN, [
-                uniswapUniversalRouter.target,
+                addr1.address,
                 amount,
                 '1',
                 encodePathExactInput([tokens.WETH.target, tokens.USDC.target, tokens.DAI.target], [UniswapV3Pools.WETH_USDC.fee, UniswapV3Pools.USDC_DAI.fee]),
