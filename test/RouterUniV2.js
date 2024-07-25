@@ -55,6 +55,39 @@ describe('Router [UniV2]', async function () {
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA, (await tx.wait()).gasUsed);
         });
 
+        it('matcha2', async function () {
+            const { addr1, tokens, matcha2, settlerActionsABI, settings: { gasUsedTableRow, amount } } = await loadFixture(initContractsWithCaseSettings);            
+            const iface = new ethers.Interface(JSON.stringify(settlerActionsABI));
+            
+            // Generate the calldata for the BASIC function
+            const encodedBasicFunctionData = iface.encodeFunctionData('BASIC', [
+                await tokens.EEE.getAddress(),
+                10000n, // bps
+                tokens.WETH.target, // pool
+                4n, // offset
+                '0xd0e30db00000000000000000000000000000000000000000000000000000000000000000' // tx data
+            ]);
+
+            const encodedUniswapV2FunctionData = iface.encodeFunctionData('UNISWAPV2', [
+                addr1.address, // matcha2.target,
+                tokens.WETH.target,
+                10000n,
+                UniswapV2Pools.WETH_DAI,
+                0x1e00n, // uint24 swapInfo, lowest 2 bits are FoT and zeroForOne, the highest bits are the pool fee in bps
+                0n, // amountOutMin
+            ])
+
+            // Attempt to execute the transaction
+            const tx = await matcha2.execute(
+                { recipient: '0x0000000000000000000000000000000000000000', buyToken: '0x0000000000000000000000000000000000000000', minAmountOut: '0x00' },
+                [encodedBasicFunctionData, encodedUniswapV2FunctionData],
+                '0x0000000000000000000000000000000000000000000000000000000000000000',
+                { value: amount }
+            );
+
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA2, (await tx.wait()).gasUsed);
+        })
+
         it('uniswap', async function () {
             const { addr1, tokens, uniswapv2, settings: { gasUsedTableRow, amount } } = await loadFixture(initContractsWithCaseSettings);
             const tx = await uniswapv2.swapExactETHForTokens(
@@ -128,6 +161,12 @@ describe('Router [UniV2]', async function () {
                 { value: amount },
             );
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA, (await tx.wait()).gasUsed);
+        });
+
+        it('matcha2', async function () {
+            const {settings: {gasUsedTableRow} } = await loadFixture(initContractsWithCaseSettings);
+
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA2, null);
         });
 
         it('uniswap', async function () {
@@ -207,6 +246,12 @@ describe('Router [UniV2]', async function () {
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA, (await tx.wait()).gasUsed);
         });
 
+        it('matcha2', async function () {
+            const {settings: {gasUsedTableRow} } = await loadFixture(initContractsWithCaseSettings);
+
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA2, null);
+        });
+
         it('uniswap', async function () {
             const { addr1, tokens, uniswapv2, settings: { gasUsedTableRow, amount } } = await loadFixture(initContractsWithCaseSettings);
             const tx = await uniswapv2.swapExactTokensForETH(
@@ -278,6 +323,12 @@ describe('Router [UniV2]', async function () {
                 false,
             );
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA, (await tx.wait()).gasUsed);
+        });
+
+        it('matcha2', async function () {
+            const {settings: {gasUsedTableRow} } = await loadFixture(initContractsWithCaseSettings);
+
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA2, null);
         });
 
         it('uniswap', async function () {
@@ -353,6 +404,12 @@ describe('Router [UniV2]', async function () {
             );
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA, (await tx.wait()).gasUsed);
         });
+
+        it('matcha2', async function () {
+            const {settings: {gasUsedTableRow} } = await loadFixture(initContractsWithCaseSettings);
+
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA2, null);
+        })
 
         it('uniswap', async function () {
             const { addr1, tokens, uniswapv2, settings: { gasUsedTableRow, amount } } = await loadFixture(initContractsWithCaseSettings);
@@ -431,6 +488,12 @@ describe('Router [UniV2]', async function () {
             );
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA, (await tx.wait()).gasUsed);
         });
+
+        it('matcha2', async function () {
+            const {settings: {gasUsedTableRow} } = await loadFixture(initContractsWithCaseSettings);
+
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA2, null);
+        })
 
         it('uniswap', async function () {
             const { addr1, tokens, uniswapv2, settings: { gasUsedTableRow, amount } } = await loadFixture(initContractsWithCaseSettings);
