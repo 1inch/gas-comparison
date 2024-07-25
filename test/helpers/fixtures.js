@@ -1,5 +1,6 @@
 const { ether, constants } = require("@1inch/solidity-utils");
 const { ethers } = require("hardhat");
+const fs = require('fs');
 
 async function initRouterContracts () {
     const [addr1] = await ethers.getSigners();
@@ -9,7 +10,13 @@ async function initRouterContracts () {
     const uniswapv3 = await ethers.getContractAt('IUniswapV3Router', '0xE592427A0AEce92De3Edee1F18E0157C05861564');
     const uniswapUniversalRouter = await ethers.getContractAt('IUniversalRouter', '0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD') // uniswap's latest router
     const paraswap = await ethers.getContractAt('IParaswapRouter', '0x000dB803A70511E09dA650D4C0506d0000100000');
-
+    const settlerDeployer = await ethers.getContractAt([
+        "function ownerOf(uint256) external view returns (address)",
+        "function next(uint128) external view returns (address)",
+      ], '0x00000000000004533Fe15556B1E086BB1A72cEae');
+    const takerSubmitted = 2; 
+    const matcha2 = await ethers.getContractAt('ISettler', '0x7f6ceE965959295cC64d0E6c00d99d6532d8e86b'); // await ethers.getContractAt('ISettler', await settlerDeployer.ownerOf(takerSubmitted));
+    const settlerActionsABI = await JSON.parse(fs.readFileSync('./artifacts/contracts/interfaces/router/ISettlerActions.sol/ISettlerActions.json')).abi;
     const tokens = {
         ETH: {
             async getAddress () { return constants.ZERO_ADDRESS; },
@@ -42,7 +49,8 @@ async function initRouterContracts () {
     ); // USDT
     await tokens.WETH.deposit({ value: ether('1') }); // WETH
 
-    return { addr1, tokens, inch, matcha, paraswap, uniswapv2, uniswapv3, uniswapUniversalRouter };
+    return { addr1, tokens, inch, matcha, matcha2, settlerActionsABI, paraswap, 
+            uniswapv2, uniswapv3, uniswapUniversalRouter };
 }
 
 /**
