@@ -7,6 +7,7 @@ const ProtocolKey = {
     COWSWAP: 'cowswap',
     MATCHA: '0x',
     PARASWAP: 'paraswap',
+    MATCHA2: '0x settler'
 }
 
 /**
