@@ -1,6 +1,6 @@
 const { ether, constants } = require("@1inch/solidity-utils");
 const { ethers } = require("hardhat");
-const { PERMIT2_ADDRESS } = require('@uniswap/permit2-sdk');
+const { PERMIT2_ADDRESS, SignatureTransfer } = require('@uniswap/permit2-sdk');
 const fs = require('fs');
 
 async function initRouterContracts () {
@@ -16,7 +16,8 @@ async function initRouterContracts () {
         "function next(uint128) external view returns (address)",
       ], '0x00000000000004533Fe15556B1E086BB1A72cEae');
     const takerSubmitted = 2; 
-    const matcha2 = await ethers.getContractAt('ISettler', '0x7f6ceE965959295cC64d0E6c00d99d6532d8e86b'); // await ethers.getContractAt('ISettler', await settlerDeployer.ownerOf(takerSubmitted));
+    // the below line should be the following but fails because the chainId is wrong await ethers.getContractAt('ISettler', await settlerDeployer.ownerOf(takerSubmitted));
+    const matcha2 =   await ethers.getContractAt('ISettler', '0x07e594aa718bb872b526e93eed830a8d2a6a1071'); 
     const settlerActionsABI = await JSON.parse(fs.readFileSync('./artifacts/contracts/interfaces/router/ISettlerActions.sol/ISettlerActions.json')).abi;
     const tokens = {
         ETH: {
@@ -51,20 +52,20 @@ async function initRouterContracts () {
     ); // USDT
     await tokens.WETH.deposit({ value: ether('1') }); // WETH
 
-    let permitData = await SignatureTransfer.getPermitData({
+    let matcha2PermitData = await SignatureTransfer.getPermitData({
         permitted: {
             token: tokens.DAI.target,
-            amount: amount
+            amount: ether('1')
         }, 
         spender: matcha2.target,
         nonce: 0n,
         deadline: Date.now() + 1000,
     }, PERMIT2_ADDRESS, 31337, undefined); // 31337 is the chain ID, used to validate the signer
 
-    const permitSignature = await addr1.signTypedData(permitData.domain, permitData.types, permitData.values);
+    const permitSignature = await addr1.signTypedData(matcha2PermitData.domain, matcha2PermitData.types, matcha2PermitData.values);
 
     return { addr1, tokens, inch, matcha, matcha2, settlerActionsABI, paraswap, 
-            uniswapv2, uniswapv3, uniswapUniversalRouter, permitData, permitSignature };
+            uniswapv2, uniswapv3, uniswapUniversalRouter, matcha2PermitData, permitSignature };
 }
 
 /**
