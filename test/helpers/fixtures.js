@@ -1,5 +1,6 @@
 const { ether, constants } = require("@1inch/solidity-utils");
 const { ethers } = require("hardhat");
+const { PERMIT2_ADDRESS } = require('@uniswap/permit2-sdk');
 const fs = require('fs');
 
 async function initRouterContracts () {
@@ -36,6 +37,7 @@ async function initRouterContracts () {
     await tokens.DAI.approve(uniswapv3, ether('1'));
     await tokens.DAI.approve(paraswap, ether('1'));
     await tokens.DAI.approve(uniswapUniversalRouter, ether('1'));
+    await tokens.DAI.approve(PERMIT2_ADDRESS, ether('1'))
 
     // Buy some tokens for warmup address and exchanges
     await addr1.sendTransaction({ to: '0x2a1530c4c41db0b0b2bb646cb5eb1a67b7158667', value: ether('1') }); // DAI
@@ -49,8 +51,20 @@ async function initRouterContracts () {
     ); // USDT
     await tokens.WETH.deposit({ value: ether('1') }); // WETH
 
+    let permitData = await SignatureTransfer.getPermitData({
+        permitted: {
+            token: tokens.DAI.target,
+            amount: amount
+        }, 
+        spender: matcha2.target,
+        nonce: 0n,
+        deadline: Date.now() + 1000,
+    }, PERMIT2_ADDRESS, 31337, undefined); // 31337 is the chain ID, used to validate the signer
+
+    const permitSignature = await addr1.signTypedData(permitData.domain, permitData.types, permitData.values);
+
     return { addr1, tokens, inch, matcha, matcha2, settlerActionsABI, paraswap, 
-            uniswapv2, uniswapv3, uniswapUniversalRouter };
+            uniswapv2, uniswapv3, uniswapUniversalRouter, permitData, permitSignature };
 }
 
 /**
