@@ -46,6 +46,13 @@ describe('Router [UniV3]', async function () {
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA, (await tx.wait()).gasUsed);
         });
 
+        it('matcha2', async function () {
+            const {addr1, tokens, matcha2, permitSignature, matcha2PermitData, settings: {gasUsedTableRow, amount } } = await loadFixture(initRouterContractsWithCaseSettings);
+
+
+            
+        })
+
         it('uniswap', async function () {
             const { addr1, tokens, uniswapv3, settings: { gasUsedTableRow, amount } } = await loadFixture(initRouterContractsWithCaseSettings);
             const tx = await uniswapv3.exactInputSingle([
@@ -233,6 +240,38 @@ describe('Router [UniV3]', async function () {
             );
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA, (await tx.wait()).gasUsed);
         });
+
+        it('matcha2', async function () {
+            const { addr1, tokens, matcha2, settlerActionsABI, matcha2PermitData, permitSignature, settings: { gasUsedTableRow, amount } } = await loadFixture(initRouterContractsWithCaseSettings);            
+
+            const iface = new ethers.Interface(JSON.stringify(settlerActionsABI));
+
+            const encodedUniswapV3VIP = iface.encodeFunctionData('UNISWAPV3_VIP', [
+                addr1.address,
+                '0x128acb08' + ethers.AbiCoder.defaultAbiCoder().encode([
+                    'address', // recipient
+                    'bool', // zeroForOne
+                    'int256', // amount specified
+                    'uint160', // sqrtPriceLimitX96
+                    'bytes', // data
+                ], [matcha2.target, false, amount, false ? 4295128740n : 1461446703485210103287273052203988822378723970341n, '0x00'])
+                    .slice(2),
+                matcha2PermitData.values,
+                permitSignature,
+                0n
+            ])
+
+            const tx = await matcha2.execute(
+                {recipient: '0x0000000000000000000000000000000000000000', buyToken: '0x0000000000000000000000000000000000000000', minAmountOut: '0x00'},
+                [encodedUniswapV3VIP],
+                '0x0000000000000000000000000000000000000000000000000000000000000000',
+
+            )
+
+            console.log('Gas used:', (await tx.wait()).gasUsed.toString());
+
+
+        })
 
         it('uniswap', async function () {
             const { addr1, tokens, uniswapv3, settings: { gasUsedTableRow, amount } } = await loadFixture(initRouterContractsWithCaseSettings);
@@ -505,6 +544,8 @@ describe('Router [UniV3]', async function () {
             );
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA, (await tx.wait()).gasUsed);
         });
+
+
 
         it('uniswap', async function () {
             const { addr1, tokens, uniswapv3, settings: { gasUsedTableRow, amount } } = await loadFixture(initRouterContractsWithCaseSettings);
