@@ -7,8 +7,6 @@ const { createGasUsedTable } = require('./helpers/table');
 const { UniswapV3Pools } = require('./helpers/pools');
 const { RoutePlanner, CommandType } = require('@uniswap/universal-router-sdk');
 
-Error.stackTraceLimit = 1000;
-
 describe('Router [UniV3]', async function () {
     const gasUsedTable = createGasUsedTable('UniswapV3 pools', 'path');
 
