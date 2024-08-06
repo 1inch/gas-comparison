@@ -7,7 +7,7 @@ async function initRouterContracts() {
     const matcha = await ethers.getContractAt('IMatchaRouter', '0xdef1c0ded9bec7f1a1670819833240f027b25eff');
     const uniswapv2 = await ethers.getContractAt('IUniswapV2Router', '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D');
     const uniswapv3 = await ethers.getContractAt('IUniswapV3Router', '0xE592427A0AEce92De3Edee1F18E0157C05861564');
-    const uniswapUniversalRouter = await ethers.getContractAt('IUniversalRouter', '0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD'); // uniswap's latest router
+    const uniswapUniversalRouter = await ethers.getContractAt('UniversalRouter', '0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD'); // uniswap's latest router
     const paraswap = await ethers.getContractAt('IParaswapRouter', '0x000dB803A70511E09dA650D4C0506d0000100000');
     const permit2 = await ethers.getContractAt('contracts/interfaces/IPermit2.sol:IPermit2', '0x000000000022d473030f116ddee9f6b43ac78ba3');
 
