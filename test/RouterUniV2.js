@@ -5,6 +5,7 @@ const { ProtocolKey, paraswapUniV2PoolData } = require('./helpers/utils');
 const { initRouterContracts, adjustV2PoolTimestamps } = require('./helpers/fixtures');
 const { createGasUsedTable } = require('./helpers/table');
 const { UniswapV2Pools } = require('./helpers/pools');
+const { RoutePlanner, CommandType } = require('@uniswap/universal-router-sdk');
 
 describe('Router [UniV2]', async function () {
     const gasUsedTable = createGasUsedTable('UniswapV2 pools', 'path');
@@ -56,10 +57,28 @@ describe('Router [UniV2]', async function () {
             const {
                 addr1,
                 tokens,
-                uniswapv2,
+                uniswapUniversalRouter,
                 settings: { gasUsedTableRow, amount },
             } = await loadFixture(initContractsWithCaseSettings);
-            const tx = await uniswapv2.swapExactETHForTokens(amount, [tokens.WETH, tokens.DAI], addr1.address, '0xffffffffff', { value: amount });
+
+            const planner = new RoutePlanner();
+            // see https://github.com/Uniswap/sdks/blob/92b765bdf2759e5e6639a01728a96df81efbaa2b/sdks/universal-router-sdk/src/utils/routerCommands.ts#L87
+            planner.addCommand(CommandType.WRAP_ETH, [
+                UniswapV2Pools.WETH_DAI, // recipient
+                amount,
+            ]);
+            planner.addCommand(CommandType.V2_SWAP_EXACT_IN, [
+                addr1.address,
+                0, // amount 0 because pair already has wETH deposited
+                1, // minimum return
+                [tokens.WETH.target, tokens.DAI.target],
+                false,
+            ]);
+
+            const { commands, inputs } = planner;
+
+            const tx = await uniswapUniversalRouter["execute(bytes,bytes[])"](commands, inputs, { value: amount });
+
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP, (await tx.wait()).gasUsed);
         });
 
@@ -127,12 +146,29 @@ describe('Router [UniV2]', async function () {
 
         it('uniswap', async function () {
             const {
-                addr1,
                 tokens,
-                uniswapv2,
+                uniswapUniversalRouter,
                 settings: { gasUsedTableRow, amount },
+                addr1,
             } = await loadFixture(initContractsWithCaseSettings);
-            const tx = await uniswapv2.swapExactETHForTokens(amount, [tokens.WETH, tokens.USDC, tokens.DAI], addr1.address, '0xffffffffff', { value: amount });
+
+            const planner = new RoutePlanner();
+            planner.addCommand(CommandType.WRAP_ETH, [
+                UniswapV2Pools.WETH_USDC, // recipient
+                amount,
+            ]);
+
+            planner.addCommand(CommandType.V2_SWAP_EXACT_IN, [
+                addr1.address,
+                0, // amount 0 because pair already has wETH deposited
+                1, // minimum return
+                [tokens.WETH.target, tokens.USDC.target, tokens.DAI.target],
+                false,
+            ]);
+
+            const { commands, inputs } = planner;
+
+            const tx = await uniswapUniversalRouter["execute(bytes,bytes[])"](commands, inputs, { value: amount });
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP, (await tx.wait()).gasUsed);
         });
 
@@ -218,10 +254,20 @@ describe('Router [UniV2]', async function () {
             const {
                 addr1,
                 tokens,
-                uniswapv2,
+                uniswapUniversalRouter,
                 settings: { gasUsedTableRow, amount },
             } = await loadFixture(initContractsWithCaseSettings);
-            const tx = await uniswapv2.swapExactTokensForETH(amount, '1', [tokens.DAI, tokens.WETH], addr1.address, '0xffffffffff');
+
+            const planner = new RoutePlanner();
+
+            planner.addCommand(CommandType.V2_SWAP_EXACT_IN, [addr1.address, amount, 1, [tokens.DAI.target, tokens.WETH.target], true]);
+
+            planner.addCommand(CommandType.UNWRAP_WETH, [addr1.address, 0]);
+
+            const { commands, inputs } = planner;
+
+            const tx = await uniswapUniversalRouter["execute(bytes,bytes[])"](commands, inputs);
+
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP, (await tx.wait()).gasUsed);
         });
 
@@ -289,10 +335,18 @@ describe('Router [UniV2]', async function () {
             const {
                 addr1,
                 tokens,
-                uniswapv2,
+                uniswapUniversalRouter,
                 settings: { gasUsedTableRow, amount },
             } = await loadFixture(initContractsWithCaseSettings);
-            const tx = await uniswapv2.swapExactTokensForTokens(amount, '1', [tokens.DAI, tokens.WETH], addr1.address, '0xffffffffff');
+
+            const planner = new RoutePlanner();
+
+            planner.addCommand(CommandType.V2_SWAP_EXACT_IN, [addr1.address, amount, 1, [tokens.DAI.target, tokens.WETH.target], true]);
+
+            const { commands, inputs } = planner;
+
+            const tx = await uniswapUniversalRouter["execute(bytes,bytes[])"](commands, inputs);
+
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP, (await tx.wait()).gasUsed);
         });
 
@@ -367,10 +421,18 @@ describe('Router [UniV2]', async function () {
             const {
                 addr1,
                 tokens,
-                uniswapv2,
+                uniswapUniversalRouter,
                 settings: { gasUsedTableRow, amount },
             } = await loadFixture(initContractsWithCaseSettings);
-            const tx = await uniswapv2.swapExactTokensForTokens(amount, '1', [tokens.DAI, tokens.WETH, tokens.USDC], addr1.address, '0xffffffffff');
+
+            const planner = new RoutePlanner();
+
+            planner.addCommand(CommandType.V2_SWAP_EXACT_IN, [addr1.address, amount, 1, [tokens.DAI.target, tokens.WETH.target, tokens.USDC.target], true]);
+
+            const { commands, inputs } = planner;
+
+            const tx = await uniswapUniversalRouter["execute(bytes,bytes[])"](commands, inputs);
+
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP, (await tx.wait()).gasUsed);
         });
 
@@ -455,16 +517,24 @@ describe('Router [UniV2]', async function () {
             const {
                 addr1,
                 tokens,
-                uniswapv2,
+                uniswapUniversalRouter,
                 settings: { gasUsedTableRow, amount },
             } = await loadFixture(initContractsWithCaseSettings);
-            const tx = await uniswapv2.swapExactTokensForTokens(
-                amount,
-                '1',
-                [tokens.DAI, tokens.WETH, tokens.USDC, tokens.USDT],
+
+            const planner = new RoutePlanner();
+
+            planner.addCommand(CommandType.V2_SWAP_EXACT_IN, [
                 addr1.address,
-                '0xffffffffff',
-            );
+                amount,
+                1,
+                [tokens.DAI.target, tokens.WETH.target, tokens.USDC.target, tokens.USDT.target],
+                true,
+            ]);
+
+            const { commands, inputs } = planner;
+
+            const tx = await uniswapUniversalRouter["execute(bytes,bytes[])"](commands, inputs);
+
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP, (await tx.wait()).gasUsed);
         });
 

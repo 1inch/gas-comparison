@@ -7,8 +7,9 @@ async function initRouterContracts() {
     const matcha = await ethers.getContractAt('IMatchaRouter', '0xdef1c0ded9bec7f1a1670819833240f027b25eff');
     const uniswapv2 = await ethers.getContractAt('IUniswapV2Router', '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D');
     const uniswapv3 = await ethers.getContractAt('IUniswapV3Router', '0xE592427A0AEce92De3Edee1F18E0157C05861564');
-    const uniswapUniversalRouter = await ethers.getContractAt('IUniversalRouter', '0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD'); // uniswap's latest router
-    const paraswap = await ethers.getContractAt('IParaswapRouter', '0x6A000F20005980200259B80c5102003040001068');
+    const uniswapUniversalRouter = await ethers.getContractAt('IUniswapUniversalRouter', '0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD'); // uniswap's latest router
+    const paraswap = await ethers.getContractAt('IParaswapRouter', '0x000dB803A70511E09dA650D4C0506d0000100000');
+    const permit2 = await ethers.getContractAt('contracts/interfaces/IPermit2.sol:IPermit2', '0x000000000022d473030f116ddee9f6b43ac78ba3');
 
     const tokens = {
         ETH: {
@@ -32,7 +33,8 @@ async function initRouterContracts() {
     await tokens.DAI.approve(uniswapv2, ether('1'));
     await tokens.DAI.approve(uniswapv3, ether('1'));
     await tokens.DAI.approve(paraswap, ether('1'));
-    await tokens.DAI.approve(uniswapUniversalRouter, ether('1'));
+    await tokens.DAI.approve(permit2, ether('1'));
+    await permit2.approve(tokens.DAI.target, uniswapUniversalRouter.target, ether('1'), Date.now());
 
     // Buy some tokens for warmup address and exchanges
     await addr1.sendTransaction({ to: '0x2a1530c4c41db0b0b2bb646cb5eb1a67b7158667', value: ether('1') }); // DAI
@@ -59,7 +61,35 @@ async function adjustV2PoolTimestamps(ethers, poolsV2) {
     await ethers.provider.send('evm_setNextBlockTimestamp', [nextBlockTimestamp]);
 }
 
+function encodePathExactInput(tokens, feeAmounts) {
+    return encodePath(tokens, feeAmounts);
+}
+
+// @dev Encodes a path and fee amounts into a single string for uniswap v3 RoutePlanner
+// @param path - an array of token addresses
+// @param fees - an array of fee amounts associated with each pool
+// @returns the encoded path string
+// source: https://github.com/Uniswap/universal-router/blob/228f2d151a5fc99836d72ae00f81db92cdb44bd3/test/integration-tests/shared/swapRouter02Helpers.ts#L47
+function encodePath(path, fees) {
+    if (path.length !== fees.length + 1) {
+        throw new Error('path/fee lengths do not match');
+    }
+
+    let encoded = '0x';
+    for (let i = 0; i < fees.length; i++) {
+        // 20 byte encoding of the address
+        encoded += path[i].slice(2);
+        // 3 byte encoding of the fee
+        encoded += fees[i].toString(16).padStart(2 * 3, '0');
+    }
+    // encode the final token
+    encoded += path[path.length - 1].slice(2);
+
+    return encoded.toLowerCase();
+}
+
 module.exports = {
     initRouterContracts,
     adjustV2PoolTimestamps,
+    encodePathExactInput,
 };
