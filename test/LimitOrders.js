@@ -2,7 +2,7 @@ const hre = require('hardhat');
 const { ethers, getChainId } = hre;
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 const { NonceManager } = require('ethers');
-const { ether, constants } = require('@1inch/solidity-utils');
+const { ether, constants, permit2Contract } = require('@1inch/solidity-utils');
 const { fillWithMakingAmount, buildMakerTraits } = require('@1inch/limit-order-protocol-contract/test/helpers/orderUtils');
 const { InchOrder, MatchaOrder, UniswapOrder, ParaswapOrder } = require('./helpers/orders');
 const { expect } = require('chai');
@@ -11,7 +11,6 @@ const { createGasUsedTable } = require('./helpers/table');
 
 const PARASWAP_TOKEN_TRANSFER_PROXY = '0x216B4B4Ba9F3e719726886d34a177484278Bfcae';
 const PARASWAP_LIMIT_ORDERS = '0xe92b586627ccA7a83dC919cc7127196d70f55a06';
-const PERMIT2CONTRACT = '0x000000000022D473030F116dDEE9F6B43aC78BA3';
 
 describe('LimitOrders', async function () {
     const gasUsedTable = createGasUsedTable('Limit Orders', 'case');
@@ -26,6 +25,7 @@ describe('LimitOrders', async function () {
         const inch = await ethers.getContractAt('LimitOrderProtocol', '0x111111125421ca6dc452d289314280a0f8842a65');
         const uniswap = await ethers.getContractAt('IReactor', '0x6000da47483062A0D734Ba3dc7576Ce6A0B645C4');
         const matcha = await ethers.getContractAt('IMatcha', '0xDef1C0ded9bec7F1a1670819833240f027b25EfF');
+        const permit2 = await permit2Contract();
 
         const tokens = {
             ETH: {
@@ -54,11 +54,11 @@ describe('LimitOrders', async function () {
                 await token.connect(wallet).approve(uniswap, ether('1'));
                 await token.connect(wallet).approve(PARASWAP_TOKEN_TRANSFER_PROXY, ether('1'));
                 await token.connect(wallet).approve(PARASWAP_LIMIT_ORDERS, ether('1'));
-                await token.connect(wallet).approve(PERMIT2CONTRACT, ether('1'));
+                await token.connect(wallet).approve(permit2, ether('1'));
             }
         }
 
-        return { maker, taker, tokens, inch, matcha, uniswap };
+        return { maker, taker, tokens, inch, matcha, uniswap, permit2 };
     }
 
     describe('ETH => DAI', async function () {
@@ -112,6 +112,7 @@ describe('LimitOrders', async function () {
                 maker,
                 taker,
                 uniswap,
+                permit2,
                 settings: { gasUsedTableRow, makerToken, takerToken, makingAmount, takingAmount },
             } = await loadFixture(initContractsWithCaseSettings);
 
@@ -126,7 +127,7 @@ describe('LimitOrders', async function () {
                 outputTokenAddress: await takerToken.getAddress(),
                 inputAmount: makingAmount,
                 outputAmount: takingAmount,
-                permit2contractAddress: PERMIT2CONTRACT,
+                permit2contractAddress: await permit2.getAddress(),
             });
             const signedOrder = await uniswapOrder.sign(maker);
             const tx = await uniswap.connect(taker).execute(signedOrder, { value: uniswapOrder.order.info.outputs[0].startAmount });
@@ -218,6 +219,7 @@ describe('LimitOrders', async function () {
                 maker,
                 taker,
                 uniswap,
+                permit2,
                 settings: { gasUsedTableRow, makerToken, takerToken, makingAmount, takingAmount },
             } = await loadFixture(initContractsWithCaseSettings);
 
@@ -232,7 +234,7 @@ describe('LimitOrders', async function () {
                 outputTokenAddress: await takerToken.getAddress(),
                 inputAmount: makingAmount,
                 outputAmount: takingAmount,
-                permit2contractAddress: PERMIT2CONTRACT,
+                permit2contractAddress: await permit2.getAddress(),
             });
             const signedOrder = await uniswapOrder.sign(maker);
             const tx = await uniswap.connect(taker).execute(signedOrder);
