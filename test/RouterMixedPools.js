@@ -1,6 +1,6 @@
 const { ethers } = require('hardhat');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
-const { ether, permit2Contract } = require('@1inch/solidity-utils');
+const { ether } = require('@1inch/solidity-utils');
 const { ProtocolKey } = require('./helpers/utils');
 const { initRouterContracts, adjustV2PoolTimestamps, encodePathExactInput } = require('./helpers/fixtures');
 const { createGasUsedTable } = require('./helpers/table');
@@ -71,7 +71,7 @@ describe('Mixed pools', async function () {
                 false,
             ]);
             const { commands, inputs } = planner;
-            const tx = await uniswapUniversalRouter["execute(bytes,bytes[])"](commands, inputs, { value: amount });
+            const tx = await uniswapUniversalRouter['execute(bytes,bytes[])'](commands, inputs, { value: amount });
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP, (await tx.wait()).gasUsed);
         });
     });
@@ -131,7 +131,7 @@ describe('Mixed pools', async function () {
                 false,
             ]);
             const { commands, inputs } = planner;
-            const tx = await uniswapUniversalRouter["execute(bytes,bytes[])"](commands, inputs, { value: amount });
+            const tx = await uniswapUniversalRouter['execute(bytes,bytes[])'](commands, inputs, { value: amount });
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP, (await tx.wait()).gasUsed);
         });
     });
@@ -184,7 +184,7 @@ describe('Mixed pools', async function () {
                 false,
             ]);
             const { commands, inputs } = planner;
-            const tx = await uniswapUniversalRouter["execute(bytes,bytes[])"](commands, inputs);
+            const tx = await uniswapUniversalRouter['execute(bytes,bytes[])'](commands, inputs);
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP, (await tx.wait()).gasUsed);
         });
     });
@@ -243,7 +243,7 @@ describe('Mixed pools', async function () {
                 false,
             ]);
             const { commands, inputs } = planner;
-            const tx = await uniswapUniversalRouter["execute(bytes,bytes[])"](commands, inputs);
+            const tx = await uniswapUniversalRouter['execute(bytes,bytes[])'](commands, inputs);
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP, (await tx.wait()).gasUsed);
         });
     });
