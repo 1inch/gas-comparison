@@ -3,7 +3,9 @@ const { trim0x } = require('@1inch/solidity-utils');
 
 const ProtocolKey = {
     INCH: '1inch',
-    UNISWAP: 'uniswap',
+    UNISWAP_V2: 'uniswap v2',
+    UNISWAP_V3: 'uniswap v3',
+    UNISWAP_UNIVERSAL: 'universal router',
     COWSWAP: 'cowswap',
     MATCHA: '0x',
     PARASWAP: 'paraswap',

@@ -53,7 +53,7 @@ describe('Router [UniV3]', async function () {
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA, (await tx.wait()).gasUsed);
         });
 
-        it('uniswap', async function () {
+        it('uniswap universal router', async function () {
             const {
                 addr1,
                 tokens,
@@ -76,7 +76,20 @@ describe('Router [UniV3]', async function () {
             const tx = await uniswapUniversalRouter["execute(bytes,bytes[])"](commands, inputs, { value: amount });
             const receipt = await tx.wait();
 
-            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP, receipt.gasUsed);
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP_UNIVERSAL, receipt.gasUsed);
+        });
+
+        it('uniswap v3 router', async function () {
+            const {
+                addr1,
+                tokens,
+                uniswapv3,
+                settings: { gasUsedTableRow, amount },
+            } = await loadFixture(initRouterContractsWithCaseSettings);
+            const tx = await uniswapv3.exactInputSingle([tokens.WETH, tokens.DAI, UniswapV3Pools.WETH_DAI.fee, addr1.address, '0xffffffff', amount, '1', '0'], {
+                value: amount,
+            });
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP_V3, (await tx.wait()).gasUsed);
         });
 
         it('paraswap', async function () {
@@ -165,7 +178,7 @@ describe('Router [UniV3]', async function () {
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA, (await tx.wait()).gasUsed);
         });
 
-        it('uniswap', async function () {
+        it('uniswap universal router', async function () {
             const {
                 addr1,
                 tokens,
@@ -189,7 +202,33 @@ describe('Router [UniV3]', async function () {
 
             const tx = await uniswapUniversalRouter["execute(bytes,bytes[])"](commands, inputs, { value: amount });
 
-            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP, (await tx.wait()).gasUsed);
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP_UNIVERSAL, (await tx.wait()).gasUsed);
+        });
+
+        it('uniswap v3 router', async function () {
+            const {
+                addr1,
+                tokens,
+                uniswapv3,
+                settings: { gasUsedTableRow, amount },
+            } = await loadFixture(initRouterContractsWithCaseSettings);
+            const tx = await uniswapv3.exactInput(
+                [
+                    ethers.concat([
+                        tokens.WETH.target,
+                        ethers.toBeHex(UniswapV3Pools.WETH_USDC.fee, 3),
+                        tokens.USDC.target,
+                        ethers.toBeHex(UniswapV3Pools.USDC_DAI.fee, 3),
+                        tokens.DAI.target,
+                    ]),
+                    addr1.address,
+                    '0xffffffff',
+                    amount,
+                    '1',
+                ],
+                { value: amount },
+            );
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP_V3, (await tx.wait()).gasUsed);
         });
 
         it('paraswap', async function () {
@@ -289,7 +328,7 @@ describe('Router [UniV3]', async function () {
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA, (await tx.wait()).gasUsed);
         });
 
-        it('uniswap', async function () {
+        it('uniswap universal router', async function () {
             const {
                 addr1,
                 tokens,
@@ -313,7 +352,31 @@ describe('Router [UniV3]', async function () {
 
             const tx = await uniswapUniversalRouter["execute(bytes,bytes[])"](commands, inputs);
 
-            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP, (await tx.wait()).gasUsed);
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP_UNIVERSAL, (await tx.wait()).gasUsed);
+        });
+
+        it('uniswap v3 router', async function () {
+            const {
+                addr1,
+                tokens,
+                uniswapv3,
+                settings: { gasUsedTableRow, amount },
+            } = await loadFixture(initRouterContractsWithCaseSettings);
+            const swapData = uniswapv3.interface.encodeFunctionData('exactInputSingle', [
+                [
+                    await tokens.DAI.getAddress(),
+                    await tokens.WETH.getAddress(),
+                    UniswapV3Pools.WETH_DAI.fee,
+                    constants.ZERO_ADDRESS,
+                    '0xffffffff',
+                    amount,
+                    '1',
+                    '0',
+                ],
+            ]);
+            const unwrapData = uniswapv3.interface.encodeFunctionData('unwrapWETH9', ['1', addr1.address]);
+            const tx = await uniswapv3.multicall([swapData, unwrapData]);
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP_V3, (await tx.wait()).gasUsed);
         });
 
         it('paraswap', async function () {
@@ -402,7 +465,7 @@ describe('Router [UniV3]', async function () {
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA, (await tx.wait()).gasUsed);
         });
 
-        it('uniswap', async function () {
+        it('uniswap universal router', async function () {
             const {
                 addr1,
                 tokens,
@@ -424,7 +487,18 @@ describe('Router [UniV3]', async function () {
 
             const tx = await uniswapUniversalRouter["execute(bytes,bytes[])"](commands, inputs);
 
-            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP, (await tx.wait()).gasUsed);
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP_UNIVERSAL, (await tx.wait()).gasUsed);
+        });
+
+        it('uniswap v3 router', async function () {
+            const {
+                addr1,
+                tokens,
+                uniswapv3,
+                settings: { gasUsedTableRow, amount },
+            } = await loadFixture(initRouterContractsWithCaseSettings);
+            const tx = await uniswapv3.exactInputSingle([tokens.DAI, tokens.WETH, UniswapV3Pools.WETH_DAI.fee, addr1.address, '0xffffffff', amount, '1', '0']);
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP_V3, (await tx.wait()).gasUsed);
         });
 
         it('paraswap', async function () {
@@ -520,7 +594,7 @@ describe('Router [UniV3]', async function () {
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA, (await tx.wait()).gasUsed);
         });
 
-        it('uniswap', async function () {
+        it('uniswap universal router', async function () {
             const {
                 addr1,
                 tokens,
@@ -542,7 +616,30 @@ describe('Router [UniV3]', async function () {
 
             const tx = await uniswapUniversalRouter["execute(bytes,bytes[])"](commands, inputs);
 
-            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP, (await tx.wait()).gasUsed);
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP_UNIVERSAL, (await tx.wait()).gasUsed);
+        });
+
+        it('uniswap v3 router', async function () {
+            const {
+                addr1,
+                tokens,
+                uniswapv3,
+                settings: { gasUsedTableRow, amount },
+            } = await loadFixture(initRouterContractsWithCaseSettings);
+            const tx = await uniswapv3.exactInput({
+                path: ethers.concat([
+                    tokens.DAI.target,
+                    ethers.toBeHex(UniswapV3Pools.WETH_DAI.fee, 3),
+                    tokens.WETH.target,
+                    ethers.toBeHex(UniswapV3Pools.WETH_USDC.fee, 3),
+                    tokens.USDC.target,
+                ]),
+                recipient: addr1.address,
+                deadline: '0xffffffff',
+                amountIn: amount,
+                amountOutMinimum: '1',
+            });
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP_V3, (await tx.wait()).gasUsed);
         });
 
         it('paraswap', async function () {
@@ -648,7 +745,7 @@ describe('Router [UniV3]', async function () {
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA, (await tx.wait()).gasUsed);
         });
 
-        it('uniswap', async function () {
+        it('uniswap universal router', async function () {
             const {
                 addr1,
                 tokens,
@@ -673,7 +770,32 @@ describe('Router [UniV3]', async function () {
 
             const tx = await uniswapUniversalRouter["execute(bytes,bytes[])"](commands, inputs);
 
-            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP, (await tx.wait()).gasUsed);
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP_UNIVERSAL, (await tx.wait()).gasUsed);
+        });
+
+        it('uniswap v3 router', async function () {
+            const {
+                addr1,
+                tokens,
+                uniswapv3,
+                settings: { gasUsedTableRow, amount },
+            } = await loadFixture(initRouterContractsWithCaseSettings);
+            const tx = await uniswapv3.exactInput({
+                path: ethers.concat([
+                    tokens.DAI.target,
+                    ethers.toBeHex(UniswapV3Pools.WETH_DAI.fee, 3),
+                    tokens.WETH.target,
+                    ethers.toBeHex(UniswapV3Pools.WETH_USDC.fee, 3),
+                    tokens.USDC.target,
+                    ethers.toBeHex(UniswapV3Pools.USDT_USDC.fee, 3),
+                    tokens.USDT.target,
+                ]),
+                recipient: addr1.address,
+                deadline: '0xffffffff',
+                amountIn: amount,
+                amountOutMinimum: '1',
+            });
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP_V3, (await tx.wait()).gasUsed);
         });
 
         it('paraswap', async function () {
