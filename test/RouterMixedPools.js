@@ -1,8 +1,8 @@
 const { ethers } = require('hardhat');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 const { ether } = require('@1inch/solidity-utils');
-const { ProtocolKey } = require('./helpers/utils');
-const { initRouterContracts, adjustV2PoolTimestamps, encodePathExactInput } = require('./helpers/fixtures');
+const { ProtocolKey, uniswapV3EncodePath } = require('./helpers/utils');
+const { initRouterContracts, adjustV2PoolTimestamps } = require('./helpers/fixtures');
 const { createGasUsedTable } = require('./helpers/table');
 const { UniswapV2Pools, UniswapV3Pools } = require('./helpers/pools');
 const { RoutePlanner, CommandType } = require('@uniswap/universal-router-sdk');
@@ -67,7 +67,7 @@ describe('Mixed pools', async function () {
                 addr1.address,
                 '0x8000000000000000000000000000000000000000000000000000000000000000',
                 '1',
-                encodePathExactInput([tokens.DAI.target, tokens.USDC.target], [UniswapV3Pools.USDC_DAI.fee]),
+                uniswapV3EncodePath([tokens.DAI.target, tokens.USDC.target], [UniswapV3Pools.USDC_DAI.fee]),
                 false,
             ]);
             const { commands, inputs } = planner;
@@ -120,7 +120,7 @@ describe('Mixed pools', async function () {
                 UniswapV2Pools.USDC_DAI,
                 amount,
                 '1',
-                encodePathExactInput([tokens.WETH.target, tokens.DAI.target], [UniswapV3Pools.WETH_DAI.fee]),
+                uniswapV3EncodePath([tokens.WETH.target, tokens.DAI.target], [UniswapV3Pools.WETH_DAI.fee]),
                 false,
             ]);
             planner.addCommand(CommandType.V2_SWAP_EXACT_IN, [
@@ -180,7 +180,7 @@ describe('Mixed pools', async function () {
                 addr1.address,
                 '0x8000000000000000000000000000000000000000000000000000000000000000',
                 '1',
-                encodePathExactInput([tokens.WETH.target, tokens.USDC.target], [UniswapV3Pools.WETH_USDC.fee]),
+                uniswapV3EncodePath([tokens.WETH.target, tokens.USDC.target], [UniswapV3Pools.WETH_USDC.fee]),
                 false,
             ]);
             const { commands, inputs } = planner;
@@ -232,7 +232,7 @@ describe('Mixed pools', async function () {
                 UniswapV2Pools.WETH_USDC,
                 amount,
                 '1',
-                encodePathExactInput([tokens.DAI.target, tokens.WETH.target], [UniswapV3Pools.WETH_DAI.fee]),
+                uniswapV3EncodePath([tokens.DAI.target, tokens.WETH.target], [UniswapV3Pools.WETH_DAI.fee]),
                 true,
             ]);
             planner.addCommand(CommandType.V2_SWAP_EXACT_IN, [

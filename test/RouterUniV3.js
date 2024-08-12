@@ -1,8 +1,8 @@
 const { ethers } = require('hardhat');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 const { ether, constants } = require('@1inch/solidity-utils');
-const { ProtocolKey } = require('./helpers/utils');
-const { initRouterContracts, encodePathExactInput } = require('./helpers/fixtures');
+const { ProtocolKey, uniswapV3EncodePath } = require('./helpers/utils');
+const { initRouterContracts } = require('./helpers/fixtures');
 const { createGasUsedTable } = require('./helpers/table');
 const { UniswapV3Pools } = require('./helpers/pools');
 const { RoutePlanner, CommandType } = require('@uniswap/universal-router-sdk');
@@ -67,7 +67,7 @@ describe('Router [UniV3]', async function () {
                 addr1.address,
                 amount,
                 '1',
-                encodePathExactInput([tokens.WETH.target, tokens.DAI.target], [UniswapV3Pools.WETH_DAI.fee]),
+                uniswapV3EncodePath([tokens.WETH.target, tokens.DAI.target], [UniswapV3Pools.WETH_DAI.fee]),
                 false,
             ]);
 
@@ -194,7 +194,7 @@ describe('Router [UniV3]', async function () {
                 addr1.address,
                 amount,
                 '1',
-                encodePathExactInput([tokens.WETH.target, tokens.USDC.target, tokens.DAI.target], [UniswapV3Pools.WETH_USDC.fee, UniswapV3Pools.USDC_DAI.fee]),
+                uniswapV3EncodePath([tokens.WETH.target, tokens.USDC.target, tokens.DAI.target], [UniswapV3Pools.WETH_USDC.fee, UniswapV3Pools.USDC_DAI.fee]),
                 false,
             ]);
 
@@ -342,7 +342,7 @@ describe('Router [UniV3]', async function () {
                 addr1.address,
                 amount,
                 '1',
-                encodePathExactInput([tokens.DAI.target, tokens.WETH.target], [UniswapV3Pools.WETH_DAI.fee]),
+                uniswapV3EncodePath([tokens.DAI.target, tokens.WETH.target], [UniswapV3Pools.WETH_DAI.fee]),
                 true,
             ]);
 
@@ -479,7 +479,7 @@ describe('Router [UniV3]', async function () {
                 addr1.address,
                 amount,
                 '1',
-                encodePathExactInput([tokens.DAI.target, tokens.WETH.target], [UniswapV3Pools.WETH_DAI.fee]),
+                uniswapV3EncodePath([tokens.DAI.target, tokens.WETH.target], [UniswapV3Pools.WETH_DAI.fee]),
                 true,
             ]);
 
@@ -608,7 +608,7 @@ describe('Router [UniV3]', async function () {
                 addr1.address,
                 amount,
                 '1',
-                encodePathExactInput([tokens.DAI.target, tokens.WETH.target, tokens.USDC.target], [UniswapV3Pools.WETH_DAI.fee, UniswapV3Pools.WETH_USDC.fee]),
+                uniswapV3EncodePath([tokens.DAI.target, tokens.WETH.target, tokens.USDC.target], [UniswapV3Pools.WETH_DAI.fee, UniswapV3Pools.WETH_USDC.fee]),
                 true,
             ]);
 
@@ -759,7 +759,7 @@ describe('Router [UniV3]', async function () {
                 addr1.address,
                 amount,
                 '1',
-                encodePathExactInput(
+                uniswapV3EncodePath(
                     [tokens.DAI.target, tokens.WETH.target, tokens.USDC.target, tokens.USDT.target],
                     [UniswapV3Pools.WETH_DAI.fee, UniswapV3Pools.WETH_USDC.fee, UniswapV3Pools.USDT_USDC.fee],
                 ),
