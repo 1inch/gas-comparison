@@ -1,4 +1,4 @@
-const { ether, constants } = require('@1inch/solidity-utils');
+const { ether, constants, permit2Contract } = require('@1inch/solidity-utils');
 const { ethers } = require('hardhat');
 
 async function initRouterContracts() {
@@ -9,7 +9,7 @@ async function initRouterContracts() {
     const uniswapv3 = await ethers.getContractAt('IUniswapV3Router', '0xE592427A0AEce92De3Edee1F18E0157C05861564');
     const uniswapUniversalRouter = await ethers.getContractAt('IUniswapUniversalRouter', '0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD'); // uniswap's latest router
     const paraswap = await ethers.getContractAt('IParaswapRouter', '0x000dB803A70511E09dA650D4C0506d0000100000');
-    const permit2 = await ethers.getContractAt('contracts/interfaces/IPermit2.sol:IPermit2', '0x000000000022d473030f116ddee9f6b43ac78ba3');
+    const permit2 = await permit2Contract();
 
     const tokens = {
         ETH: {
@@ -34,7 +34,7 @@ async function initRouterContracts() {
     await tokens.DAI.approve(uniswapv3, ether('1'));
     await tokens.DAI.approve(paraswap, ether('1'));
     await tokens.DAI.approve(permit2, ether('1'));
-    await permit2.approve(tokens.DAI.target, uniswapUniversalRouter.target, ether('1'), Date.now());
+    await permit2.approve(tokens.DAI, uniswapUniversalRouter, ether('1'), Date.now());
 
     // Buy some tokens for warmup address and exchanges
     await addr1.sendTransaction({ to: '0x2a1530c4c41db0b0b2bb646cb5eb1a67b7158667', value: ether('1') }); // DAI

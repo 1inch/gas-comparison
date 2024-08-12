@@ -1,9 +1,14 @@
 const { ethers } = require('hardhat');
 const { trim0x } = require('@1inch/solidity-utils');
+const { MixedRouteTrade, MixedRouteSDK, Trade } = require('@uniswap/router-sdk');
+const { SwapRouter, UniswapTrade } = require('@uniswap/universal-router-sdk');
+const { Pool } = require('@uniswap/v3-sdk');
+const { Pair } = require('@uniswap/v2-sdk');
+const { CurrencyAmount, Token, TradeType, Ether, Percent } = require('@uniswap/sdk-core');
 
 const ProtocolKey = {
     INCH: '1inch',
-    UNISWAP: 'uniswap', 
+    UNISWAP: 'uniswap',
     UNISWAP_V2: 'uniswap v2',
     UNISWAP_V3: 'uniswap v3',
     UNISWAP_UNIVERSAL: 'universal router',
