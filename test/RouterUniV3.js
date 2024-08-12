@@ -57,12 +57,12 @@ describe('Router [UniV3]', async function () {
             const {
                 addr1,
                 tokens,
-                uniswapUniversalRouter,
+                uniswapUniversal,
                 settings: { gasUsedTableRow, amount },
             } = await loadFixture(initRouterContractsWithCaseSettings);
 
             const planner = new RoutePlanner();
-            planner.addCommand(CommandType.WRAP_ETH, [uniswapUniversalRouter.target, amount]);
+            planner.addCommand(CommandType.WRAP_ETH, [uniswapUniversal.target, amount]);
             planner.addCommand(CommandType.V3_SWAP_EXACT_IN, [
                 addr1.address,
                 amount,
@@ -73,7 +73,7 @@ describe('Router [UniV3]', async function () {
 
             const { commands, inputs } = planner;
 
-            const tx = await uniswapUniversalRouter['execute(bytes,bytes[])'](commands, inputs, { value: amount });
+            const tx = await uniswapUniversal['execute(bytes,bytes[])'](commands, inputs, { value: amount });
             const receipt = await tx.wait();
 
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP_UNIVERSAL, receipt.gasUsed);
@@ -182,13 +182,13 @@ describe('Router [UniV3]', async function () {
             const {
                 addr1,
                 tokens,
-                uniswapUniversalRouter,
+                uniswapUniversal,
                 settings: { gasUsedTableRow, amount },
             } = await loadFixture(initRouterContractsWithCaseSettings);
 
             const planner = new RoutePlanner();
 
-            planner.addCommand(CommandType.WRAP_ETH, [uniswapUniversalRouter.target, amount]);
+            planner.addCommand(CommandType.WRAP_ETH, [uniswapUniversal.target, amount]);
 
             planner.addCommand(CommandType.V3_SWAP_EXACT_IN, [
                 addr1.address,
@@ -200,7 +200,7 @@ describe('Router [UniV3]', async function () {
 
             const { commands, inputs } = planner;
 
-            const tx = await uniswapUniversalRouter['execute(bytes,bytes[])'](commands, inputs, { value: amount });
+            const tx = await uniswapUniversal['execute(bytes,bytes[])'](commands, inputs, { value: amount });
 
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP_UNIVERSAL, (await tx.wait()).gasUsed);
         });
@@ -332,7 +332,7 @@ describe('Router [UniV3]', async function () {
             const {
                 addr1,
                 tokens,
-                uniswapUniversalRouter,
+                uniswapUniversal,
                 settings: { gasUsedTableRow, amount },
             } = await loadFixture(initRouterContractsWithCaseSettings);
 
@@ -350,7 +350,7 @@ describe('Router [UniV3]', async function () {
 
             const { commands, inputs } = planner;
 
-            const tx = await uniswapUniversalRouter['execute(bytes,bytes[])'](commands, inputs);
+            const tx = await uniswapUniversal['execute(bytes,bytes[])'](commands, inputs);
 
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP_UNIVERSAL, (await tx.wait()).gasUsed);
         });
@@ -469,7 +469,7 @@ describe('Router [UniV3]', async function () {
             const {
                 addr1,
                 tokens,
-                uniswapUniversalRouter,
+                uniswapUniversal,
                 settings: { gasUsedTableRow, amount },
             } = await loadFixture(initRouterContractsWithCaseSettings);
 
@@ -485,7 +485,7 @@ describe('Router [UniV3]', async function () {
 
             const { commands, inputs } = planner;
 
-            const tx = await uniswapUniversalRouter['execute(bytes,bytes[])'](commands, inputs);
+            const tx = await uniswapUniversal['execute(bytes,bytes[])'](commands, inputs);
 
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP_UNIVERSAL, (await tx.wait()).gasUsed);
         });
@@ -598,7 +598,7 @@ describe('Router [UniV3]', async function () {
             const {
                 addr1,
                 tokens,
-                uniswapUniversalRouter,
+                uniswapUniversal,
                 settings: { gasUsedTableRow, amount },
             } = await loadFixture(initRouterContractsWithCaseSettings);
 
@@ -614,7 +614,7 @@ describe('Router [UniV3]', async function () {
 
             const { commands, inputs } = planner;
 
-            const tx = await uniswapUniversalRouter['execute(bytes,bytes[])'](commands, inputs);
+            const tx = await uniswapUniversal['execute(bytes,bytes[])'](commands, inputs);
 
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP_UNIVERSAL, (await tx.wait()).gasUsed);
         });
@@ -749,7 +749,7 @@ describe('Router [UniV3]', async function () {
             const {
                 addr1,
                 tokens,
-                uniswapUniversalRouter,
+                uniswapUniversal,
                 settings: { gasUsedTableRow, amount },
             } = await loadFixture(initRouterContractsWithCaseSettings);
 
@@ -768,7 +768,7 @@ describe('Router [UniV3]', async function () {
 
             const { commands, inputs } = planner;
 
-            const tx = await uniswapUniversalRouter['execute(bytes,bytes[])'](commands, inputs);
+            const tx = await uniswapUniversal['execute(bytes,bytes[])'](commands, inputs);
 
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP_UNIVERSAL, (await tx.wait()).gasUsed);
         });

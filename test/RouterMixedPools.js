@@ -55,14 +55,14 @@ describe('Mixed pools', async function () {
         it('uniswap', async function () {
             const {
                 addr1,
-                uniswapUniversalRouter,
+                uniswapUniversal,
                 tokens,
                 settings: { gasUsedTableRow, amount },
             } = await loadFixture(initContractsWithCaseSettings);
 
             const planner = new RoutePlanner();
-            planner.addCommand(CommandType.WRAP_ETH, [uniswapUniversalRouter.target, amount]);
-            planner.addCommand(CommandType.V2_SWAP_EXACT_IN, [uniswapUniversalRouter.target, amount, '1', [tokens.WETH.target, tokens.DAI.target], false]);
+            planner.addCommand(CommandType.WRAP_ETH, [uniswapUniversal.target, amount]);
+            planner.addCommand(CommandType.V2_SWAP_EXACT_IN, [uniswapUniversal.target, amount, '1', [tokens.WETH.target, tokens.DAI.target], false]);
             planner.addCommand(CommandType.V3_SWAP_EXACT_IN, [
                 addr1.address,
                 '0x8000000000000000000000000000000000000000000000000000000000000000',
@@ -71,7 +71,7 @@ describe('Mixed pools', async function () {
                 false,
             ]);
             const { commands, inputs } = planner;
-            const tx = await uniswapUniversalRouter['execute(bytes,bytes[])'](commands, inputs, { value: amount });
+            const tx = await uniswapUniversal['execute(bytes,bytes[])'](commands, inputs, { value: amount });
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP, (await tx.wait()).gasUsed);
         });
     });
@@ -109,13 +109,13 @@ describe('Mixed pools', async function () {
         it('uniswap', async function () {
             const {
                 addr1,
-                uniswapUniversalRouter,
+                uniswapUniversal,
                 tokens,
                 settings: { gasUsedTableRow, amount },
             } = await loadFixture(initContractsWithCaseSettings);
 
             const planner = new RoutePlanner();
-            planner.addCommand(CommandType.WRAP_ETH, [uniswapUniversalRouter.target, amount]);
+            planner.addCommand(CommandType.WRAP_ETH, [uniswapUniversal.target, amount]);
             planner.addCommand(CommandType.V3_SWAP_EXACT_IN, [
                 UniswapV2Pools.USDC_DAI,
                 amount,
@@ -131,7 +131,7 @@ describe('Mixed pools', async function () {
                 false,
             ]);
             const { commands, inputs } = planner;
-            const tx = await uniswapUniversalRouter['execute(bytes,bytes[])'](commands, inputs, { value: amount });
+            const tx = await uniswapUniversal['execute(bytes,bytes[])'](commands, inputs, { value: amount });
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP, (await tx.wait()).gasUsed);
         });
     });
@@ -169,13 +169,13 @@ describe('Mixed pools', async function () {
         it('uniswap', async function () {
             const {
                 addr1,
-                uniswapUniversalRouter,
+                uniswapUniversal,
                 tokens,
                 settings: { gasUsedTableRow, amount },
             } = await loadFixture(initContractsWithCaseSettings);
 
             const planner = new RoutePlanner();
-            planner.addCommand(CommandType.V2_SWAP_EXACT_IN, [uniswapUniversalRouter.target, amount, '1', [tokens.DAI.target, tokens.WETH.target], true]);
+            planner.addCommand(CommandType.V2_SWAP_EXACT_IN, [uniswapUniversal.target, amount, '1', [tokens.DAI.target, tokens.WETH.target], true]);
             planner.addCommand(CommandType.V3_SWAP_EXACT_IN, [
                 addr1.address,
                 '0x8000000000000000000000000000000000000000000000000000000000000000',
@@ -184,7 +184,7 @@ describe('Mixed pools', async function () {
                 false,
             ]);
             const { commands, inputs } = planner;
-            const tx = await uniswapUniversalRouter['execute(bytes,bytes[])'](commands, inputs);
+            const tx = await uniswapUniversal['execute(bytes,bytes[])'](commands, inputs);
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP, (await tx.wait()).gasUsed);
         });
     });
@@ -222,7 +222,7 @@ describe('Mixed pools', async function () {
         it('uniswap', async function () {
             const {
                 addr1,
-                uniswapUniversalRouter,
+                uniswapUniversal,
                 tokens,
                 settings: { gasUsedTableRow, amount },
             } = await loadFixture(initContractsWithCaseSettings);
@@ -243,7 +243,7 @@ describe('Mixed pools', async function () {
                 false,
             ]);
             const { commands, inputs } = planner;
-            const tx = await uniswapUniversalRouter['execute(bytes,bytes[])'](commands, inputs);
+            const tx = await uniswapUniversal['execute(bytes,bytes[])'](commands, inputs);
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP, (await tx.wait()).gasUsed);
         });
     });
