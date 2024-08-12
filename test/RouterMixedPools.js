@@ -25,9 +25,7 @@ describe('Mixed pools', async function () {
         // This fixture is used to approve tokens in the permit2 contract and doesn't use permit functionality
         const fixtureData = await initContracts();
 
-        // TODO: add this abi method to the interface in solidity-utils
-        const abi = ['function approve(address token, address spender, uint160 amount, uint48 expiration) external'];
-        const permit2 = await ethers.getContractAt(abi, (await permit2Contract()).target);
+        const permit2 = await permit2Contract();
         await fixtureData.tokens.DAI.approve(permit2, ether('1'));
         await permit2.approve(fixtureData.tokens.DAI, fixtureData.uniswapUniversalRouter, ether('1'), Date.now());
         await permit2.approve(fixtureData.tokens.DAI, fixtureData.inch, ether('1'), Date.now());
