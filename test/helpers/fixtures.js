@@ -16,8 +16,8 @@ async function initRouterContracts () {
         "function next(uint128) external view returns (address)",
       ], '0x00000000000004533Fe15556B1E086BB1A72cEae');
     const takerSubmitted = 2; 
-    // the below line should be the following but fails because the chainId is wrong await ethers.getContractAt('ISettler', await settlerDeployer.ownerOf(takerSubmitted));
-    const matcha2 =   await ethers.getContractAt('ISettler', '0x07e594aa718bb872b526e93eed830a8d2a6a1071'); 
+    // the below line should be the following but fails because the chainId is wrong // await ethers.getContractAt('ISettler', await settlerDeployer.ownerOf(takerSubmitted));
+    const matcha2 =   await ethers.getContractAt('ISettler', '0x2c4b05349418ef279184f07590e61af27cf3a86b'); 
     const settlerActionsABI = await JSON.parse(fs.readFileSync('./artifacts/contracts/interfaces/router/ISettlerActions.sol/ISettlerActions.json')).abi;
     const tokens = {
         ETH: {
