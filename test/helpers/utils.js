@@ -32,8 +32,13 @@ function paraswapUniV2PoolData (pools) {
     return result;
 }
 
+function encodeUniswapPath(sourceToken, fork, feeTeir, destinationToken)
+{
+    return '0x' + (BigInt(sourceToken) << 192n | BigInt(fork) << 184n | BigInt(feeTeir) << 160n | BigInt(destinationToken)).toString(16);
+}
 module.exports = {
     ProtocolKey,
     percentageOf,
     paraswapUniV2PoolData,
+    encodeUniswapPath
 };
