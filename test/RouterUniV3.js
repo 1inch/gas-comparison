@@ -1,7 +1,7 @@
 const { ethers } = require('hardhat');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 const { ether, constants } = require('@1inch/solidity-utils');
-const { ProtocolKey } = require('./helpers/utils');
+const { ProtocolKey, encodeUniswapPath } = require('./helpers/utils');
 const { initRouterContracts } = require('./helpers/fixtures');
 const { createGasUsedTable } = require('./helpers/table');
 const { UniswapV3Pools } = require('./helpers/pools');
@@ -47,11 +47,41 @@ describe('Router [UniV3]', async function () {
         });
 
         it('matcha2', async function () {
-            const {addr1, tokens, matcha2, permitSignature, matcha2PermitData, settings: {gasUsedTableRow, amount } } = await loadFixture(initRouterContractsWithCaseSettings);
+            const {addr1, tokens, matcha2, settlerActionsABI, permitSignature, matcha2PermitData, settings: {gasUsedTableRow, amount } } = await loadFixture(initRouterContractsWithCaseSettings);
 
+            const iface = new ethers.Interface(JSON.stringify(settlerActionsABI));
 
-            
-        })
+            const encodedWrapETHfunction = iface.encodeFunctionData('BASIC', [
+                await tokens.EEE.getAddress(),
+                10000n,
+                tokens.WETH.target,
+                4n,
+                '0xd0e30db00000000000000000000000000000000000000000000000000000000000000000'
+            ]);
+
+            const encodedUniswapV3FunctionData = iface.encodeFunctionData('UNISWAPV3', [
+                addr1.address,  // destination
+                10000n, // fee
+                encodeUniswapPath(tokens.WETH.target, 0x00n, UniswapV3Pools.WETH_DAI.fee, tokens.DAI.target),
+                0n // min buy amount       
+            ])
+
+            // const encodedData = matcha2.interface.encodeFunctionData('execute', [
+            //     { recipient: '0x0000000000000000000000000000000000000000', buyToken: '0x0000000000000000000000000000000000000000', minAmountOut: '0x00' },
+            //     [encodedWrapETHfunction, encodedUniswapV3FunctionData],
+            //     '0x0000000000000000000000000000000000000000000000000000000000000000'
+            // ])
+
+            let tx = await matcha2.execute(
+                { recipient: '0x0000000000000000000000000000000000000000', buyToken: '0x0000000000000000000000000000000000000000', minAmountOut: '0x00' },
+                [encodedWrapETHfunction, encodedUniswapV3FunctionData],
+                '0x0000000000000000000000000000000000000000000000000000000000000000',
+                {value: amount}
+            )
+
+            // console.log(encodedData);
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA2, (await tx.wait()).gasUsed);
+        });
 
         it('uniswap', async function () {
             const { addr1, tokens, uniswapv3, settings: { gasUsedTableRow, amount } } = await loadFixture(initRouterContractsWithCaseSettings);
@@ -145,6 +175,45 @@ describe('Router [UniV3]', async function () {
             );
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA, (await tx.wait()).gasUsed);
         });
+
+        it('matcha2', async function () {
+            const {addr1, tokens, matcha2, settlerActionsABI, permitSignature, matcha2PermitData, settings: {gasUsedTableRow, amount } } = await loadFixture(initRouterContractsWithCaseSettings);
+
+            const iface = new ethers.Interface(JSON.stringify(settlerActionsABI));
+
+            const encodedWrapETHfunction = iface.encodeFunctionData('BASIC', [
+                await tokens.EEE.getAddress(),
+                10000n,
+                tokens.WETH.target,
+                4n,
+                '0xd0e30db00000000000000000000000000000000000000000000000000000000000000000'
+            ]);
+
+            const encodedUniswapV3FunctionData = iface.encodeFunctionData('UNISWAPV3', [
+                addr1.address, 
+                10000n,
+                encodeUniswapPath(tokens.WETH.target, 0x00n, UniswapV3Pools.WETH_DAI.fee, tokens.DAI.target)
+                + encodeUniswapPath(tokens.DAI.target, 0x00n, UniswapV3Pools.USDC_DAI.fee, tokens.USDC.target).slice(42) /*remove leading 0x*/,
+                0n, // min buy amount
+            ]);
+
+            const encodedData = matcha2.interface.encodeFunctionData('execute', [
+                { recipient: '0x0000000000000000000000000000000000000000', buyToken: '0x0000000000000000000000000000000000000000', minAmountOut: '0x00' },
+                [encodedWrapETHfunction, encodedUniswapV3FunctionData],
+                '0x0000000000000000000000000000000000000000000000000000000000000000'
+            ])
+
+            console.log(encodedData);
+
+            let tx = await matcha2.execute(
+                { recipient: '0x0000000000000000000000000000000000000000', buyToken: '0x0000000000000000000000000000000000000000', minAmountOut: '0x00' },
+                [encodedWrapETHfunction, encodedUniswapV3FunctionData],
+                '0x0000000000000000000000000000000000000000000000000000000000000000',
+                {value: amount}
+            )
+
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA2, (await tx.wait()).gasUsed);
+        })
 
         it('uniswap', async function () {
             const { addr1, tokens, uniswapv3, settings: { gasUsedTableRow, amount } } = await loadFixture(initRouterContractsWithCaseSettings);
@@ -248,29 +317,32 @@ describe('Router [UniV3]', async function () {
 
             const encodedUniswapV3VIP = iface.encodeFunctionData('UNISWAPV3_VIP', [
                 addr1.address,
-                '0x128acb08' + ethers.AbiCoder.defaultAbiCoder().encode([
-                    'address', // recipient
-                    'bool', // zeroForOne
-                    'int256', // amount specified
-                    'uint160', // sqrtPriceLimitX96
-                    'bytes', // data
-                ], [matcha2.target, false, amount, false ? 4295128740n : 1461446703485210103287273052203988822378723970341n, '0x00'])
-                    .slice(2),
+                encodeUniswapPath(tokens.DAI.target, 0x00n, UniswapV3Pools.WETH_DAI.fee, tokens.WETH.target),
                 matcha2PermitData.values,
                 permitSignature,
                 0n
             ])
 
+            const encodeUnwrapETHFunction = iface.encodeFunctionData('BASIC', [
+                tokens.WETH.target,
+                10000n,
+                tokens.WETH.target,
+                4n,
+                '0x2e1a7d4d0000000000000000000000000000000000000000000000000000000000000000'
+            ]);
+
+            console.log
+
             const tx = await matcha2.execute(
-                {recipient: '0x0000000000000000000000000000000000000000', buyToken: '0x0000000000000000000000000000000000000000', minAmountOut: '0x00'},
-                [encodedUniswapV3VIP],
+                {recipient: '0x0000000000000000000000000000000000000000', buyToken: await tokens.EEE.getAddress(), minAmountOut: '0x00'},
+                [encodedUniswapV3VIP, encodeUnwrapETHFunction],
                 '0x0000000000000000000000000000000000000000000000000000000000000000',
 
             )
 
             console.log('Gas used:', (await tx.wait()).gasUsed.toString());
 
-
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA2, (await tx.wait()).gasUsed);
         })
 
         it('uniswap', async function () {
@@ -358,6 +430,12 @@ describe('Router [UniV3]', async function () {
             );
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA, (await tx.wait()).gasUsed);
         });
+
+        it('matcha2', async function () {
+            const {addr1, tokens, matcha2, settlerActionsABI, permitSignature, matcha2PermitData, settings: {gasUsedTableRow, amount } } = await loadFixture(initRouterContractsWithCaseSettings);
+
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA2, 0); 
+        })
 
         it('uniswap', async function () {
             const { addr1, tokens, uniswapv3, settings: { gasUsedTableRow, amount } } = await loadFixture(initRouterContractsWithCaseSettings);
@@ -447,6 +525,12 @@ describe('Router [UniV3]', async function () {
             );
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA, (await tx.wait()).gasUsed);
         });
+
+        it('matcha2', async function () {
+            const {addr1, tokens, matcha2, settlerActionsABI, permitSignature, matcha2PermitData, settings: {gasUsedTableRow, amount } } = await loadFixture(initRouterContractsWithCaseSettings);
+
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA2, 0); 
+        })
 
         it('uniswap', async function () {
             const { addr1, tokens, uniswapv3, settings: { gasUsedTableRow, amount } } = await loadFixture(initRouterContractsWithCaseSettings);
@@ -545,7 +629,11 @@ describe('Router [UniV3]', async function () {
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA, (await tx.wait()).gasUsed);
         });
 
+        it('matcha2', async function () {
+            const {addr1, tokens, matcha2, settlerActionsABI, permitSignature, matcha2PermitData, settings: {gasUsedTableRow, amount } } = await loadFixture(initRouterContractsWithCaseSettings);
 
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA2, 0); 
+        })
 
         it('uniswap', async function () {
             const { addr1, tokens, uniswapv3, settings: { gasUsedTableRow, amount } } = await loadFixture(initRouterContractsWithCaseSettings);
