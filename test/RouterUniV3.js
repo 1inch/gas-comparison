@@ -20,7 +20,7 @@ describe('Router [UniV3]', async function () {
                 ...(await initRouterContracts()),
                 settings: {
                     gasUsedTableRow: gasUsedTable.addRow(['ETH => DAI']),
-                    amount: ether('1'),
+                    amount: ether('0.0001'),
                 },
             };
         }
@@ -135,7 +135,7 @@ describe('Router [UniV3]', async function () {
                 ...(await initRouterContracts()),
                 settings: {
                     gasUsedTableRow: gasUsedTable.addRow(['ETH => USDC => DAI']),
-                    amount: ether('1'),
+                    amount: ether('0.0001'),
                 },
             };
         }
@@ -290,7 +290,7 @@ describe('Router [UniV3]', async function () {
                 ...(await initRouterContracts()),
                 settings: {
                     gasUsedTableRow: gasUsedTable.addRow(['DAI => ETH']),
-                    amount: ether('1'),
+                    amount: ether('0.0001'),
                 },
             };
         }
@@ -427,7 +427,7 @@ describe('Router [UniV3]', async function () {
                 ...(await initRouterContracts()),
                 settings: {
                     gasUsedTableRow: gasUsedTable.addRow(['DAI => WETH']),
-                    amount: ether('1'),
+                    amount: ether('0.0001'),
                 },
             };
         }
@@ -549,7 +549,7 @@ describe('Router [UniV3]', async function () {
                 ...(await initRouterContracts()),
                 settings: {
                     gasUsedTableRow: gasUsedTable.addRow(['DAI => WETH => USDC']),
-                    amount: ether('1'),
+                    amount: ether('0.0001'),
                 },
             };
         }
@@ -697,7 +697,7 @@ describe('Router [UniV3]', async function () {
                 ...(await initRouterContracts()),
                 settings: {
                     gasUsedTableRow: gasUsedTable.addRow(['DAI => WETH => USDC => USDT']),
-                    amount: ether('1'),
+                    amount: ether('0.0001'),
                 },
             };
         }
