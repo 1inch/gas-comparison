@@ -12,7 +12,6 @@
     "@1inch/limit-order-settlement": "2.0.1",
     "@1inch/solidity-utils": "5.2.2",
     "@openzeppelin/contracts": "5.0.2",
-    "@uniswap/universal-router": "1.6.0",
     "@uniswap/universal-router-sdk": "2.2.2",
     "solmate": "6.2.0"
   },
