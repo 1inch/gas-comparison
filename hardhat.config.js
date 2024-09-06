@@ -38,14 +38,4 @@ module.exports = {
     tracer: {
         enableAllOpcodes: true,
     },
-    dependencyCompiler: {
-        paths: [
-            '@1inch/limit-order-protocol-contract/contracts/LimitOrderProtocol.sol',
-            '@1inch/limit-order-settlement/contracts/Settlement.sol',
-            '@1inch/solidity-utils/contracts/interfaces/IWETH.sol',
-            '@openzeppelin/contracts/token/ERC20/IERC20.sol',
-            '@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol',
-            '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol',
-        ],
-    },
 };
