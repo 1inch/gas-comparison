@@ -38,4 +38,10 @@ module.exports = {
     tracer: {
         enableAllOpcodes: true,
     },
+    dependencyCompiler: {
+        paths: [
+            '@1inch/limit-order-protocol-contract/contracts/LimitOrderProtocol.sol',
+            '@1inch/limit-order-settlement/contracts/Settlement.sol',
+        ],
+    },
 };
