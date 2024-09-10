@@ -12,7 +12,6 @@
     "@1inch/limit-order-settlement": "2.0.1",
     "@1inch/solidity-utils": "5.2.2",
     "@openzeppelin/contracts": "5.0.2",
-    "@uniswap/universal-router": "1.6.0",
     "@uniswap/universal-router-sdk": "2.2.2",
     "solmate": "6.2.0"
   },
@@ -33,7 +32,7 @@
     "eslint-plugin-n": "17.7.0",
     "eslint-plugin-promise": "6.1.1",
     "ethers": "6.12.1",
-    "hardhat": "2.22.9",
+    "hardhat": "2.19.5",
     "hardhat-dependency-compiler": "1.1.4",
     "hardhat-deploy": "0.12.4",
     "hardhat-gas-reporter": "2.1.1",
