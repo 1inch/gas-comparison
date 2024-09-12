@@ -36,7 +36,7 @@ module.exports = {
                     evmVersion: (networks[getNetwork()])?.hardfork || 'cancun',
                     viaIR: true,
                 },
-            }
+            },
         ],
     },
     namedAccounts: {
