@@ -11,13 +11,14 @@ async function initRouterContracts() {
     const uniswapv3 = await ethers.getContractAt('IUniswapV3Router', '0xE592427A0AEce92De3Edee1F18E0157C05861564');
     const uniswapUniversalRouter = await ethers.getContractAt('IUniversalRouter', '0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD'); // uniswap's latest router
     const paraswap = await ethers.getContractAt('IParaswapRouter', '0x6A000F20005980200259B80c5102003040001068');
-    const settlerDeployer = await ethers.getContractAt([
-        "function ownerOf(uint256) external view returns (address)",
-        "function next(uint128) external view returns (address)",
-      ], '0x00000000000004533Fe15556B1E086BB1A72cEae');
-    const takerSubmitted = 2; 
-    // the below line should be the following but fails because the chainId is wrong // await ethers.getContractAt('ISettler', await settlerDeployer.ownerOf(takerSubmitted));
-    const matcha2 =   await ethers.getContractAt('ISettler', '0x70bf6634eE8Cb27D04478f184b9b8BB13E5f4710'); 
+    const settlerDeployer = await ethers.getContractAt(
+        ['function ownerOf(uint256) external view returns (address)', 'function next(uint128) external view returns (address)'],
+        '0x00000000000004533Fe15556B1E086BB1A72cEae',
+    );
+    const takerSubmitted = 2;
+    // the below line should be the following but fails because the chainId is wrong
+    // await ethers.getContractAt('ISettler', await settlerDeployer.ownerOf(takerSubmitted));
+    const matcha2 = await ethers.getContractAt('ISettler', '0x70bf6634eE8Cb27D04478f184b9b8BB13E5f4710');
     const settlerActionsABI = await JSON.parse(fs.readFileSync('./artifacts/contracts/interfaces/router/ISettlerActions.sol/ISettlerActions.json')).abi;
     const tokens = {
         ETH: {
@@ -42,7 +43,7 @@ async function initRouterContracts() {
     await tokens.DAI.approve(uniswapv3, ether('1'));
     await tokens.DAI.approve(paraswap, ether('1'));
     await tokens.DAI.approve(uniswapUniversalRouter, ether('1'));
-    await tokens.DAI.approve(PERMIT2_ADDRESS, ether('1'))
+    await tokens.DAI.approve(PERMIT2_ADDRESS, ether('1'));
 
     // Buy some tokens for warmup address and exchanges
     await addr1.sendTransaction({ to: '0x2a1530c4c41db0b0b2bb646cb5eb1a67b7158667', value: ether('1') }); // DAI
@@ -50,20 +51,37 @@ async function initRouterContracts() {
     await uniswapv2.swapExactETHForTokens(ether('0'), [tokens.WETH, tokens.USDT], addr1, ether('1'), { value: ether('1') }); // USDT
     await tokens.WETH.deposit({ value: ether('1') }); // WETH
 
-    let matcha2PermitData = await SignatureTransfer.getPermitData({
-        permitted: {
-            token: tokens.DAI.target,
-            amount: ether('1')
-        }, 
-        spender: matcha2.target,
-        nonce: 0n,
-        deadline: Date.now() + 1000,
-    }, PERMIT2_ADDRESS, 31337, undefined); // 31337 is the chain ID, used to validate the signer
+    const matcha2PermitData = await SignatureTransfer.getPermitData(
+        {
+            permitted: {
+                token: tokens.DAI.target,
+                amount: ether('1'),
+            },
+            spender: matcha2.target,
+            nonce: 0n,
+            deadline: Date.now() + 1000,
+        },
+        PERMIT2_ADDRESS,
+        31337,
+        undefined,
+    ); // 31337 is the chain ID, used to validate the signer
 
     const permitSignature = await addr1.signTypedData(matcha2PermitData.domain, matcha2PermitData.types, matcha2PermitData.values);
 
-    return { addr1, tokens, inch, matcha, matcha2, settlerActionsABI, paraswap, 
-            uniswapv2, uniswapv3, uniswapUniversalRouter, matcha2PermitData, permitSignature };
+    return {
+        addr1,
+        tokens,
+        inch,
+        matcha,
+        matcha2,
+        settlerActionsABI,
+        paraswap,
+        uniswapv2,
+        uniswapv3,
+        uniswapUniversalRouter,
+        matcha2PermitData,
+        permitSignature,
+    };
 }
 
 /**

@@ -12,7 +12,7 @@ const ProtocolKey = {
     COWSWAP: 'cowswap',
     MATCHA: '0x',
     PARASWAP: 'paraswap',
-    MATCHA2: '0x settler'
+    MATCHA2: '0x settler',
 };
 
 /**
@@ -211,19 +211,17 @@ async function uniswapMixedPoolsData(poolObjects, pathTokens, useEth, amount) {
     return { value, data };
 }
 
-function encodeUniswapPath(sourceToken, fork, feeTeir, destinationToken)
-{
-    return '0x' + (BigInt(sourceToken) << 192n | BigInt(fork) << 184n | BigInt(feeTeir) << 160n | BigInt(destinationToken)).toString(16);
+function encodeUniswapPath(sourceToken, fork, feeTeir, destinationToken) {
+    return '0x' + ((BigInt(sourceToken) << 192n) | (BigInt(fork) << 184n) | (BigInt(feeTeir) << 160n) | BigInt(destinationToken)).toString(16);
 }
 
-function encodeUniswapPath(sourceToken, fork, feeTeir, destinationToken)
-{
-    return '0x' + (BigInt(sourceToken) << 192n | BigInt(fork) << 184n | BigInt(feeTeir) << 160n | BigInt(destinationToken)).toString(16);
+function encodeUniswapPath(sourceToken, fork, feeTeir, destinationToken) {
+    return '0x' + ((BigInt(sourceToken) << 192n) | (BigInt(fork) << 184n) | (BigInt(feeTeir) << 160n) | BigInt(destinationToken)).toString(16);
 }
 module.exports = {
     ProtocolKey,
     percentageOf,
     paraswapUniV2PoolData,
     uniswapMixedPoolsData,
-    encodeUniswapPath
+    encodeUniswapPath,
 };
