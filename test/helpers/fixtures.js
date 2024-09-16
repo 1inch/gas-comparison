@@ -37,6 +37,8 @@ async function initRouterContracts() {
         USDT: await ethers.getContractAt('IERC20', '0xdAC17F958D2ee523a2206206994597C13D831ec7'),
     };
 
+    ethers.provider.send('hardhat_setNextBlockBaseFeePerGas', ['0x0']);
+
     await tokens.DAI.approve(inch, ether('1'));
     await tokens.DAI.approve(matcha, ether('1'));
     await tokens.DAI.approve(uniswapv2, ether('1'));
