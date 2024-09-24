@@ -1,7 +1,6 @@
 const { ether, constants } = require('@1inch/solidity-utils');
-const { ethers } = require('hardhat');
+const { ethers, artifacts } = require('hardhat');
 const { PERMIT2_ADDRESS, SignatureTransfer } = require('@uniswap/permit2-sdk');
-const fs = require('fs');
 
 async function initRouterContracts() {
     const [addr1] = await ethers.getSigners();
@@ -11,15 +10,9 @@ async function initRouterContracts() {
     const uniswapv3 = await ethers.getContractAt('IUniswapV3Router', '0xE592427A0AEce92De3Edee1F18E0157C05861564');
     const uniswapUniversalRouter = await ethers.getContractAt('IUniversalRouter', '0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD'); // uniswap's latest router
     const paraswap = await ethers.getContractAt('IParaswapRouter', '0x6A000F20005980200259B80c5102003040001068');
-    const settlerDeployer = await ethers.getContractAt(
-        ['function ownerOf(uint256) external view returns (address)', 'function next(uint128) external view returns (address)'],
-        '0x00000000000004533Fe15556B1E086BB1A72cEae',
-    );
-    const takerSubmitted = 2;
-    // the below line should be the following but fails because the chainId is wrong
-    // await ethers.getContractAt('ISettler', await settlerDeployer.ownerOf(takerSubmitted));
     const matcha2 = await ethers.getContractAt('ISettler', '0x70bf6634eE8Cb27D04478f184b9b8BB13E5f4710');
-    const settlerActionsABI = await JSON.parse(fs.readFileSync('./artifacts/contracts/interfaces/router/ISettlerActions.sol/ISettlerActions.json')).abi;
+    const iSettlerActions = new ethers.Interface((await artifacts.readArtifact('ISettlerActions')).abi);
+
     const tokens = {
         ETH: {
             async getAddress() {
@@ -76,7 +69,7 @@ async function initRouterContracts() {
         inch,
         matcha,
         matcha2,
-        settlerActionsABI,
+        iSettlerActions,
         paraswap,
         uniswapv2,
         uniswapv3,

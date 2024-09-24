@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-pragma solidity 0.8.25;
+pragma solidity ^0.8.0;
 
 interface IMatchaRouter {
     function sellToUniswap(address[] calldata tokens, uint256 sellAmount, uint256 minBuyAmount, bool isSushi) external payable;

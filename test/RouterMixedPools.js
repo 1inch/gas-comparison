@@ -1,6 +1,6 @@
 const { ethers } = require('hardhat');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
-const { ether, permit2Contract } = require('@1inch/solidity-utils');
+const { ether, permit2Contract, trim0x, constants } = require('@1inch/solidity-utils');
 const { ProtocolKey, uniswapMixedPoolsData, encodeUniswapPath } = require('./helpers/utils');
 const { initRouterContracts, adjustV2PoolTimestamps } = require('./helpers/fixtures');
 const { createGasUsedTable } = require('./helpers/table');
@@ -68,21 +68,19 @@ describe('Mixed pools', async function () {
                 addr1,
                 tokens,
                 matcha2,
-                settlerActionsABI,
+                iSettlerActions,
                 settings: { gasUsedTableRow, amount },
             } = await loadFixture(initContractsWithCaseSettings);
 
-            const iface = new ethers.Interface(JSON.stringify(settlerActionsABI));
-
-            const encodedWrapETHfunction = iface.encodeFunctionData('BASIC', [
+            const encodedWrapETHfunction = iSettlerActions.encodeFunctionData('BASIC', [
                 await tokens.EEE.getAddress(),
                 10000n,
                 tokens.WETH.target,
                 4n,
-                '0xd0e30db00000000000000000000000000000000000000000000000000000000000000000',
+                tokens.WETH.interface.getFunction('deposit').selector + trim0x(constants.ZERO_BYTES32),
             ]);
 
-            const encodededWETHToDAI = iface.encodeFunctionData('UNISWAPV2', [
+            const encodededWETHToDAI = iSettlerActions.encodeFunctionData('UNISWAPV2', [
                 matcha2.target,
                 tokens.WETH.target,
                 10000n,
@@ -91,7 +89,7 @@ describe('Mixed pools', async function () {
                 0n,
             ]);
 
-            const encodedDAIToUSDC = iface.encodeFunctionData('UNISWAPV3', [
+            const encodedDAIToUSDC = iSettlerActions.encodeFunctionData('UNISWAPV3', [
                 addr1.address,
                 10000n,
                 encodeUniswapPath(tokens.DAI.target, 0x00n, UniswapV3Pools.USDC_DAI.fee, tokens.USDC.target),
@@ -99,9 +97,9 @@ describe('Mixed pools', async function () {
             ]);
 
             const tx = await matcha2.execute(
-                { recipient: '0x0000000000000000000000000000000000000000', buyToken: '0x0000000000000000000000000000000000000000', minAmountOut: '0x00' },
+                { recipient: constants.ZERO_ADDRESS, buyToken: constants.ZERO_ADDRESS, minAmountOut: '0x00' },
                 [encodedWrapETHfunction, encodededWETHToDAI, encodedDAIToUSDC],
-                '0x0000000000000000000000000000000000000000000000000000000000000000',
+                constants.ZERO_BYTES32,
                 { value: amount },
             );
 
@@ -164,28 +162,26 @@ describe('Mixed pools', async function () {
                 addr1,
                 tokens,
                 matcha2,
-                settlerActionsABI,
+                iSettlerActions,
                 settings: { gasUsedTableRow, amount },
             } = await loadFixture(initContractsWithCaseSettings);
 
-            const iface = new ethers.Interface(JSON.stringify(settlerActionsABI));
-
-            const encodedWrapETHfunction = iface.encodeFunctionData('BASIC', [
+            const encodedWrapETHfunction = iSettlerActions.encodeFunctionData('BASIC', [
                 await tokens.EEE.getAddress(),
                 10000n,
                 tokens.WETH.target,
                 4n,
-                '0xd0e30db00000000000000000000000000000000000000000000000000000000000000000',
+                tokens.WETH.interface.getFunction('deposit').selector + trim0x(constants.ZERO_BYTES32),
             ]);
 
-            const encodedWETHToDAI = iface.encodeFunctionData('UNISWAPV3', [
+            const encodedWETHToDAI = iSettlerActions.encodeFunctionData('UNISWAPV3', [
                 UniswapV2Pools.USDC_DAI, // recipient, use USDC_DAI pool to save gas
                 10000n,
                 encodeUniswapPath(tokens.WETH.target, 0x00n, UniswapV3Pools.WETH_DAI.fee, tokens.DAI.target),
                 0n,
             ]);
 
-            const encodedDAIToUSDC = iface.encodeFunctionData('UNISWAPV2', [
+            const encodedDAIToUSDC = iSettlerActions.encodeFunctionData('UNISWAPV2', [
                 addr1.address,
                 tokens.DAI.target,
                 10000n,
@@ -195,9 +191,9 @@ describe('Mixed pools', async function () {
             ]);
 
             const tx = await matcha2.execute(
-                { recipient: '0x0000000000000000000000000000000000000000', buyToken: '0x0000000000000000000000000000000000000000', minAmountOut: '0x00' },
+                { recipient: constants.ZERO_ADDRESS, buyToken: constants.ZERO_ADDRESS, minAmountOut: '0x00' },
                 [encodedWrapETHfunction, encodedWETHToDAI, encodedDAIToUSDC],
-                '0x0000000000000000000000000000000000000000000000000000000000000000',
+                constants.ZERO_BYTES32,
                 { value: amount },
             );
 
@@ -260,21 +256,19 @@ describe('Mixed pools', async function () {
                 addr1,
                 tokens,
                 matcha2,
-                settlerActionsABI,
+                iSettlerActions,
                 matcha2PermitData,
                 permitSignature,
                 settings: { gasUsedTableRow },
             } = await loadFixture(initContractsWithCaseSettings);
 
-            const iface = new ethers.Interface(JSON.stringify(settlerActionsABI));
-
-            const encodedTransferFrom = iface.encodeFunctionData('TRANSFER_FROM', [
+            const encodedTransferFrom = iSettlerActions.encodeFunctionData('TRANSFER_FROM', [
                 UniswapV2Pools.WETH_DAI,
                 matcha2PermitData.values,
                 permitSignature,
             ]);
 
-            const encodedDAIToWETH = iface.encodeFunctionData('UNISWAPV2', [
+            const encodedDAIToWETH = iSettlerActions.encodeFunctionData('UNISWAPV2', [
                 matcha2.target,
                 tokens.DAI.target,
                 10000n,
@@ -283,7 +277,7 @@ describe('Mixed pools', async function () {
                 0n,
             ]);
 
-            const encodedWETHToUSDC = iface.encodeFunctionData('UNISWAPV3', [
+            const encodedWETHToUSDC = iSettlerActions.encodeFunctionData('UNISWAPV3', [
                 addr1.address,
                 10000n,
                 encodeUniswapPath(tokens.WETH.target, 0x00n, UniswapV3Pools.WETH_USDC.fee, tokens.USDC.target),
@@ -291,9 +285,9 @@ describe('Mixed pools', async function () {
             ]);
 
             const tx = await matcha2.execute(
-                { recipient: '0x0000000000000000000000000000000000000000', buyToken: '0x0000000000000000000000000000000000000000', minAmountOut: '0x00' },
+                { recipient: constants.ZERO_ADDRESS, buyToken: constants.ZERO_ADDRESS, minAmountOut: '0x00' },
                 [encodedTransferFrom, encodedDAIToWETH, encodedWETHToUSDC],
-                '0x0000000000000000000000000000000000000000000000000000000000000000',
+                constants.ZERO_BYTES32,
             );
 
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA2, (await tx.wait()).gasUsed);
@@ -355,28 +349,22 @@ describe('Mixed pools', async function () {
                 addr1,
                 tokens,
                 matcha2,
-                settlerActionsABI,
+                iSettlerActions,
                 matcha2PermitData,
                 permitSignature,
                 settings: { gasUsedTableRow },
             } = await loadFixture(initContractsWithCaseSettings);
 
-            const iface = new ethers.Interface(JSON.stringify(settlerActionsABI));
+            const encodedTransferFrom = iSettlerActions.encodeFunctionData('TRANSFER_FROM', [matcha2.target, matcha2PermitData.values, permitSignature]);
 
-            const encodedTransferFrom = iface.encodeFunctionData('TRANSFER_FROM', [
-                matcha2.target,
-                matcha2PermitData.values,
-                permitSignature,
-            ]);
-
-            const encodedDAIToWETH = iface.encodeFunctionData('UNISWAPV3', [
+            const encodedDAIToWETH = iSettlerActions.encodeFunctionData('UNISWAPV3', [
                 UniswapV2Pools.WETH_USDC, // recipient, use WETH_USDC pool to save gas
                 10000n,
                 encodeUniswapPath(tokens.DAI.target, 0x00n, UniswapV3Pools.WETH_DAI.fee, tokens.WETH.target),
                 0n,
             ]);
 
-            const encodedWETHToUSDC = iface.encodeFunctionData('UNISWAPV2', [
+            const encodedWETHToUSDC = iSettlerActions.encodeFunctionData('UNISWAPV2', [
                 addr1.address,
                 tokens.WETH.target,
                 10000n,
@@ -386,9 +374,9 @@ describe('Mixed pools', async function () {
             ]);
 
             const tx = await matcha2.execute(
-                { recipient: '0x0000000000000000000000000000000000000000', buyToken: '0x0000000000000000000000000000000000000000', minAmountOut: '0x00' },
+                { recipient: constants.ZERO_ADDRESS, buyToken: constants.ZERO_ADDRESS, minAmountOut: '0x00' },
                 [encodedTransferFrom, encodedDAIToWETH, encodedWETHToUSDC],
-                '0x0000000000000000000000000000000000000000000000000000000000000000',
+                constants.ZERO_BYTES32,
             );
 
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA2, (await tx.wait()).gasUsed);

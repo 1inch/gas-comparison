@@ -26,17 +26,6 @@ module.exports = {
                     viaIR: true,
                 },
             },
-            {
-                version: '0.8.25',
-                settings: {
-                    optimizer: {
-                        enabled: true,
-                        runs: 1000000,
-                    },
-                    evmVersion: (networks[getNetwork()])?.hardfork || 'cancun',
-                    viaIR: true,
-                },
-            },
         ],
     },
     namedAccounts: {
@@ -46,9 +35,6 @@ module.exports = {
     },
     networks,
     etherscan,
-    tracer: {
-        enableAllOpcodes: true,
-    },
     dependencyCompiler: {
         paths: [
             '@1inch/limit-order-protocol-contract/contracts/LimitOrderProtocol.sol',
