@@ -1,7 +1,6 @@
 const { ether, constants } = require('@1inch/solidity-utils');
-const { ethers } = require('hardhat');
+const { ethers, artifacts } = require('hardhat');
 const { PERMIT2_ADDRESS, SignatureTransfer } = require('@uniswap/permit2-sdk');
-const fs = require('fs');
 
 async function initRouterContracts() {
     const [addr1] = await ethers.getSigners();
@@ -19,7 +18,8 @@ async function initRouterContracts() {
     // the below line should be the following but fails because the chainId is wrong
     // await ethers.getContractAt('ISettler', await settlerDeployer.ownerOf(takerSubmitted));
     const matcha2 = await ethers.getContractAt('ISettler', '0x70bf6634eE8Cb27D04478f184b9b8BB13E5f4710');
-    const settlerActionsABI = await JSON.parse(fs.readFileSync('./artifacts/contracts/interfaces/router/ISettlerActions.sol/ISettlerActions.json')).abi;
+    const iSettlerActions = new ethers.Interface((await artifacts.readArtifact("ISettlerActions")).abi);
+
     const tokens = {
         ETH: {
             async getAddress() {
@@ -76,7 +76,7 @@ async function initRouterContracts() {
         inch,
         matcha,
         matcha2,
-        settlerActionsABI,
+        iSettlerActions,
         paraswap,
         uniswapv2,
         uniswapv3,
