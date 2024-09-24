@@ -355,11 +355,7 @@ describe('Mixed pools', async function () {
                 settings: { gasUsedTableRow },
             } = await loadFixture(initContractsWithCaseSettings);
 
-            const encodedTransferFrom = iSettlerActions.encodeFunctionData('TRANSFER_FROM', [
-                matcha2.target,
-                matcha2PermitData.values,
-                permitSignature,
-            ]);
+            const encodedTransferFrom = iSettlerActions.encodeFunctionData('TRANSFER_FROM', [matcha2.target, matcha2PermitData.values, permitSignature]);
 
             const encodedDAIToWETH = iSettlerActions.encodeFunctionData('UNISWAPV3', [
                 UniswapV2Pools.WETH_USDC, // recipient, use WETH_USDC pool to save gas

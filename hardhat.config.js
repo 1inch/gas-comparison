@@ -26,17 +26,6 @@ module.exports = {
                     viaIR: true,
                 },
             },
-            {
-                version: '0.8.25',
-                settings: {
-                    optimizer: {
-                        enabled: true,
-                        runs: 1000000,
-                    },
-                    evmVersion: (networks[getNetwork()])?.hardfork || 'cancun',
-                    viaIR: true,
-                },
-            },
         ],
     },
     namedAccounts: {

@@ -309,11 +309,7 @@ describe('Router [UniV2]', async function () {
                 settings: { gasUsedTableRow },
             } = await loadFixture(initContractsWithCaseSettings);
 
-            const encodedTransferFrom = iSettlerActions.encodeFunctionData('TRANSFER_FROM', [
-                matcha2.target,
-                matcha2PermitData.values,
-                permitSignature,
-            ]);
+            const encodedTransferFrom = iSettlerActions.encodeFunctionData('TRANSFER_FROM', [matcha2.target, matcha2PermitData.values, permitSignature]);
 
             const encodedUniswapV2FunctionDataDAItoWETH = iSettlerActions.encodeFunctionData('UNISWAPV2', [
                 matcha2.target, // since we'll need to unwrap it
@@ -423,11 +419,7 @@ describe('Router [UniV2]', async function () {
                 settings: { gasUsedTableRow },
             } = await loadFixture(initContractsWithCaseSettings);
 
-            const encodedTransferFrom = iSettlerActions.encodeFunctionData('TRANSFER_FROM', [
-                matcha2.target,
-                matcha2PermitData.values,
-                permitSignature,
-            ]);
+            const encodedTransferFrom = iSettlerActions.encodeFunctionData('TRANSFER_FROM', [matcha2.target, matcha2PermitData.values, permitSignature]);
 
             const encodedUniswapV2FunctionDataDAItoWETH = iSettlerActions.encodeFunctionData('UNISWAPV2', [
                 addr1.address, // recipient
@@ -536,11 +528,7 @@ describe('Router [UniV2]', async function () {
                 settings: { gasUsedTableRow },
             } = await loadFixture(initContractsWithCaseSettings);
 
-            const encodedTransferFrom = iSettlerActions.encodeFunctionData('TRANSFER_FROM', [
-                matcha2.target,
-                matcha2PermitData.values,
-                permitSignature,
-            ]);
+            const encodedTransferFrom = iSettlerActions.encodeFunctionData('TRANSFER_FROM', [matcha2.target, matcha2PermitData.values, permitSignature]);
 
             const UniswapV2FunctionDataDAItoWETH = iSettlerActions.encodeFunctionData('UNISWAPV2', [
                 UniswapV2Pools.WETH_USDC,
@@ -668,11 +656,7 @@ describe('Router [UniV2]', async function () {
                 settings: { gasUsedTableRow },
             } = await loadFixture(initContractsWithCaseSettings);
 
-            const encodedTransferFrom = iSettlerActions.encodeFunctionData('TRANSFER_FROM', [
-                matcha2.target,
-                matcha2PermitData.values,
-                permitSignature,
-            ]);
+            const encodedTransferFrom = iSettlerActions.encodeFunctionData('TRANSFER_FROM', [matcha2.target, matcha2PermitData.values, permitSignature]);
 
             const UniswapV2FunctionDataDAItoWETH = iSettlerActions.encodeFunctionData('UNISWAPV2', [
                 UniswapV2Pools.WETH_USDC,
