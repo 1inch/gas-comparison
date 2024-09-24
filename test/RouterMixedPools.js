@@ -1,6 +1,6 @@
 const { ethers } = require('hardhat');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
-const { ether, permit2Contract } = require('@1inch/solidity-utils');
+const { ether, permit2Contract, trim0x, constants } = require('@1inch/solidity-utils');
 const { ProtocolKey, uniswapMixedPoolsData, encodeUniswapPath } = require('./helpers/utils');
 const { initRouterContracts, adjustV2PoolTimestamps } = require('./helpers/fixtures');
 const { createGasUsedTable } = require('./helpers/table');
@@ -77,7 +77,7 @@ describe('Mixed pools', async function () {
                 10000n,
                 tokens.WETH.target,
                 4n,
-                '0xd0e30db00000000000000000000000000000000000000000000000000000000000000000',
+                tokens.WETH.interface.getFunction('deposit').selector + trim0x(constants.ZERO_BYTES32),
             ]);
 
             const encodededWETHToDAI = iSettlerActions.encodeFunctionData('UNISWAPV2', [
@@ -97,9 +97,9 @@ describe('Mixed pools', async function () {
             ]);
 
             const tx = await matcha2.execute(
-                { recipient: '0x0000000000000000000000000000000000000000', buyToken: '0x0000000000000000000000000000000000000000', minAmountOut: '0x00' },
+                { recipient: constants.ZERO_ADDRESS, buyToken: constants.ZERO_ADDRESS, minAmountOut: '0x00' },
                 [encodedWrapETHfunction, encodededWETHToDAI, encodedDAIToUSDC],
-                '0x0000000000000000000000000000000000000000000000000000000000000000',
+                constants.ZERO_BYTES32,
                 { value: amount },
             );
 
@@ -171,7 +171,7 @@ describe('Mixed pools', async function () {
                 10000n,
                 tokens.WETH.target,
                 4n,
-                '0xd0e30db00000000000000000000000000000000000000000000000000000000000000000',
+                tokens.WETH.interface.getFunction('deposit').selector + trim0x(constants.ZERO_BYTES32),
             ]);
 
             const encodedWETHToDAI = iSettlerActions.encodeFunctionData('UNISWAPV3', [
@@ -191,9 +191,9 @@ describe('Mixed pools', async function () {
             ]);
 
             const tx = await matcha2.execute(
-                { recipient: '0x0000000000000000000000000000000000000000', buyToken: '0x0000000000000000000000000000000000000000', minAmountOut: '0x00' },
+                { recipient: constants.ZERO_ADDRESS, buyToken: constants.ZERO_ADDRESS, minAmountOut: '0x00' },
                 [encodedWrapETHfunction, encodedWETHToDAI, encodedDAIToUSDC],
-                '0x0000000000000000000000000000000000000000000000000000000000000000',
+                constants.ZERO_BYTES32,
                 { value: amount },
             );
 
@@ -285,9 +285,9 @@ describe('Mixed pools', async function () {
             ]);
 
             const tx = await matcha2.execute(
-                { recipient: '0x0000000000000000000000000000000000000000', buyToken: '0x0000000000000000000000000000000000000000', minAmountOut: '0x00' },
+                { recipient: constants.ZERO_ADDRESS, buyToken: constants.ZERO_ADDRESS, minAmountOut: '0x00' },
                 [encodedTransferFrom, encodedDAIToWETH, encodedWETHToUSDC],
-                '0x0000000000000000000000000000000000000000000000000000000000000000',
+                constants.ZERO_BYTES32,
             );
 
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA2, (await tx.wait()).gasUsed);
@@ -378,9 +378,9 @@ describe('Mixed pools', async function () {
             ]);
 
             const tx = await matcha2.execute(
-                { recipient: '0x0000000000000000000000000000000000000000', buyToken: '0x0000000000000000000000000000000000000000', minAmountOut: '0x00' },
+                { recipient: constants.ZERO_ADDRESS, buyToken: constants.ZERO_ADDRESS, minAmountOut: '0x00' },
                 [encodedTransferFrom, encodedDAIToWETH, encodedWETHToUSDC],
-                '0x0000000000000000000000000000000000000000000000000000000000000000',
+                constants.ZERO_BYTES32,
             );
 
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA2, (await tx.wait()).gasUsed);

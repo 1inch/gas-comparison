@@ -392,7 +392,7 @@ class CowswapOrder {
             },
             {
                 ...this.order,
-                appData: trim0x(this.order.appData).length > 0 ? this.order.appData : '0x0000000000000000000000000000000000000000000000000000000000000000',
+                appData: trim0x(this.order.appData).length > 0 ? this.order.appData : constants.ZERO_BYTES32,
             },
         );
     }
@@ -405,7 +405,7 @@ class CowswapOrder {
             sellAmount: this.order.sellAmount,
             buyAmount: this.order.buyAmount,
             validTo: this.order.validTo,
-            appData: trim0x(this.order.appData).length > 0 ? this.order.appData : '0x0000000000000000000000000000000000000000000000000000000000000000',
+            appData: trim0x(this.order.appData).length > 0 ? this.order.appData : constants.ZERO_BYTES32,
             feeAmount: this.order.feeAmount,
             flags: this.encodeTradeFlags(this.order),
             executedAmount,

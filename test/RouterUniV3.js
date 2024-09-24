@@ -1,6 +1,6 @@
 const { ethers } = require('hardhat');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
-const { ether, constants } = require('@1inch/solidity-utils');
+const { ether, trim0x, constants } = require('@1inch/solidity-utils');
 const { ProtocolKey, encodeUniswapPath } = require('./helpers/utils');
 const { initRouterContracts } = require('./helpers/fixtures');
 const { createGasUsedTable } = require('./helpers/table');
@@ -66,7 +66,7 @@ describe('Router [UniV3]', async function () {
                 10000n,
                 tokens.WETH.target,
                 4n,
-                '0xd0e30db00000000000000000000000000000000000000000000000000000000000000000',
+                tokens.WETH.interface.getFunction('deposit').selector + trim0x(constants.ZERO_BYTES32),
             ]);
 
             const encodedUniswapV3FunctionData = iSettlerActions.encodeFunctionData('UNISWAPV3', [
@@ -77,9 +77,9 @@ describe('Router [UniV3]', async function () {
             ]);
 
             const tx = await matcha2.execute(
-                { recipient: '0x0000000000000000000000000000000000000000', buyToken: '0x0000000000000000000000000000000000000000', minAmountOut: '0x00' },
+                { recipient: constants.ZERO_ADDRESS, buyToken: constants.ZERO_ADDRESS, minAmountOut: '0x00' },
                 [encodedWrapETHfunction, encodedUniswapV3FunctionData],
-                '0x0000000000000000000000000000000000000000000000000000000000000000',
+                constants.ZERO_BYTES32,
                 { value: amount },
             );
 
@@ -199,7 +199,7 @@ describe('Router [UniV3]', async function () {
                 10000n,
                 tokens.WETH.target,
                 4n,
-                '0xd0e30db00000000000000000000000000000000000000000000000000000000000000000',
+                tokens.WETH.interface.getFunction('deposit').selector + trim0x(constants.ZERO_BYTES32),
             ]);
 
             const encodedUniswapV3FunctionData = iSettlerActions.encodeFunctionData('UNISWAPV3', [
@@ -211,9 +211,9 @@ describe('Router [UniV3]', async function () {
             ]);
 
             const tx = await matcha2.execute(
-                { recipient: '0x0000000000000000000000000000000000000000', buyToken: '0x0000000000000000000000000000000000000000', minAmountOut: '0x00' },
+                { recipient: constants.ZERO_ADDRESS, buyToken: constants.ZERO_ADDRESS, minAmountOut: '0x00' },
                 [encodedWrapETHfunction, encodedUniswapV3FunctionData],
-                '0x0000000000000000000000000000000000000000000000000000000000000000',
+                constants.ZERO_BYTES32,
                 { value: amount },
             );
 
@@ -367,13 +367,13 @@ describe('Router [UniV3]', async function () {
                 10000n,
                 tokens.WETH.target,
                 4n,
-                '0x2e1a7d4d0000000000000000000000000000000000000000000000000000000000000000',
+                tokens.WETH.interface.getFunction('withdraw').selector + trim0x(constants.ZERO_BYTES32),
             ]);
 
             const tx = await matcha2.execute(
-                { recipient: '0x0000000000000000000000000000000000000000', buyToken: await tokens.EEE.getAddress(), minAmountOut: '0x00' },
+                { recipient: constants.ZERO_ADDRESS, buyToken: await tokens.EEE.getAddress(), minAmountOut: '0x00' },
                 [encodedUniswapV3VIP, encodeUnwrapETHFunction],
-                '0x0000000000000000000000000000000000000000000000000000000000000000',
+                constants.ZERO_BYTES32,
             );
 
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA2, (await tx.wait()).gasUsed);
@@ -509,9 +509,9 @@ describe('Router [UniV3]', async function () {
             ]);
 
             const tx = await matcha2.execute(
-                { recipient: '0x0000000000000000000000000000000000000000', buyToken: await tokens.WETH.getAddress(), minAmountOut: '0x00' },
+                { recipient: constants.ZERO_ADDRESS, buyToken: await tokens.WETH.getAddress(), minAmountOut: '0x00' },
                 [encodedUniswapV3VIP],
-                '0x0000000000000000000000000000000000000000000000000000000000000000',
+                constants.ZERO_BYTES32,
             );
 
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA2, (await tx.wait()).gasUsed);
@@ -641,9 +641,9 @@ describe('Router [UniV3]', async function () {
             ]);
 
             const tx = await matcha2.execute(
-                { recipient: '0x0000000000000000000000000000000000000000', buyToken: await tokens.WETH.getAddress(), minAmountOut: '0x00' },
+                { recipient: constants.ZERO_ADDRESS, buyToken: await tokens.WETH.getAddress(), minAmountOut: '0x00' },
                 [encodedUniswapV3VIP],
-                '0x0000000000000000000000000000000000000000000000000000000000000000',
+                constants.ZERO_BYTES32,
             );
 
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA2, (await tx.wait()).gasUsed);
@@ -796,9 +796,9 @@ describe('Router [UniV3]', async function () {
             ]);
 
             const tx = await matcha2.execute(
-                { recipient: '0x0000000000000000000000000000000000000000', buyToken: await tokens.WETH.getAddress(), minAmountOut: '0x00' },
+                { recipient: constants.ZERO_ADDRESS, buyToken: await tokens.WETH.getAddress(), minAmountOut: '0x00' },
                 [encodedUniswapV3VIP],
-                '0x0000000000000000000000000000000000000000000000000000000000000000',
+                constants.ZERO_BYTES32,
             );
 
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA2, (await tx.wait()).gasUsed);
