@@ -46,23 +46,6 @@ async function initRouterContracts() {
     await uniswapv2.swapExactETHForTokens(ether('0'), [tokens.WETH, tokens.USDT], addr1, ether('1'), { value: ether('1') }); // USDT
     await tokens.WETH.deposit({ value: ether('1') }); // WETH
 
-    const matcha2PermitData = await SignatureTransfer.getPermitData(
-        {
-            permitted: {
-                token: tokens.DAI.target,
-                amount: ether('1'),
-            },
-            spender: matcha2.target,
-            nonce: 0n,
-            deadline: Date.now() + 1000,
-        },
-        PERMIT2_ADDRESS,
-        31337,
-        undefined,
-    ); // 31337 is the chain ID, used to validate the signer
-
-    const permitSignature = await addr1.signTypedData(matcha2PermitData.domain, matcha2PermitData.types, matcha2PermitData.values);
-
     return {
         addr1,
         tokens,
@@ -74,8 +57,6 @@ async function initRouterContracts() {
         uniswapv2,
         uniswapv3,
         uniswapUniversalRouter,
-        matcha2PermitData,
-        permitSignature,
     };
 }
 

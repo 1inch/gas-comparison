@@ -1,7 +1,7 @@
 const { ethers } = require('hardhat');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 const { ether, trim0x, constants } = require('@1inch/solidity-utils');
-const { ProtocolKey, paraswapUniV2PoolData } = require('./helpers/utils');
+const { ProtocolKey, paraswapUniV2PoolData, getPermit2Data } = require('./helpers/utils');
 const { initRouterContracts, adjustV2PoolTimestamps } = require('./helpers/fixtures');
 const { createGasUsedTable } = require('./helpers/table');
 const { UniswapV2Pools } = require('./helpers/pools');
@@ -415,12 +415,12 @@ describe('Router [UniV2]', async function () {
                 tokens,
                 matcha2,
                 iSettlerActions,
-                matcha2PermitData,
-                permitSignature,
                 settings: { gasUsedTableRow },
             } = await loadFixture(initContractsWithCaseSettings);
 
-            const encodedTransferFrom = iSettlerActions.encodeFunctionData('TRANSFER_FROM', [matcha2.target, matcha2PermitData.values, permitSignature]);
+            const { permit2Data, permitSignature } = await getPermit2Data({ token: tokens.DAI.target, spender: matcha2.target, signer: addr1 });
+
+            const encodedTransferFrom = iSettlerActions.encodeFunctionData('TRANSFER_FROM', [matcha2.target, permit2Data.values, permitSignature]);
 
             const encodedUniswapV2FunctionDataDAItoWETH = iSettlerActions.encodeFunctionData('UNISWAPV2', [
                 matcha2.target, // since we'll need to unwrap it
@@ -548,12 +548,12 @@ describe('Router [UniV2]', async function () {
                 tokens,
                 matcha2,
                 iSettlerActions,
-                matcha2PermitData,
-                permitSignature,
                 settings: { gasUsedTableRow },
             } = await loadFixture(initContractsWithCaseSettings);
 
-            const encodedTransferFrom = iSettlerActions.encodeFunctionData('TRANSFER_FROM', [matcha2.target, matcha2PermitData.values, permitSignature]);
+            const { permit2Data, permitSignature } = await getPermit2Data({ token: tokens.DAI.target, spender: matcha2.target, signer: addr1 });
+
+            const encodedTransferFrom = iSettlerActions.encodeFunctionData('TRANSFER_FROM', [matcha2.target, permit2Data.values, permitSignature]);
 
             const encodedUniswapV2FunctionDataDAItoWETH = iSettlerActions.encodeFunctionData('UNISWAPV2', [
                 addr1.address, // recipient
@@ -696,12 +696,12 @@ describe('Router [UniV2]', async function () {
                 tokens,
                 matcha2,
                 iSettlerActions,
-                matcha2PermitData,
-                permitSignature,
                 settings: { gasUsedTableRow },
             } = await loadFixture(initContractsWithCaseSettings);
 
-            const encodedTransferFrom = iSettlerActions.encodeFunctionData('TRANSFER_FROM', [matcha2.target, matcha2PermitData.values, permitSignature]);
+            const { permit2Data, permitSignature } = await getPermit2Data({ token: tokens.DAI.target, spender: matcha2.target, signer: addr1 });
+
+            const encodedTransferFrom = iSettlerActions.encodeFunctionData('TRANSFER_FROM', [matcha2.target, permit2Data.values, permitSignature]);
 
             const UniswapV2FunctionDataDAItoWETH = iSettlerActions.encodeFunctionData('UNISWAPV2', [
                 UniswapV2Pools.WETH_USDC,
@@ -862,12 +862,12 @@ describe('Router [UniV2]', async function () {
                 tokens,
                 matcha2,
                 iSettlerActions,
-                matcha2PermitData,
-                permitSignature,
                 settings: { gasUsedTableRow },
             } = await loadFixture(initContractsWithCaseSettings);
 
-            const encodedTransferFrom = iSettlerActions.encodeFunctionData('TRANSFER_FROM', [matcha2.target, matcha2PermitData.values, permitSignature]);
+            const { permit2Data, permitSignature } = await getPermit2Data({ token: tokens.DAI.target, spender: matcha2.target, signer: addr1 });
+
+            const encodedTransferFrom = iSettlerActions.encodeFunctionData('TRANSFER_FROM', [matcha2.target, permit2Data.values, permitSignature]);
 
             const UniswapV2FunctionDataDAItoWETH = iSettlerActions.encodeFunctionData('UNISWAPV2', [
                 UniswapV2Pools.WETH_USDC,
