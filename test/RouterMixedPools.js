@@ -390,7 +390,7 @@ describe('Mixed pools', async function () {
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.INCH, (await tx.wait()).gasUsed);
         });
 
-        it.only('uniswap', async function () {
+        it('uniswap', async function () {
             const {
                 addr1,
                 uniswapUniversal,

@@ -6,9 +6,9 @@ async function initRouterContracts() {
     const matcha = await ethers.getContractAt('IMatchaRouter', '0xdef1c0ded9bec7f1a1670819833240f027b25eff');
     const uniswapv2 = await ethers.getContractAt('IUniswapV2Router', '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D');
     const uniswapv3 = await ethers.getContractAt('IUniswapV3Router', '0xE592427A0AEce92De3Edee1F18E0157C05861564');
-    const uniswapUniversal = await ethers.getContractAt('IUniswapUniversal', '0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD');
+    const uniswapUniversal = await ethers.getContractAt('IUniswapUniversalRouter', '0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD');
     const permit2 = await permit2Contract();
-    const paraswap = await ethers.getContractAt('IParaswapRouter', '0x6A000F20005980200259B80c5102003040001068');
+    const paraswap = await ethers.getContractAt('IParaswapRouter', '0x000dB803A70511E09dA650D4C0506d0000100000');
     const matcha2 = await ethers.getContractAt('ISettler', '0x70bf6634eE8Cb27D04478f184b9b8BB13E5f4710');
     const iSettlerActions = new ethers.Interface((await artifacts.readArtifact('ISettlerActions')).abi);
 
@@ -36,7 +36,7 @@ async function initRouterContracts() {
     await tokens.DAI.approve(uniswapv2, ether('1'));
     await tokens.DAI.approve(uniswapv3, ether('1'));
     await tokens.DAI.approve(paraswap, ether('1'));
-    await tokens.DAI.approve(uniswapUniversal, ether('1'));
+    await tokens.DAI.approve(permit2, ether('1'));
     await permit2.approve(tokens.DAI, uniswapUniversal, ether('1'), Date.now());
 
     // Buy some tokens for warmup address and exchanges
