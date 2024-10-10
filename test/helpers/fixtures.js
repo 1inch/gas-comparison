@@ -1,6 +1,5 @@
 const { ether, constants, permit2Contract } = require('@1inch/solidity-utils');
-const { ethers } = require('hardhat');
-
+const { ethers, artifacts } = require('hardhat');
 async function initRouterContracts() {
     const [addr1] = await ethers.getSigners();
     const inch = await ethers.getContractAt('IAggregationRouter', '0x111111125421ca6dc452d289314280a0f8842a65');
@@ -8,8 +7,10 @@ async function initRouterContracts() {
     const uniswapv2 = await ethers.getContractAt('IUniswapV2Router', '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D');
     const uniswapv3 = await ethers.getContractAt('IUniswapV3Router', '0xE592427A0AEce92De3Edee1F18E0157C05861564');
     const uniswapUniversal = await ethers.getContractAt('IUniswapUniversalRouter', '0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD');
-    const paraswap = await ethers.getContractAt('IParaswapRouter', '0x000dB803A70511E09dA650D4C0506d0000100000');
     const permit2 = await permit2Contract();
+    const paraswap = await ethers.getContractAt('IParaswapRouter', '0x000dB803A70511E09dA650D4C0506d0000100000');
+    const matcha2 = await ethers.getContractAt('ISettler', '0x70bf6634eE8Cb27D04478f184b9b8BB13E5f4710');
+    const iSettlerActions = new ethers.Interface((await artifacts.readArtifact('ISettlerActions')).abi);
 
     const tokens = {
         ETH: {
@@ -28,6 +29,8 @@ async function initRouterContracts() {
         USDT: await ethers.getContractAt('IERC20', '0xdAC17F958D2ee523a2206206994597C13D831ec7'),
     };
 
+    ethers.provider.send('hardhat_setNextBlockBaseFeePerGas', ['0x0']);
+
     await tokens.DAI.approve(inch, ether('1'));
     await tokens.DAI.approve(matcha, ether('1'));
     await tokens.DAI.approve(uniswapv2, ether('1'));
@@ -42,7 +45,18 @@ async function initRouterContracts() {
     await uniswapv2.swapExactETHForTokens(ether('0'), [tokens.WETH, tokens.USDT], addr1, ether('1'), { value: ether('1') }); // USDT
     await tokens.WETH.deposit({ value: ether('1') }); // WETH
 
-    return { addr1, tokens, inch, matcha, paraswap, uniswapv2, uniswapv3, uniswapUniversal };
+    return {
+        addr1,
+        tokens,
+        inch,
+        matcha,
+        matcha2,
+        iSettlerActions,
+        paraswap,
+        uniswapv2,
+        uniswapv3,
+        uniswapUniversal,
+    };
 }
 
 /**

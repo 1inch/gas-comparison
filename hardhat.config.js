@@ -35,9 +35,6 @@ module.exports = {
     },
     networks,
     etherscan,
-    tracer: {
-        enableAllOpcodes: true,
-    },
     dependencyCompiler: {
         paths: [
             '@1inch/limit-order-protocol-contract/contracts/LimitOrderProtocol.sol',

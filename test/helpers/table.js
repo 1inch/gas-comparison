@@ -21,6 +21,7 @@ function compareGasUsedElements(displayedElement1, displayedElement2) {
 class GasUsedTable {
     DEFAULT_FIRST_COLUMN = { columnAlign: 'left', headAlign: 'center', content: 'case' };
     DEFAULT_COLORS = { best: 'green', worst: 'red', neutral: 'white' };
+    EMPTY_CELL = 'empty';
     header = null;
     table = null;
     colors = null;
@@ -64,7 +65,10 @@ class GasUsedTable {
             this.table.options.colAligns[columnIndex] = align;
             this.table.options.head[0].colSpan++;
         }
-        this.table[rowIndex].push(this.modifyElementHook(element));
+        for (let i = this.table[rowIndex].length; i <= columnIndex; i++) {
+            this.table[rowIndex].push(this.EMPTY_CELL);
+        }
+        this.table[rowIndex][columnIndex] = this.modifyElementHook(element);
     }
 
     compareElementsHook(element1, element2) {
@@ -82,7 +86,10 @@ class GasUsedTable {
     toStringWithColors() {
         for (let i = 1; i < this.table.length; i++) {
             const row = this.table[i];
-            const sortRow = row.slice(1).sort(this.compareElementsHook);
+            const sortRow = row
+                .slice(1)
+                .filter((a) => a !== this.EMPTY_CELL)
+                .sort(this.compareElementsHook);
             const best = sortRow[sortRow.length - 1];
             const worst = sortRow[0];
             for (let j = 1; j < row.length; j++) {
@@ -115,7 +122,10 @@ class GasUsedTable {
         // Patch table lines with percentages and colors
         for (let i = 1; i < this.table.length; i++) {
             const row = this.table[i];
-            const sortRow = row.slice(1).sort(this.compareElementsHook);
+            const sortRow = row
+                .slice(1)
+                .filter((a) => a !== this.EMPTY_CELL)
+                .sort(this.compareElementsHook);
             const best = sortRow[sortRow.length - 1];
             const worst = sortRow[0];
             const comparePercentageValue = this.table[i][1];
@@ -135,10 +145,15 @@ class GasUsedTable {
                 if (j === 1) {
                     tmpRow[j] = chalk[cellColor](this.table[i][j]);
                 } else {
-                    let diff = (parseFloat(this.table[i][j].replace(/,/g, '')) / parseFloat(comparePercentageValue.replace(/,/g, ''))) * 100 - 100;
-                    diff = diff > 0 ? `+${diff.toFixed(2)}` : diff.toFixed(2);
-                    tmpRow[(j - 2) * 2 + 2] = chalk[cellColor](this.table[i][j]);
-                    tmpRow[(j - 2) * 2 + 3] = chalk[cellColor](`${diff}%`);
+                    if (this.table[i][j] === this.EMPTY_CELL) {
+                        tmpRow[(j - 2) * 2 + 2] = '';
+                        tmpRow[(j - 2) * 2 + 3] = '';
+                    } else {
+                        let diff = (parseFloat(this.table[i][j].replace(/,/g, '')) / parseFloat(comparePercentageValue.replace(/,/g, ''))) * 100 - 100;
+                        diff = diff > 0 ? `+${diff.toFixed(2)}` : diff.toFixed(2);
+                        tmpRow[(j - 2) * 2 + 2] = chalk[cellColor](this.table[i][j]);
+                        tmpRow[(j - 2) * 2 + 3] = chalk[cellColor](`${diff}%`);
+                    }
                 }
             }
             this.table[i] = tmpRow;

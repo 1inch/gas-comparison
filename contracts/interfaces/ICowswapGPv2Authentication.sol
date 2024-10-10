@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.0;  // solhint-disable-line compiler-version
+pragma solidity ^0.8.0;
 
 interface ICowswapGPv2Authentication {
     function manager() external view returns (address);
