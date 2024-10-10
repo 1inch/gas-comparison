@@ -86,7 +86,10 @@ class GasUsedTable {
     toStringWithColors() {
         for (let i = 1; i < this.table.length; i++) {
             const row = this.table[i];
-            const sortRow = row.slice(1).filter(a => a !== this.EMPTY_CELL).sort(this.compareElementsHook);
+            const sortRow = row
+                .slice(1)
+                .filter((a) => a !== this.EMPTY_CELL)
+                .sort(this.compareElementsHook);
             const best = sortRow[sortRow.length - 1];
             const worst = sortRow[0];
             for (let j = 1; j < row.length; j++) {
@@ -119,7 +122,10 @@ class GasUsedTable {
         // Patch table lines with percentages and colors
         for (let i = 1; i < this.table.length; i++) {
             const row = this.table[i];
-            const sortRow = row.slice(1).filter(a => a !== this.EMPTY_CELL).sort(this.compareElementsHook);
+            const sortRow = row
+                .slice(1)
+                .filter((a) => a !== this.EMPTY_CELL)
+                .sort(this.compareElementsHook);
             const best = sortRow[sortRow.length - 1];
             const worst = sortRow[0];
             const comparePercentageValue = this.table[i][1];

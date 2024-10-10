@@ -328,11 +328,7 @@ describe('Mixed pools', async function () {
 
             const { permit2Data, permitSignature } = await getPermit2Data({ token: tokens.DAI.target, spender: matcha2.target, signer: addr1 });
 
-            const encodedTransferFrom = iSettlerActions.encodeFunctionData('TRANSFER_FROM', [
-                UniswapV2Pools.WETH_DAI,
-                permit2Data.values,
-                permitSignature,
-            ]);
+            const encodedTransferFrom = iSettlerActions.encodeFunctionData('TRANSFER_FROM', [UniswapV2Pools.WETH_DAI, permit2Data.values, permitSignature]);
 
             const encodedDAIToWETH = iSettlerActions.encodeFunctionData('UNISWAPV2', [
                 matcha2.target,

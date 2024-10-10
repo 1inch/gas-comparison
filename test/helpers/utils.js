@@ -1,11 +1,6 @@
 const { ethers } = require('hardhat');
 const { trim0x, ether } = require('@1inch/solidity-utils');
-const { MixedRouteTrade, MixedRouteSDK, Trade } = require('@uniswap/router-sdk');
 const { PERMIT2_ADDRESS, SignatureTransfer } = require('@uniswap/permit2-sdk');
-const { SwapRouter, UniswapTrade } = require('@uniswap/universal-router-sdk');
-const { Pool } = require('@uniswap/v3-sdk');
-const { Pair } = require('@uniswap/v2-sdk');
-const { CurrencyAmount, Token, TradeType, Ether, Percent } = require('@uniswap/sdk-core');
 
 const ProtocolKey = {
     INCH: '1inch',
@@ -76,7 +71,7 @@ async function getPermit2Data({ token, amount = ether('1'), spender, signer }) {
         const wordPos = nonce / 256n;
         const bitPos = nonce % 256n;
         const nonceBitmap = await permit2Contract.nonceBitmap(signer, wordPos);
-        if (BigInt(((nonceBitmap ^ (1n << bitPos)) & (1n << bitPos))) !== 0n) {
+        if (BigInt((nonceBitmap ^ (1n << bitPos)) & (1n << bitPos)) !== 0n) {
             break;
         }
     }
