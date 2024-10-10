@@ -496,7 +496,7 @@ describe('Router [UniV3]', async function () {
                 ...(await initRouterContracts()),
                 settings: {
                     gasUsedTableRow: gasUsedTable.addRow(['DAI => ETH (Permit2)']),
-                    amount: ether('1'),
+                    amount: ether('0.0001'),
                 },
             };
         }
@@ -683,7 +683,7 @@ describe('Router [UniV3]', async function () {
                 ...(await initRouterContracts()),
                 settings: {
                     gasUsedTableRow: gasUsedTable.addRow(['DAI => WETH (Permit2)']),
-                    amount: ether('1'),
+                    amount: ether('0.0001'),
                 },
             };
         }
@@ -888,7 +888,7 @@ describe('Router [UniV3]', async function () {
                 ...(await initRouterContracts()),
                 settings: {
                     gasUsedTableRow: gasUsedTable.addRow(['DAI => WETH => USDC (Permit2)']),
-                    amount: ether('1'),
+                    amount: ether('0.0001'),
                 },
             };
         }
@@ -1109,7 +1109,7 @@ describe('Router [UniV3]', async function () {
                 ...(await initRouterContracts()),
                 settings: {
                     gasUsedTableRow: gasUsedTable.addRow(['DAI => WETH => USDC => USDT (Permit2)']),
-                    amount: ether('1'),
+                    amount: ether('0.0001'),
                 },
             };
         }

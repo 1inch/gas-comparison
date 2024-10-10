@@ -1,6 +1,6 @@
 const { ethers } = require('hardhat');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
-const { ether, permit2Contract, trim0x, constants } = require('@1inch/solidity-utils');
+const { ether, trim0x, constants } = require('@1inch/solidity-utils');
 const { ProtocolKey, uniswapV3EncodePath, encodeUniswapPath, getPermit2Data } = require('./helpers/utils');
 const { initRouterContracts, adjustV2PoolTimestamps } = require('./helpers/fixtures');
 const { createGasUsedTable } = require('./helpers/table');
@@ -18,18 +18,6 @@ describe('Mixed pools', async function () {
         const fixtureData = await initRouterContracts();
 
         await adjustV2PoolTimestamps(ethers, UniswapV2Pools);
-
-        return fixtureData;
-    }
-
-    async function initContractsWithApproveInPermit2() {
-        // This fixture is used to approve tokens in the permit2 contract and doesn't use permit functionality
-        const fixtureData = await initContracts();
-
-        const permit2 = await permit2Contract();
-        await fixtureData.tokens.DAI.approve(permit2, ether('1'));
-        await permit2.approve(fixtureData.tokens.DAI, fixtureData.uniswapUniversal, ether('1'), Date.now());
-        await permit2.approve(fixtureData.tokens.DAI, fixtureData.inch, ether('1'), Date.now());
 
         return fixtureData;
     }
@@ -290,7 +278,7 @@ describe('Mixed pools', async function () {
     describe('DAI =(uniV2)=> WETH =(uniV3)=> USDC (Permit2)', async function () {
         async function initContractsWithCaseSettings() {
             return {
-                ...(await initContractsWithApproveInPermit2()),
+                ...(await initContracts()),
                 settings: {
                     gasUsedTableRow: gasUsedTable.addRow(['DAI =(uniV2)=> WETH =(uniV3)=> USDC (Permit2)']),
                     amount: ether('1'),
@@ -418,7 +406,7 @@ describe('Mixed pools', async function () {
     describe('DAI =(uniV3)=> WETH =(uniV2)=> USDC (Permit2)', async function () {
         async function initContractsWithCaseSettings() {
             return {
-                ...(await initContractsWithApproveInPermit2()),
+                ...(await initContracts()),
                 settings: {
                     gasUsedTableRow: gasUsedTable.addRow(['DAI =(uniV3)=> WETH =(uniV2)=> USDC (Permit2)']),
                     amount: ether('1'),
