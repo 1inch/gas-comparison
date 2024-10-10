@@ -298,6 +298,47 @@ describe('Router [UniV2]', async function () {
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA, (await tx.wait()).gasUsed);
         });
 
+        it('matcha2', async function () {
+            const {
+                addr1,
+                tokens,
+                matcha2,
+                iSettlerActions,
+                matcha2AllowanceHolder,
+                fakePermit,
+                settings: { gasUsedTableRow },
+            } = await loadFixture(initContractsWithCaseSettings);
+
+            const encodedTransferFrom = iSettlerActions.encodeFunctionData('TRANSFER_FROM', [UniswapV2Pools.WETH_DAI, fakePermit, '0x']);
+
+            const encodedUniswapV2FunctionDataDAItoWETH = iSettlerActions.encodeFunctionData('UNISWAPV2', [
+                matcha2.target, // since we'll need to unwrap it
+                tokens.DAI.target, // sell token
+                0n, // bps
+                UniswapV2Pools.WETH_DAI, // pool
+                0x1e01n, // swapInfo
+                0n, // amountOutMin
+            ]);
+
+            const encodedBasicFunctionData = iSettlerActions.encodeFunctionData('BASIC', [
+                tokens.WETH.target,
+                0n, // bps
+                tokens.WETH.target, // pool
+                4n, // offset
+                tokens.WETH.interface.getFunction('withdraw').selector + trim0x(constants.ZERO_BYTES32),
+            ]);
+
+            const swapCalldata = matcha2.interface.encodeFunctionData('execute', [
+                { recipient: addr1.address, buyToken: await tokens.EEE.getAddress(), minAmountOut: '0x00' },
+                [encodedTransferFrom, encodedUniswapV2FunctionDataDAItoWETH, encodedBasicFunctionData],
+                constants.ZERO_BYTES32,
+            ]);
+
+            const tx = await matcha2AllowanceHolder.exec(matcha2.target, tokens.DAI.target, ether('1'), matcha2.target, swapCalldata);
+
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA2, (await tx.wait()).gasUsed);
+        });
+
         it('uniswap', async function () {
             const {
                 addr1,
@@ -437,6 +478,39 @@ describe('Router [UniV2]', async function () {
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA, (await tx.wait()).gasUsed);
         });
 
+        it('matcha2', async function () {
+            const {
+                addr1,
+                tokens,
+                matcha2,
+                matcha2AllowanceHolder,
+                iSettlerActions,
+                fakePermit,
+                settings: { gasUsedTableRow },
+            } = await loadFixture(initContractsWithCaseSettings);
+
+            const encodedTransferFrom = iSettlerActions.encodeFunctionData('TRANSFER_FROM', [UniswapV2Pools.WETH_DAI, fakePermit, '0x']);
+
+            const encodedUniswapV2FunctionDataDAItoWETH = iSettlerActions.encodeFunctionData('UNISWAPV2', [
+                addr1.address, // recipient
+                tokens.DAI.target, // sell token
+                0n, // bps
+                UniswapV2Pools.WETH_DAI, // pool
+                0x1e01n, // swapInfo
+                0n, // amountOutMin
+            ]);
+
+            const swapCalldata = matcha2.interface.encodeFunctionData('execute', [
+                { recipient: constants.ZERO_ADDRESS, buyToken: constants.ZERO_ADDRESS, minAmountOut: '0x00' },
+                [encodedTransferFrom, encodedUniswapV2FunctionDataDAItoWETH],
+                constants.ZERO_BYTES32,
+            ]);
+
+            const tx = await matcha2AllowanceHolder.exec(matcha2.target, tokens.DAI.target, ether('1'), matcha2.target, swapCalldata);
+
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA2, (await tx.wait()).gasUsed);
+        });
+
         it('uniswap', async function () {
             const {
                 addr1,
@@ -567,6 +641,48 @@ describe('Router [UniV2]', async function () {
             } = await loadFixture(initContractsWithCaseSettings);
             const tx = await matcha.sellToUniswap([tokens.DAI, tokens.WETH, tokens.USDC], amount, '1', false);
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA, (await tx.wait()).gasUsed);
+        });
+
+        it('matcha2', async function () {
+            const {
+                addr1,
+                tokens,
+                matcha2,
+                iSettlerActions,
+                matcha2AllowanceHolder,
+                fakePermit,
+                settings: { gasUsedTableRow },
+            } = await loadFixture(initContractsWithCaseSettings);
+
+            const encodedTransferFrom = iSettlerActions.encodeFunctionData('TRANSFER_FROM', [UniswapV2Pools.WETH_DAI, fakePermit, '0x']);
+
+            const UniswapV2FunctionDataDAItoWETH = iSettlerActions.encodeFunctionData('UNISWAPV2', [
+                UniswapV2Pools.WETH_USDC,
+                tokens.DAI.target, // sell token
+                0n, // bps
+                UniswapV2Pools.WETH_DAI, // pool
+                0x1e01n, // swapInfo
+                0n, // amountOutMin
+            ]);
+
+            const UniswapV2FunctionDataWETHtoUSDC = iSettlerActions.encodeFunctionData('UNISWAPV2', [
+                addr1.address,
+                tokens.WETH.target,
+                0n,
+                UniswapV2Pools.WETH_USDC,
+                0x1e00,
+                0n,
+            ]);
+
+            const swapCalldata = matcha2.interface.encodeFunctionData('execute', [
+                { recipient: constants.ZERO_ADDRESS, buyToken: constants.ZERO_ADDRESS, minAmountOut: '0x00' },
+                [encodedTransferFrom, UniswapV2FunctionDataDAItoWETH, UniswapV2FunctionDataWETHtoUSDC],
+                constants.ZERO_BYTES32,
+            ]);
+
+            const tx = await matcha2AllowanceHolder.exec(matcha2.target, tokens.DAI.target, ether('1'), matcha2.target, swapCalldata);
+
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA2, (await tx.wait()).gasUsed);
         });
 
         it('uniswap', async function () {
@@ -725,6 +841,57 @@ describe('Router [UniV2]', async function () {
             } = await loadFixture(initContractsWithCaseSettings);
             const tx = await matcha.sellToUniswap([tokens.DAI, tokens.WETH, tokens.USDC, tokens.USDT], amount, '1', false);
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA, (await tx.wait()).gasUsed);
+        });
+
+        it('matcha2', async function () {
+            const {
+                addr1,
+                tokens,
+                matcha2,
+                iSettlerActions,
+                matcha2AllowanceHolder,
+                fakePermit,
+                settings: { gasUsedTableRow },
+            } = await loadFixture(initContractsWithCaseSettings);
+
+            const encodedTransferFrom = iSettlerActions.encodeFunctionData('TRANSFER_FROM', [UniswapV2Pools.WETH_DAI, fakePermit, '0x']);
+
+            const UniswapV2FunctionDataDAItoWETH = iSettlerActions.encodeFunctionData('UNISWAPV2', [
+                UniswapV2Pools.WETH_USDC,
+                tokens.DAI.target, // sell token
+                0n, // bps
+                UniswapV2Pools.WETH_DAI, // pool
+                0x1e01n, // swapInfo
+                0n, // amountOutMin
+            ]);
+
+            const UniswapV2FunctionDataWETHtoUSDC = iSettlerActions.encodeFunctionData('UNISWAPV2', [
+                UniswapV2Pools.USDC_USDT,
+                tokens.WETH.target,
+                0n,
+                UniswapV2Pools.WETH_USDC,
+                0x1e00n,
+                0n,
+            ]);
+
+            const UniswapV2FunctionDataUSDCtoUSDT = iSettlerActions.encodeFunctionData('UNISWAPV2', [
+                addr1.address,
+                tokens.USDC.target,
+                0n,
+                UniswapV2Pools.USDC_USDT,
+                0x1e01n,
+                0n,
+            ]);
+
+            const swapCalldata = matcha2.interface.encodeFunctionData('execute', [
+                { recipient: constants.ZERO_ADDRESS, buyToken: constants.ZERO_ADDRESS, minAmountOut: '0x00' },
+                [encodedTransferFrom, UniswapV2FunctionDataDAItoWETH, UniswapV2FunctionDataWETHtoUSDC, UniswapV2FunctionDataUSDCtoUSDT],
+                constants.ZERO_BYTES32,
+            ]);
+
+            const tx = await matcha2AllowanceHolder.exec(matcha2.target, tokens.DAI.target, ether('1'), matcha2.target, swapCalldata);
+
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA2, (await tx.wait()).gasUsed);
         });
 
         it('uniswap', async function () {

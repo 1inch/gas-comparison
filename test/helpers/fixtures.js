@@ -1,6 +1,6 @@
 const { ether, constants } = require('@1inch/solidity-utils');
 const { ethers, artifacts } = require('hardhat');
-const { PERMIT2_ADDRESS, SignatureTransfer } = require('@uniswap/permit2-sdk');
+const { PERMIT2_ADDRESS } = require('@uniswap/permit2-sdk');
 
 async function initRouterContracts() {
     const [addr1] = await ethers.getSigners();
@@ -11,6 +11,7 @@ async function initRouterContracts() {
     const uniswapUniversalRouter = await ethers.getContractAt('IUniversalRouter', '0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD'); // uniswap's latest router
     const paraswap = await ethers.getContractAt('IParaswapRouter', '0x6A000F20005980200259B80c5102003040001068');
     const matcha2 = await ethers.getContractAt('ISettler', '0x70bf6634eE8Cb27D04478f184b9b8BB13E5f4710');
+    const matcha2AllowanceHolder = await ethers.getContractAt('IAllowanceHolder', '0x0000000000001fF3684f28c67538d4D072C22734');
     const iSettlerActions = new ethers.Interface((await artifacts.readArtifact('ISettlerActions')).abi);
 
     const tokens = {
@@ -39,6 +40,7 @@ async function initRouterContracts() {
     await tokens.DAI.approve(paraswap, ether('1'));
     await tokens.DAI.approve(uniswapUniversalRouter, ether('1'));
     await tokens.DAI.approve(PERMIT2_ADDRESS, ether('1'));
+    await tokens.DAI.approve(matcha2AllowanceHolder, ether('1'));
 
     // Buy some tokens for warmup address and exchanges
     await addr1.sendTransaction({ to: '0x2a1530c4c41db0b0b2bb646cb5eb1a67b7158667', value: ether('1') }); // DAI
@@ -46,12 +48,23 @@ async function initRouterContracts() {
     await uniswapv2.swapExactETHForTokens(ether('0'), [tokens.WETH, tokens.USDT], addr1, ether('1'), { value: ether('1') }); // USDT
     await tokens.WETH.deposit({ value: ether('1') }); // WETH
 
+    const fakePermit = {
+        nonce: 0n,
+        deadline: '0xffffffffffff',
+        permitted: {
+            token: tokens.DAI.target,
+            amount: ether('1'),
+        },
+    };
+
     return {
         addr1,
         tokens,
         inch,
         matcha,
         matcha2,
+        matcha2AllowanceHolder,
+        fakePermit,
         iSettlerActions,
         paraswap,
         uniswapv2,
