@@ -198,7 +198,9 @@ describe('Router [UniV2]', async function () {
 
             it('uniswap v2 router', async function () {
                 const { addr1, tokens, uniswapv2 } = await loadFixture(initRouterContracts);
-                const tx = await uniswapv2.swapExactETHForTokens(amount, [tokens.WETH, tokens.USDC, tokens.DAI], addr1.address, '0xffffffffff', { value: amount });
+                const tx = await uniswapv2.swapExactETHForTokens(amount, [tokens.WETH, tokens.USDC, tokens.DAI], addr1.address, '0xffffffffff', {
+                    value: amount,
+                });
                 gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP_V2, (await tx.wait()).gasUsed);
             });
 
@@ -282,7 +284,13 @@ describe('Router [UniV2]', async function () {
             it('paraswap', async function () {
                 const { addr1, tokens, uniswapv2, paraswap } = await loadFixture(initRouterContracts);
                 // Get `quotedAmount` to avoid positive slippage which makes the transaction significantly more expensive
-                const [, quotedAmount] = await uniswapv2.swapExactTokensForETH.staticCall(amount, '1', [tokens.DAI, tokens.WETH], addr1.address, '0xffffffffff');
+                const [, quotedAmount] = await uniswapv2.swapExactTokensForETH.staticCall(
+                    amount,
+                    '1',
+                    [tokens.DAI, tokens.WETH],
+                    addr1.address,
+                    '0xffffffffff',
+                );
                 const tx = await paraswap.swapExactAmountInOnUniswapV2(
                     [
                         tokens.DAI,
@@ -339,7 +347,13 @@ describe('Router [UniV2]', async function () {
             it('paraswap', async function () {
                 const { addr1, tokens, uniswapv2, paraswap } = await loadFixture(initRouterContracts);
                 // Get `quotedAmount` to avoid positive slippage which makes the transaction significantly more expensive
-                const [, quotedAmount] = await uniswapv2.swapExactTokensForTokens.staticCall(amount, '1', [tokens.DAI, tokens.WETH], addr1.address, '0xffffffffff');
+                const [, quotedAmount] = await uniswapv2.swapExactTokensForTokens.staticCall(
+                    amount,
+                    '1',
+                    [tokens.DAI, tokens.WETH],
+                    addr1.address,
+                    '0xffffffffff',
+                );
                 const tx = await paraswap.swapExactAmountInOnUniswapV2(
                     [
                         tokens.DAI,

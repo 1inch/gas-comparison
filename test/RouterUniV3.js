@@ -90,9 +90,12 @@ describe('Router [UniV3]', async function () {
 
             it('uniswap v3 router', async function () {
                 const { addr1, tokens, uniswapv3 } = await loadFixture(initRouterContracts);
-                const tx = await uniswapv3.exactInputSingle([tokens.WETH, tokens.DAI, UniswapV3Pools.WETH_DAI.fee, addr1.address, '0xffffffff', amount, '1', '0'], {
-                    value: amount,
-                });
+                const tx = await uniswapv3.exactInputSingle(
+                    [tokens.WETH, tokens.DAI, UniswapV3Pools.WETH_DAI.fee, addr1.address, '0xffffffff', amount, '1', '0'],
+                    {
+                        value: amount,
+                    },
+                );
                 gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP_V3, (await tx.wait()).gasUsed);
             });
 
@@ -199,7 +202,10 @@ describe('Router [UniV3]', async function () {
                     addr1.address,
                     amount,
                     '1',
-                    uniswapV3EncodePath([tokens.WETH.target, tokens.USDC.target, tokens.DAI.target], [UniswapV3Pools.WETH_USDC.fee, UniswapV3Pools.USDC_DAI.fee]),
+                    uniswapV3EncodePath(
+                        [tokens.WETH.target, tokens.USDC.target, tokens.DAI.target],
+                        [UniswapV3Pools.WETH_USDC.fee, UniswapV3Pools.USDC_DAI.fee],
+                    ),
                     false,
                 ]);
 
@@ -429,7 +435,16 @@ describe('Router [UniV3]', async function () {
 
             it('uniswap v3 router', async function () {
                 const { addr1, tokens, uniswapv3 } = await loadFixture(initRouterContracts);
-                const tx = await uniswapv3.exactInputSingle([tokens.DAI, tokens.WETH, UniswapV3Pools.WETH_DAI.fee, addr1.address, '0xffffffff', amount, '1', '0']);
+                const tx = await uniswapv3.exactInputSingle([
+                    tokens.DAI,
+                    tokens.WETH,
+                    UniswapV3Pools.WETH_DAI.fee,
+                    addr1.address,
+                    '0xffffffff',
+                    amount,
+                    '1',
+                    '0',
+                ]);
                 gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP_V3, (await tx.wait()).gasUsed);
             });
 
@@ -511,7 +526,10 @@ describe('Router [UniV3]', async function () {
                     addr1.address,
                     amount,
                     '1',
-                    uniswapV3EncodePath([tokens.DAI.target, tokens.WETH.target, tokens.USDC.target], [UniswapV3Pools.WETH_DAI.fee, UniswapV3Pools.WETH_USDC.fee]),
+                    uniswapV3EncodePath(
+                        [tokens.DAI.target, tokens.WETH.target, tokens.USDC.target],
+                        [UniswapV3Pools.WETH_DAI.fee, UniswapV3Pools.WETH_USDC.fee],
+                    ),
                     true,
                 ]);
 
