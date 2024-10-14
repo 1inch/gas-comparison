@@ -64,18 +64,6 @@ function encodeUniswapPath(sourceToken, fork, feeTeir, destinationToken) {
 }
 
 async function getPermit2Data({ token, amount = ether('1'), spender, signer }) {
-    const permit2Contract = await ethers.getContractAt('IAllowanceTransfer', PERMIT2_ADDRESS);
-
-    let nonce = 0n;
-    for (; ; nonce++) {
-        const wordPos = nonce / 256n;
-        const bitPos = nonce % 256n;
-        const nonceBitmap = await permit2Contract.nonceBitmap(signer, wordPos);
-        if (BigInt((nonceBitmap ^ (1n << bitPos)) & (1n << bitPos)) !== 0n) {
-            break;
-        }
-    }
-
     const permit2Data = SignatureTransfer.getPermitData(
         {
             permitted: {
@@ -83,7 +71,7 @@ async function getPermit2Data({ token, amount = ether('1'), spender, signer }) {
                 amount,
             },
             spender,
-            nonce,
+            nonce: 0n,
             deadline: Date.now() + 1000,
         },
         PERMIT2_ADDRESS,

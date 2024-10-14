@@ -2,43 +2,27 @@ const { ethers } = require('hardhat');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 const { ether, trim0x, constants } = require('@1inch/solidity-utils');
 const { ProtocolKey, uniswapV3EncodePath, encodeUniswapPath, getPermit2Data } = require('./helpers/utils');
-const { initRouterContracts, adjustV2PoolTimestamps } = require('./helpers/fixtures');
+const { initRouterContracts } = require('./helpers/fixtures');
 const { createGasUsedTable } = require('./helpers/table');
 const { UniswapV2Pools, UniswapV3Pools } = require('./helpers/pools');
 const { RoutePlanner, CommandType } = require('@uniswap/universal-router-sdk');
 
 describe('Mixed pools', async function () {
     const gasUsedTable = createGasUsedTable('Mixed pools', 'path');
+    const amount = ether('0.001');
 
     after(async function () {
         console.log(gasUsedTable.toString());
     });
 
-    async function initContracts() {
-        const fixtureData = await initRouterContracts();
-
-        await adjustV2PoolTimestamps(ethers, UniswapV2Pools);
-
-        return fixtureData;
-    }
-
     describe('ETH =(uniV2)=> DAI =(uniV3)=> USDC', async function () {
-        async function initContractsWithCaseSettings() {
-            return {
-                ...(await initContracts()),
-                settings: {
-                    gasUsedTableRow: gasUsedTable.addRow(['ETH =(uniV2)=> DAI =(uniV3)=> USDC']),
-                    amount: ether('1'),
-                },
-            };
-        }
+        const gasUsedTableRow = gasUsedTable.addRow(['ETH =(uniV2)=> DAI =(uniV3)=> USDC']);
 
         it('1inch', async function () {
             const {
                 addr1,
                 inch,
-                settings: { gasUsedTableRow, amount },
-            } = await loadFixture(initContractsWithCaseSettings);
+            } = await loadFixture(initRouterContracts);
 
             const tx = await inch.ethUnoswapTo2(
                 addr1.address,
@@ -58,8 +42,7 @@ describe('Mixed pools', async function () {
                 tokens,
                 matcha2,
                 iSettlerActions,
-                settings: { gasUsedTableRow, amount },
-            } = await loadFixture(initContractsWithCaseSettings);
+            } = await loadFixture(initRouterContracts);
 
             const encodedWrapETHfunction = iSettlerActions.encodeFunctionData('BASIC', [
                 await tokens.EEE.getAddress(),
@@ -100,8 +83,7 @@ describe('Mixed pools', async function () {
                 addr1,
                 uniswapUniversal,
                 tokens,
-                settings: { gasUsedTableRow, amount },
-            } = await loadFixture(initContractsWithCaseSettings);
+            } = await loadFixture(initRouterContracts);
 
             const planner = new RoutePlanner();
             planner.addCommand(CommandType.WRAP_ETH, [uniswapUniversal.target, amount]);
@@ -120,22 +102,13 @@ describe('Mixed pools', async function () {
     });
 
     describe('ETH =(uniV3)=> DAI =(uniV2)=> USDC', async function () {
-        async function initContractsWithCaseSettings() {
-            return {
-                ...(await initContracts()),
-                settings: {
-                    gasUsedTableRow: gasUsedTable.addRow(['ETH =(uniV3)=> DAI =(uniV2)=> USDC']),
-                    amount: ether('1'),
-                },
-            };
-        }
+        const gasUsedTableRow = gasUsedTable.addRow(['ETH =(uniV3)=> DAI =(uniV2)=> USDC']);
 
         it('1inch', async function () {
             const {
                 addr1,
                 inch,
-                settings: { gasUsedTableRow, amount },
-            } = await loadFixture(initContractsWithCaseSettings);
+            } = await loadFixture(initRouterContracts);
 
             const tx = await inch.ethUnoswapTo2(
                 addr1.address,
@@ -155,8 +128,7 @@ describe('Mixed pools', async function () {
                 tokens,
                 matcha2,
                 iSettlerActions,
-                settings: { gasUsedTableRow, amount },
-            } = await loadFixture(initContractsWithCaseSettings);
+            } = await loadFixture(initRouterContracts);
 
             const encodedWrapETHfunction = iSettlerActions.encodeFunctionData('BASIC', [
                 await tokens.EEE.getAddress(),
@@ -197,8 +169,7 @@ describe('Mixed pools', async function () {
                 addr1,
                 uniswapUniversal,
                 tokens,
-                settings: { gasUsedTableRow, amount },
-            } = await loadFixture(initContractsWithCaseSettings);
+            } = await loadFixture(initRouterContracts);
 
             const planner = new RoutePlanner();
             planner.addCommand(CommandType.WRAP_ETH, [uniswapUniversal.target, amount]);
@@ -223,23 +194,14 @@ describe('Mixed pools', async function () {
     });
 
     describe('DAI =(uniV2)=> WETH =(uniV3)=> USDC', async function () {
-        async function initContractsWithCaseSettings() {
-            return {
-                ...(await initContracts()),
-                settings: {
-                    gasUsedTableRow: gasUsedTable.addRow(['DAI =(uniV2)=> WETH =(uniV3)=> USDC']),
-                    amount: ether('1'),
-                },
-            };
-        }
+        const gasUsedTableRow = gasUsedTable.addRow(['DAI =(uniV2)=> WETH =(uniV3)=> USDC']);
 
         it('1inch', async function () {
             const {
                 addr1,
                 inch,
                 tokens,
-                settings: { gasUsedTableRow, amount },
-            } = await loadFixture(initContractsWithCaseSettings);
+            } = await loadFixture(initRouterContracts);
 
             const tx = await inch.unoswapTo2(
                 addr1.address,
@@ -257,8 +219,7 @@ describe('Mixed pools', async function () {
                 addr1,
                 uniswapUniversal,
                 tokens,
-                settings: { gasUsedTableRow, amount },
-            } = await loadFixture(initContractsWithCaseSettings);
+            } = await loadFixture(initRouterContracts);
 
             const planner = new RoutePlanner();
             planner.addCommand(CommandType.V2_SWAP_EXACT_IN, [uniswapUniversal.target, amount, '1', [tokens.DAI.target, tokens.WETH.target], true]);
@@ -276,23 +237,14 @@ describe('Mixed pools', async function () {
     });
 
     describe('DAI =(uniV2)=> WETH =(uniV3)=> USDC (Permit2)', async function () {
-        async function initContractsWithCaseSettings() {
-            return {
-                ...(await initContracts()),
-                settings: {
-                    gasUsedTableRow: gasUsedTable.addRow(['DAI =(uniV2)=> WETH =(uniV3)=> USDC (Permit2)']),
-                    amount: ether('1'),
-                },
-            };
-        }
+        const gasUsedTableRow = gasUsedTable.addRow(['DAI =(uniV2)=> WETH =(uniV3)=> USDC (Permit2)']);
 
         it('1inch (dummy)', async function () {
             const {
                 addr1,
                 inch,
                 tokens,
-                settings: { gasUsedTableRow, amount },
-            } = await loadFixture(initContractsWithCaseSettings);
+            } = await loadFixture(initRouterContracts);
 
             const tx = await inch.unoswapTo2(
                 addr1.address,
@@ -311,8 +263,7 @@ describe('Mixed pools', async function () {
                 tokens,
                 matcha2,
                 iSettlerActions,
-                settings: { gasUsedTableRow },
-            } = await loadFixture(initContractsWithCaseSettings);
+            } = await loadFixture(initRouterContracts);
 
             const { permit2Data, permitSignature } = await getPermit2Data({ token: tokens.DAI.target, spender: matcha2.target, signer: addr1 });
 
@@ -345,23 +296,14 @@ describe('Mixed pools', async function () {
     });
 
     describe('DAI =(uniV3)=> WETH =(uniV2)=> USDC', async function () {
-        async function initContractsWithCaseSettings() {
-            return {
-                ...(await initContracts()),
-                settings: {
-                    gasUsedTableRow: gasUsedTable.addRow(['DAI =(uniV3)=> WETH =(uniV2)=> USDC']),
-                    amount: ether('1'),
-                },
-            };
-        }
+        const gasUsedTableRow = gasUsedTable.addRow(['DAI =(uniV3)=> WETH =(uniV2)=> USDC']);
 
         it('1inch', async function () {
             const {
                 addr1,
                 inch,
                 tokens,
-                settings: { gasUsedTableRow, amount },
-            } = await loadFixture(initContractsWithCaseSettings);
+            } = await loadFixture(initRouterContracts);
 
             const tx = await inch.unoswapTo2(
                 addr1.address,
@@ -379,8 +321,7 @@ describe('Mixed pools', async function () {
                 addr1,
                 uniswapUniversal,
                 tokens,
-                settings: { gasUsedTableRow, amount },
-            } = await loadFixture(initContractsWithCaseSettings);
+            } = await loadFixture(initRouterContracts);
 
             const planner = new RoutePlanner();
             planner.addCommand(CommandType.V3_SWAP_EXACT_IN, [
@@ -404,23 +345,14 @@ describe('Mixed pools', async function () {
     });
 
     describe('DAI =(uniV3)=> WETH =(uniV2)=> USDC (Permit2)', async function () {
-        async function initContractsWithCaseSettings() {
-            return {
-                ...(await initContracts()),
-                settings: {
-                    gasUsedTableRow: gasUsedTable.addRow(['DAI =(uniV3)=> WETH =(uniV2)=> USDC (Permit2)']),
-                    amount: ether('1'),
-                },
-            };
-        }
+        const gasUsedTableRow = gasUsedTable.addRow(['DAI =(uniV3)=> WETH =(uniV2)=> USDC (Permit2)']);
 
         it('1inch (dummy)', async function () {
             const {
                 addr1,
                 inch,
                 tokens,
-                settings: { gasUsedTableRow, amount },
-            } = await loadFixture(initContractsWithCaseSettings);
+            } = await loadFixture(initRouterContracts);
 
             const tx = await inch.unoswapTo2(
                 addr1.address,
@@ -439,8 +371,7 @@ describe('Mixed pools', async function () {
                 tokens,
                 matcha2,
                 iSettlerActions,
-                settings: { gasUsedTableRow },
-            } = await loadFixture(initContractsWithCaseSettings);
+            } = await loadFixture(initRouterContracts);
 
             const { permit2Data, permitSignature } = await getPermit2Data({ token: tokens.DAI.target, spender: matcha2.target, signer: addr1 });
 

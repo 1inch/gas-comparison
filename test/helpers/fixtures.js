@@ -1,5 +1,7 @@
 const { ether, constants, permit2Contract } = require('@1inch/solidity-utils');
 const { ethers, artifacts } = require('hardhat');
+const { UniswapV2Pools } = require('./pools');
+
 async function initRouterContracts() {
     const [addr1] = await ethers.getSigners();
     const inch = await ethers.getContractAt('IAggregationRouter', '0x111111125421ca6dc452d289314280a0f8842a65');
@@ -45,6 +47,16 @@ async function initRouterContracts() {
     await uniswapv2.swapExactETHForTokens(ether('0'), [tokens.WETH, tokens.USDT], addr1, ether('1'), { value: ether('1') }); // USDT
     await tokens.WETH.deposit({ value: ether('1') }); // WETH
 
+    // Adjust UniswapV2 pools timestamps to avoid gas diff due to oracle updates
+    const latestBlockTimestamp = (await ethers.provider.getBlock('latest')).timestamp;
+    const nextBlockTimestamp = latestBlockTimestamp + 3600 * 1000;
+
+    for (const pool of Object.values(UniswapV2Pools)) {
+        const slotData = await ethers.provider.getStorage(pool, '0x8');
+        await ethers.provider.send('hardhat_setStorageAt', [pool, '0x8', ethers.toBeHex(nextBlockTimestamp, 4) + slotData.slice(10)]);
+    }
+    await ethers.provider.send('evm_setNextBlockTimestamp', [nextBlockTimestamp]);
+
     return {
         addr1,
         tokens,
@@ -59,23 +71,6 @@ async function initRouterContracts() {
     };
 }
 
-/**
- * Set `blockTimestampLast` in uniswapv2 pools and next block timestamp to avoid oracle slot updates
- * @param {Object} ethers - An initialized ethers.js object with provider.
- * @param {Object} poolsV2 - A key:value mapping where each key represents a logical identifier and the value is the corresponding pool address.
- */
-async function adjustV2PoolTimestamps(ethers, poolsV2) {
-    const latestBlockTimestamp = (await ethers.provider.getBlock('latest')).timestamp;
-    const nextBlockTimestamp = latestBlockTimestamp + 3600 * 1000;
-
-    for (const pool of Object.values(poolsV2)) {
-        const slotData = await ethers.provider.getStorage(pool, '0x8');
-        await ethers.provider.send('hardhat_setStorageAt', [pool, '0x8', ethers.toBeHex(nextBlockTimestamp, 4) + slotData.slice(10)]);
-    }
-    await ethers.provider.send('evm_setNextBlockTimestamp', [nextBlockTimestamp]);
-}
-
 module.exports = {
     initRouterContracts,
-    adjustV2PoolTimestamps,
 };
