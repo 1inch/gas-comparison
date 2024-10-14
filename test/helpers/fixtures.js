@@ -11,7 +11,7 @@ async function initRouterContracts() {
     const uniswapUniversal = await ethers.getContractAt('IUniswapUniversalRouter', '0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD');
     const permit2 = await permit2Contract();
     const paraswap = await ethers.getContractAt('IParaswapRouter', '0x000dB803A70511E09dA650D4C0506d0000100000');
-    const matcha2 = await ethers.getContractAt('ISettler', '0x70bf6634eE8Cb27D04478f184b9b8BB13E5f4710');
+    const settler = await ethers.getContractAt('ISettler', '0x70bf6634eE8Cb27D04478f184b9b8BB13E5f4710');
     const iSettlerActions = new ethers.Interface((await artifacts.readArtifact('ISettlerActions')).abi);
 
     const tokens = {
@@ -62,7 +62,7 @@ async function initRouterContracts() {
         tokens,
         inch,
         matcha,
-        matcha2,
+        settler,
         iSettlerActions,
         paraswap,
         uniswapv2,

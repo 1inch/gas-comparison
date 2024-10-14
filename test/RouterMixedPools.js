@@ -32,8 +32,8 @@ describe('Mixed pools', async function () {
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.INCH, (await tx.wait()).gasUsed);
         });
 
-        it('matcha2', async function () {
-            const { addr1, tokens, matcha2, iSettlerActions } = await loadFixture(initRouterContracts);
+        it('settler', async function () {
+            const { addr1, tokens, settler, iSettlerActions } = await loadFixture(initRouterContracts);
 
             const encodedWrapETHfunction = iSettlerActions.encodeFunctionData('BASIC', [
                 await tokens.EEE.getAddress(),
@@ -44,7 +44,7 @@ describe('Mixed pools', async function () {
             ]);
 
             const encodededWETHToDAI = iSettlerActions.encodeFunctionData('UNISWAPV2', [
-                matcha2.target,
+                settler.target,
                 tokens.WETH.target,
                 10000n,
                 UniswapV2Pools.WETH_DAI,
@@ -59,14 +59,14 @@ describe('Mixed pools', async function () {
                 0n,
             ]);
 
-            const tx = await matcha2.execute(
+            const tx = await settler.execute(
                 { recipient: constants.ZERO_ADDRESS, buyToken: constants.ZERO_ADDRESS, minAmountOut: '0x00' },
                 [encodedWrapETHfunction, encodededWETHToDAI, encodedDAIToUSDC],
                 constants.ZERO_BYTES32,
                 { value: amount },
             );
 
-            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA2, (await tx.wait()).gasUsed);
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.SETTLER, (await tx.wait()).gasUsed);
         });
 
         it('uniswap', async function () {
@@ -106,8 +106,8 @@ describe('Mixed pools', async function () {
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.INCH, (await tx.wait()).gasUsed);
         });
 
-        it('matcha2', async function () {
-            const { addr1, tokens, matcha2, iSettlerActions } = await loadFixture(initRouterContracts);
+        it('settler', async function () {
+            const { addr1, tokens, settler, iSettlerActions } = await loadFixture(initRouterContracts);
 
             const encodedWrapETHfunction = iSettlerActions.encodeFunctionData('BASIC', [
                 await tokens.EEE.getAddress(),
@@ -133,14 +133,14 @@ describe('Mixed pools', async function () {
                 0n,
             ]);
 
-            const tx = await matcha2.execute(
+            const tx = await settler.execute(
                 { recipient: constants.ZERO_ADDRESS, buyToken: constants.ZERO_ADDRESS, minAmountOut: '0x00' },
                 [encodedWrapETHfunction, encodedWETHToDAI, encodedDAIToUSDC],
                 constants.ZERO_BYTES32,
                 { value: amount },
             );
 
-            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA2, (await tx.wait()).gasUsed);
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.SETTLER, (await tx.wait()).gasUsed);
         });
 
         it('uniswap', async function () {
@@ -220,15 +220,15 @@ describe('Mixed pools', async function () {
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.INCH, (await tx.wait()).gasUsed);
         });
 
-        it('matcha2', async function () {
-            const { addr1, tokens, matcha2, iSettlerActions } = await loadFixture(initRouterContracts);
+        it('settler', async function () {
+            const { addr1, tokens, settler, iSettlerActions } = await loadFixture(initRouterContracts);
 
-            const { permit2Data, permitSignature } = await getPermit2Data({ token: tokens.DAI.target, spender: matcha2.target, signer: addr1 });
+            const { permit2Data, permitSignature } = await getPermit2Data({ token: tokens.DAI.target, spender: settler.target, signer: addr1 });
 
             const encodedTransferFrom = iSettlerActions.encodeFunctionData('TRANSFER_FROM', [UniswapV2Pools.WETH_DAI, permit2Data.values, permitSignature]);
 
             const encodedDAIToWETH = iSettlerActions.encodeFunctionData('UNISWAPV2', [
-                matcha2.target,
+                settler.target,
                 tokens.DAI.target,
                 10000n,
                 UniswapV2Pools.WETH_DAI,
@@ -243,13 +243,13 @@ describe('Mixed pools', async function () {
                 0n,
             ]);
 
-            const tx = await matcha2.execute(
+            const tx = await settler.execute(
                 { recipient: constants.ZERO_ADDRESS, buyToken: constants.ZERO_ADDRESS, minAmountOut: '0x00' },
                 [encodedTransferFrom, encodedDAIToWETH, encodedWETHToUSDC],
                 constants.ZERO_BYTES32,
             );
 
-            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA2, (await tx.wait()).gasUsed);
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.SETTLER, (await tx.wait()).gasUsed);
         });
     });
 
@@ -311,12 +311,12 @@ describe('Mixed pools', async function () {
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.INCH, (await tx.wait()).gasUsed);
         });
 
-        it('matcha2', async function () {
-            const { addr1, tokens, matcha2, iSettlerActions } = await loadFixture(initRouterContracts);
+        it('settler', async function () {
+            const { addr1, tokens, settler, iSettlerActions } = await loadFixture(initRouterContracts);
 
-            const { permit2Data, permitSignature } = await getPermit2Data({ token: tokens.DAI.target, spender: matcha2.target, signer: addr1 });
+            const { permit2Data, permitSignature } = await getPermit2Data({ token: tokens.DAI.target, spender: settler.target, signer: addr1 });
 
-            const encodedTransferFrom = iSettlerActions.encodeFunctionData('TRANSFER_FROM', [matcha2.target, permit2Data.values, permitSignature]);
+            const encodedTransferFrom = iSettlerActions.encodeFunctionData('TRANSFER_FROM', [settler.target, permit2Data.values, permitSignature]);
 
             const encodedDAIToWETH = iSettlerActions.encodeFunctionData('UNISWAPV3', [
                 UniswapV2Pools.WETH_USDC, // recipient, use WETH_USDC pool to save gas
@@ -334,13 +334,13 @@ describe('Mixed pools', async function () {
                 0n,
             ]);
 
-            const tx = await matcha2.execute(
+            const tx = await settler.execute(
                 { recipient: constants.ZERO_ADDRESS, buyToken: constants.ZERO_ADDRESS, minAmountOut: '0x00' },
                 [encodedTransferFrom, encodedDAIToWETH, encodedWETHToUSDC],
                 constants.ZERO_BYTES32,
             );
 
-            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA2, (await tx.wait()).gasUsed);
+            gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.SETTLER, (await tx.wait()).gasUsed);
         });
     });
 });
