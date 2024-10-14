@@ -19,20 +19,13 @@ describe('Router [UniV3]', async function () {
         const gasUsedTableRow = gasUsedTable.addRow(['ETH => DAI']);
 
         it('1inch', async function () {
-            const {
-                addr1,
-                inch,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, inch } = await loadFixture(initRouterContracts);
             const tx = await inch.ethUnoswapTo(addr1.address, '1', BigInt(UniswapV3Pools.WETH_DAI.address) | (1n << 253n), { value: amount });
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.INCH, (await tx.wait()).gasUsed);
         });
 
         it('matcha', async function () {
-            const {
-                addr1,
-                tokens,
-                matcha,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, tokens, matcha } = await loadFixture(initRouterContracts);
             const tx = await matcha.sellEthForTokenToUniswapV3(
                 ethers.concat([tokens.WETH.target, ethers.toBeHex(UniswapV3Pools.WETH_DAI.fee, 3), tokens.DAI.target]),
                 '1',
@@ -45,12 +38,7 @@ describe('Router [UniV3]', async function () {
         });
 
         it('matcha2', async function () {
-            const {
-                addr1,
-                tokens,
-                matcha2,
-                iSettlerActions,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, tokens, matcha2, iSettlerActions } = await loadFixture(initRouterContracts);
 
             const encodedWrapETHfunction = iSettlerActions.encodeFunctionData('BASIC', [
                 await tokens.EEE.getAddress(),
@@ -78,11 +66,7 @@ describe('Router [UniV3]', async function () {
         });
 
         it('uniswap universal router', async function () {
-            const {
-                addr1,
-                tokens,
-                uniswapUniversal,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, tokens, uniswapUniversal } = await loadFixture(initRouterContracts);
 
             const planner = new RoutePlanner();
             planner.addCommand(CommandType.WRAP_ETH, [uniswapUniversal.target, amount]);
@@ -103,11 +87,7 @@ describe('Router [UniV3]', async function () {
         });
 
         it('uniswap v3 router', async function () {
-            const {
-                addr1,
-                tokens,
-                uniswapv3,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, tokens, uniswapv3 } = await loadFixture(initRouterContracts);
             const tx = await uniswapv3.exactInputSingle([tokens.WETH, tokens.DAI, UniswapV3Pools.WETH_DAI.fee, addr1.address, '0xffffffff', amount, '1', '0'], {
                 value: amount,
             });
@@ -115,12 +95,7 @@ describe('Router [UniV3]', async function () {
         });
 
         it('paraswap', async function () {
-            const {
-                addr1,
-                tokens,
-                uniswapv3,
-                paraswap,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, tokens, uniswapv3, paraswap } = await loadFixture(initRouterContracts);
             // Get `quotedAmount` to avoid positive slippage which makes the transaction significantly more expensive
             const quotedAmount = await uniswapv3.exactInputSingle.staticCall(
                 [tokens.WETH, tokens.DAI, UniswapV3Pools.WETH_DAI.fee, addr1.address, '0xffffffff', amount, '1', '0'],
@@ -154,10 +129,7 @@ describe('Router [UniV3]', async function () {
         const gasUsedTableRow = gasUsedTable.addRow(['ETH => USDC => DAI']);
 
         it('1inch', async function () {
-            const {
-                addr1,
-                inch,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, inch } = await loadFixture(initRouterContracts);
             const tx = await inch.ethUnoswapTo2(
                 addr1.address,
                 '1',
@@ -169,11 +141,7 @@ describe('Router [UniV3]', async function () {
         });
 
         it('matcha', async function () {
-            const {
-                addr1,
-                tokens,
-                matcha,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, tokens, matcha } = await loadFixture(initRouterContracts);
             const tx = await matcha.sellEthForTokenToUniswapV3(
                 ethers.concat([
                     tokens.WETH.target,
@@ -190,12 +158,7 @@ describe('Router [UniV3]', async function () {
         });
 
         it('matcha2', async function () {
-            const {
-                addr1,
-                tokens,
-                matcha2,
-                iSettlerActions,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, tokens, matcha2, iSettlerActions } = await loadFixture(initRouterContracts);
 
             const encodedWrapETHfunction = iSettlerActions.encodeFunctionData('BASIC', [
                 await tokens.EEE.getAddress(),
@@ -224,11 +187,7 @@ describe('Router [UniV3]', async function () {
         });
 
         it('uniswap universal router', async function () {
-            const {
-                addr1,
-                tokens,
-                uniswapUniversal,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, tokens, uniswapUniversal } = await loadFixture(initRouterContracts);
 
             const planner = new RoutePlanner();
 
@@ -250,11 +209,7 @@ describe('Router [UniV3]', async function () {
         });
 
         it('uniswap v3 router', async function () {
-            const {
-                addr1,
-                tokens,
-                uniswapv3,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, tokens, uniswapv3 } = await loadFixture(initRouterContracts);
             const tx = await uniswapv3.exactInput(
                 [
                     ethers.concat([
@@ -275,12 +230,7 @@ describe('Router [UniV3]', async function () {
         });
 
         it('paraswap', async function () {
-            const {
-                addr1,
-                tokens,
-                uniswapv3,
-                paraswap,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, tokens, uniswapv3, paraswap } = await loadFixture(initRouterContracts);
             // Get `quotedAmount` to avoid positive slippage which makes the transaction significantly more expensive
             const quotedAmount = await uniswapv3.exactInput.staticCall(
                 [
@@ -330,11 +280,7 @@ describe('Router [UniV3]', async function () {
         const gasUsedTableRow = gasUsedTable.addRow(['DAI => ETH']);
 
         it('1inch', async function () {
-            const {
-                addr1,
-                tokens,
-                inch,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, tokens, inch } = await loadFixture(initRouterContracts);
             const tx = await inch.unoswapTo(
                 addr1.address,
                 await tokens.DAI.getAddress(),
@@ -346,11 +292,7 @@ describe('Router [UniV3]', async function () {
         });
 
         it('matcha', async function () {
-            const {
-                addr1,
-                tokens,
-                matcha,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, tokens, matcha } = await loadFixture(initRouterContracts);
             const tx = await matcha.sellTokenForEthToUniswapV3(
                 ethers.concat([tokens.DAI.target, ethers.toBeHex(UniswapV3Pools.WETH_DAI.fee, 3), tokens.WETH.target]),
                 amount,
@@ -361,11 +303,7 @@ describe('Router [UniV3]', async function () {
         });
 
         it('uniswap universal router', async function () {
-            const {
-                addr1,
-                tokens,
-                uniswapUniversal,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, tokens, uniswapUniversal } = await loadFixture(initRouterContracts);
 
             const planner = new RoutePlanner();
 
@@ -387,11 +325,7 @@ describe('Router [UniV3]', async function () {
         });
 
         it('uniswap v3 router', async function () {
-            const {
-                addr1,
-                tokens,
-                uniswapv3,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, tokens, uniswapv3 } = await loadFixture(initRouterContracts);
             const swapData = uniswapv3.interface.encodeFunctionData('exactInputSingle', [
                 [
                     await tokens.DAI.getAddress(),
@@ -410,12 +344,7 @@ describe('Router [UniV3]', async function () {
         });
 
         it('paraswap', async function () {
-            const {
-                addr1,
-                tokens,
-                uniswapv3,
-                paraswap,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, tokens, uniswapv3, paraswap } = await loadFixture(initRouterContracts);
             // Get `quotedAmount` to avoid positive slippage which makes the transaction significantly more expensive
             const quotedAmount = await uniswapv3.exactInputSingle.staticCall([
                 tokens.DAI,
@@ -454,11 +383,7 @@ describe('Router [UniV3]', async function () {
         const gasUsedTableRow = gasUsedTable.addRow(['DAI => ETH (Permit2)']);
 
         it('1inch (dummy)', async function () {
-            const {
-                addr1,
-                tokens,
-                inch,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, tokens, inch } = await loadFixture(initRouterContracts);
             const tx = await inch.unoswapTo(
                 addr1.address,
                 await tokens.DAI.getAddress(),
@@ -470,12 +395,7 @@ describe('Router [UniV3]', async function () {
         });
 
         it('matcha2', async function () {
-            const {
-                addr1,
-                tokens,
-                matcha2,
-                iSettlerActions,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, tokens, matcha2, iSettlerActions } = await loadFixture(initRouterContracts);
 
             const { permit2Data, permitSignature } = await getPermit2Data({ token: tokens.DAI.target, spender: matcha2.target, signer: addr1 });
 
@@ -509,11 +429,7 @@ describe('Router [UniV3]', async function () {
         const gasUsedTableRow = gasUsedTable.addRow(['DAI => WETH']);
 
         it('1inch', async function () {
-            const {
-                addr1,
-                tokens,
-                inch,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, tokens, inch } = await loadFixture(initRouterContracts);
             const tx = await inch.unoswapTo(
                 addr1.address,
                 await tokens.DAI.getAddress(),
@@ -525,11 +441,7 @@ describe('Router [UniV3]', async function () {
         });
 
         it('matcha', async function () {
-            const {
-                addr1,
-                tokens,
-                matcha,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, tokens, matcha } = await loadFixture(initRouterContracts);
             const tx = await matcha.sellTokenForTokenToUniswapV3(
                 ethers.concat([tokens.DAI.target, ethers.toBeHex(UniswapV3Pools.WETH_DAI.fee, 3), tokens.WETH.target]),
                 amount,
@@ -540,11 +452,7 @@ describe('Router [UniV3]', async function () {
         });
 
         it('uniswap universal router', async function () {
-            const {
-                addr1,
-                tokens,
-                uniswapUniversal,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, tokens, uniswapUniversal } = await loadFixture(initRouterContracts);
 
             const planner = new RoutePlanner();
 
@@ -564,22 +472,13 @@ describe('Router [UniV3]', async function () {
         });
 
         it('uniswap v3 router', async function () {
-            const {
-                addr1,
-                tokens,
-                uniswapv3,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, tokens, uniswapv3 } = await loadFixture(initRouterContracts);
             const tx = await uniswapv3.exactInputSingle([tokens.DAI, tokens.WETH, UniswapV3Pools.WETH_DAI.fee, addr1.address, '0xffffffff', amount, '1', '0']);
             gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.UNISWAP_V3, (await tx.wait()).gasUsed);
         });
 
         it('paraswap', async function () {
-            const {
-                addr1,
-                tokens,
-                uniswapv3,
-                paraswap,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, tokens, uniswapv3, paraswap } = await loadFixture(initRouterContracts);
             // Get `quotedAmount` to avoid positive slippage which makes the transaction significantly more expensive
             const quotedAmount = await uniswapv3.exactInputSingle.staticCall([
                 tokens.DAI,
@@ -618,11 +517,7 @@ describe('Router [UniV3]', async function () {
         const gasUsedTableRow = gasUsedTable.addRow(['DAI => WETH (Permit2)']);
 
         it('1inch (dummy)', async function () {
-            const {
-                addr1,
-                tokens,
-                inch,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, tokens, inch } = await loadFixture(initRouterContracts);
             const tx = await inch.unoswapTo(
                 addr1.address,
                 await tokens.DAI.getAddress(),
@@ -634,12 +529,7 @@ describe('Router [UniV3]', async function () {
         });
 
         it('matcha2', async function () {
-            const {
-                addr1,
-                tokens,
-                matcha2,
-                iSettlerActions,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, tokens, matcha2, iSettlerActions } = await loadFixture(initRouterContracts);
 
             const { permit2Data, permitSignature } = await getPermit2Data({ token: tokens.DAI.target, spender: matcha2.target, signer: addr1 });
 
@@ -665,11 +555,7 @@ describe('Router [UniV3]', async function () {
         const gasUsedTableRow = gasUsedTable.addRow(['DAI => WETH => USDC']);
 
         it('1inch', async function () {
-            const {
-                addr1,
-                tokens,
-                inch,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, tokens, inch } = await loadFixture(initRouterContracts);
             const tx = await inch.unoswapTo2(
                 addr1.address,
                 await tokens.DAI.getAddress(),
@@ -682,11 +568,7 @@ describe('Router [UniV3]', async function () {
         });
 
         it('matcha', async function () {
-            const {
-                addr1,
-                tokens,
-                matcha,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, tokens, matcha } = await loadFixture(initRouterContracts);
             const tx = await matcha.sellTokenForTokenToUniswapV3(
                 ethers.concat([
                     tokens.DAI.target,
@@ -703,11 +585,7 @@ describe('Router [UniV3]', async function () {
         });
 
         it('uniswap universal router', async function () {
-            const {
-                addr1,
-                tokens,
-                uniswapUniversal,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, tokens, uniswapUniversal } = await loadFixture(initRouterContracts);
 
             const planner = new RoutePlanner();
 
@@ -727,11 +605,7 @@ describe('Router [UniV3]', async function () {
         });
 
         it('uniswap v3 router', async function () {
-            const {
-                addr1,
-                tokens,
-                uniswapv3,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, tokens, uniswapv3 } = await loadFixture(initRouterContracts);
             const tx = await uniswapv3.exactInput({
                 path: ethers.concat([
                     tokens.DAI.target,
@@ -749,12 +623,7 @@ describe('Router [UniV3]', async function () {
         });
 
         it('paraswap', async function () {
-            const {
-                addr1,
-                tokens,
-                uniswapv3,
-                paraswap,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, tokens, uniswapv3, paraswap } = await loadFixture(initRouterContracts);
             // Get `quotedAmount` to avoid positive slippage which makes the transaction significantly more expensive
             const quotedAmount = await uniswapv3.exactInput.staticCall({
                 path: ethers.concat([
@@ -800,11 +669,7 @@ describe('Router [UniV3]', async function () {
         const gasUsedTableRow = gasUsedTable.addRow(['DAI => WETH => USDC (Permit2)']);
 
         it('1inch', async function () {
-            const {
-                addr1,
-                tokens,
-                inch,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, tokens, inch } = await loadFixture(initRouterContracts);
             const tx = await inch.unoswapTo2(
                 addr1.address,
                 await tokens.DAI.getAddress(),
@@ -817,12 +682,7 @@ describe('Router [UniV3]', async function () {
         });
 
         it('matcha2', async function () {
-            const {
-                addr1,
-                tokens,
-                matcha2,
-                iSettlerActions,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, tokens, matcha2, iSettlerActions } = await loadFixture(initRouterContracts);
 
             const { permit2Data, permitSignature } = await getPermit2Data({ token: tokens.DAI.target, spender: matcha2.target, signer: addr1 });
 
@@ -849,11 +709,7 @@ describe('Router [UniV3]', async function () {
         const gasUsedTableRow = gasUsedTable.addRow(['DAI => WETH => USDC => USDT']);
 
         it('1inch', async function () {
-            const {
-                addr1,
-                tokens,
-                inch,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, tokens, inch } = await loadFixture(initRouterContracts);
             const tx = await inch.unoswapTo3(
                 addr1.address,
                 await tokens.DAI.getAddress(),
@@ -867,11 +723,7 @@ describe('Router [UniV3]', async function () {
         });
 
         it('matcha', async function () {
-            const {
-                addr1,
-                tokens,
-                matcha,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, tokens, matcha } = await loadFixture(initRouterContracts);
             const tx = await matcha.sellTokenForTokenToUniswapV3(
                 ethers.concat([
                     tokens.DAI.target,
@@ -890,11 +742,7 @@ describe('Router [UniV3]', async function () {
         });
 
         it('uniswap universal router', async function () {
-            const {
-                addr1,
-                tokens,
-                uniswapUniversal,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, tokens, uniswapUniversal } = await loadFixture(initRouterContracts);
 
             const planner = new RoutePlanner();
 
@@ -917,11 +765,7 @@ describe('Router [UniV3]', async function () {
         });
 
         it('uniswap v3 router', async function () {
-            const {
-                addr1,
-                tokens,
-                uniswapv3,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, tokens, uniswapv3 } = await loadFixture(initRouterContracts);
             const tx = await uniswapv3.exactInput({
                 path: ethers.concat([
                     tokens.DAI.target,
@@ -941,12 +785,7 @@ describe('Router [UniV3]', async function () {
         });
 
         it('paraswap', async function () {
-            const {
-                addr1,
-                tokens,
-                uniswapv3,
-                paraswap,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, tokens, uniswapv3, paraswap } = await loadFixture(initRouterContracts);
             // Get `quotedAmount` to avoid positive slippage which makes the transaction significantly more expensive
             const quotedAmount = await uniswapv3.exactInput.staticCall({
                 path: ethers.concat([
@@ -998,11 +837,7 @@ describe('Router [UniV3]', async function () {
         const gasUsedTableRow = gasUsedTable.addRow(['DAI => WETH => USDC => USDT (Permit2)']);
 
         it('1inch', async function () {
-            const {
-                addr1,
-                tokens,
-                inch,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, tokens, inch } = await loadFixture(initRouterContracts);
             const tx = await inch.unoswapTo3(
                 addr1.address,
                 await tokens.DAI.getAddress(),
@@ -1016,12 +851,7 @@ describe('Router [UniV3]', async function () {
         });
 
         it('matcha2', async function () {
-            const {
-                addr1,
-                tokens,
-                matcha2,
-                iSettlerActions,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, tokens, matcha2, iSettlerActions } = await loadFixture(initRouterContracts);
 
             const { permit2Data, permitSignature } = await getPermit2Data({ token: tokens.DAI.target, spender: matcha2.target, signer: addr1 });
 

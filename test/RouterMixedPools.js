@@ -1,4 +1,3 @@
-const { ethers } = require('hardhat');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 const { ether, trim0x, constants } = require('@1inch/solidity-utils');
 const { ProtocolKey, uniswapV3EncodePath, encodeUniswapPath, getPermit2Data } = require('./helpers/utils');
@@ -19,10 +18,7 @@ describe('Mixed pools', async function () {
         const gasUsedTableRow = gasUsedTable.addRow(['ETH =(uniV2)=> DAI =(uniV3)=> USDC']);
 
         it('1inch', async function () {
-            const {
-                addr1,
-                inch,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, inch } = await loadFixture(initRouterContracts);
 
             const tx = await inch.ethUnoswapTo2(
                 addr1.address,
@@ -37,12 +33,7 @@ describe('Mixed pools', async function () {
         });
 
         it('matcha2', async function () {
-            const {
-                addr1,
-                tokens,
-                matcha2,
-                iSettlerActions,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, tokens, matcha2, iSettlerActions } = await loadFixture(initRouterContracts);
 
             const encodedWrapETHfunction = iSettlerActions.encodeFunctionData('BASIC', [
                 await tokens.EEE.getAddress(),
@@ -79,11 +70,7 @@ describe('Mixed pools', async function () {
         });
 
         it('uniswap', async function () {
-            const {
-                addr1,
-                uniswapUniversal,
-                tokens,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, uniswapUniversal, tokens } = await loadFixture(initRouterContracts);
 
             const planner = new RoutePlanner();
             planner.addCommand(CommandType.WRAP_ETH, [uniswapUniversal.target, amount]);
@@ -105,10 +92,7 @@ describe('Mixed pools', async function () {
         const gasUsedTableRow = gasUsedTable.addRow(['ETH =(uniV3)=> DAI =(uniV2)=> USDC']);
 
         it('1inch', async function () {
-            const {
-                addr1,
-                inch,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, inch } = await loadFixture(initRouterContracts);
 
             const tx = await inch.ethUnoswapTo2(
                 addr1.address,
@@ -123,12 +107,7 @@ describe('Mixed pools', async function () {
         });
 
         it('matcha2', async function () {
-            const {
-                addr1,
-                tokens,
-                matcha2,
-                iSettlerActions,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, tokens, matcha2, iSettlerActions } = await loadFixture(initRouterContracts);
 
             const encodedWrapETHfunction = iSettlerActions.encodeFunctionData('BASIC', [
                 await tokens.EEE.getAddress(),
@@ -165,11 +144,7 @@ describe('Mixed pools', async function () {
         });
 
         it('uniswap', async function () {
-            const {
-                addr1,
-                uniswapUniversal,
-                tokens,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, uniswapUniversal, tokens } = await loadFixture(initRouterContracts);
 
             const planner = new RoutePlanner();
             planner.addCommand(CommandType.WRAP_ETH, [uniswapUniversal.target, amount]);
@@ -197,11 +172,7 @@ describe('Mixed pools', async function () {
         const gasUsedTableRow = gasUsedTable.addRow(['DAI =(uniV2)=> WETH =(uniV3)=> USDC']);
 
         it('1inch', async function () {
-            const {
-                addr1,
-                inch,
-                tokens,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, inch, tokens } = await loadFixture(initRouterContracts);
 
             const tx = await inch.unoswapTo2(
                 addr1.address,
@@ -215,11 +186,7 @@ describe('Mixed pools', async function () {
         });
 
         it('uniswap', async function () {
-            const {
-                addr1,
-                uniswapUniversal,
-                tokens,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, uniswapUniversal, tokens } = await loadFixture(initRouterContracts);
 
             const planner = new RoutePlanner();
             planner.addCommand(CommandType.V2_SWAP_EXACT_IN, [uniswapUniversal.target, amount, '1', [tokens.DAI.target, tokens.WETH.target], true]);
@@ -240,11 +207,7 @@ describe('Mixed pools', async function () {
         const gasUsedTableRow = gasUsedTable.addRow(['DAI =(uniV2)=> WETH =(uniV3)=> USDC (Permit2)']);
 
         it('1inch (dummy)', async function () {
-            const {
-                addr1,
-                inch,
-                tokens,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, inch, tokens } = await loadFixture(initRouterContracts);
 
             const tx = await inch.unoswapTo2(
                 addr1.address,
@@ -258,12 +221,7 @@ describe('Mixed pools', async function () {
         });
 
         it('matcha2', async function () {
-            const {
-                addr1,
-                tokens,
-                matcha2,
-                iSettlerActions,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, tokens, matcha2, iSettlerActions } = await loadFixture(initRouterContracts);
 
             const { permit2Data, permitSignature } = await getPermit2Data({ token: tokens.DAI.target, spender: matcha2.target, signer: addr1 });
 
@@ -299,11 +257,7 @@ describe('Mixed pools', async function () {
         const gasUsedTableRow = gasUsedTable.addRow(['DAI =(uniV3)=> WETH =(uniV2)=> USDC']);
 
         it('1inch', async function () {
-            const {
-                addr1,
-                inch,
-                tokens,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, inch, tokens } = await loadFixture(initRouterContracts);
 
             const tx = await inch.unoswapTo2(
                 addr1.address,
@@ -317,11 +271,7 @@ describe('Mixed pools', async function () {
         });
 
         it('uniswap', async function () {
-            const {
-                addr1,
-                uniswapUniversal,
-                tokens,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, uniswapUniversal, tokens } = await loadFixture(initRouterContracts);
 
             const planner = new RoutePlanner();
             planner.addCommand(CommandType.V3_SWAP_EXACT_IN, [
@@ -348,11 +298,7 @@ describe('Mixed pools', async function () {
         const gasUsedTableRow = gasUsedTable.addRow(['DAI =(uniV3)=> WETH =(uniV2)=> USDC (Permit2)']);
 
         it('1inch (dummy)', async function () {
-            const {
-                addr1,
-                inch,
-                tokens,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, inch, tokens } = await loadFixture(initRouterContracts);
 
             const tx = await inch.unoswapTo2(
                 addr1.address,
@@ -366,12 +312,7 @@ describe('Mixed pools', async function () {
         });
 
         it('matcha2', async function () {
-            const {
-                addr1,
-                tokens,
-                matcha2,
-                iSettlerActions,
-            } = await loadFixture(initRouterContracts);
+            const { addr1, tokens, matcha2, iSettlerActions } = await loadFixture(initRouterContracts);
 
             const { permit2Data, permitSignature } = await getPermit2Data({ token: tokens.DAI.target, spender: matcha2.target, signer: addr1 });
 
