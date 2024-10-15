@@ -59,7 +59,7 @@ async function initRouterContracts() {
     }
     await ethers.provider.send('evm_setNextBlockTimestamp', [nextBlockTimestamp]);
 
-    function fakePermit({ nonce = 0n, deadline = '0xffffffffffff', permitted = { token: tokens.DAI.target, amount: ether('1') } } = {}) {
+    function fakePermit({ nonce = 0n, deadline = '0xffffffff', permitted = { token: tokens.DAI.target, amount: ether('1') } } = {}) {
         return {
             nonce,
             deadline,
