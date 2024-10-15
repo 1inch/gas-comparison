@@ -316,7 +316,7 @@ describe('Router [UniV3]', async function () {
                 const encodedUniswapV3VIP = iSettlerActions.encodeFunctionData('UNISWAPV3_VIP', [
                     addr1.address,
                     encodeUniswapPath(tokens.DAI.target, 0x00n, UniswapV3Pools.WETH_DAI.fee, tokens.WETH.target),
-                    fakePermit({permitted: { token: tokens.DAI.target, amount }}),
+                    fakePermit({ permitted: { token: tokens.DAI.target, amount } }),
                     '0x',
                     0n,
                 ]);
@@ -449,7 +449,7 @@ describe('Router [UniV3]', async function () {
                 const encodedUniswapV3VIP = iSettlerActions.encodeFunctionData('UNISWAPV3_VIP', [
                     addr1.address,
                     encodeUniswapPath(tokens.DAI.target, 0x00n, UniswapV3Pools.WETH_DAI.fee, tokens.WETH.target),
-                    fakePermit({permitted: { token: tokens.DAI.target, amount }}),
+                    fakePermit({ permitted: { token: tokens.DAI.target, amount } }),
                     '0x',
                     0n,
                 ]);
@@ -576,7 +576,7 @@ describe('Router [UniV3]', async function () {
                     addr1.address,
                     encodeUniswapPath(tokens.DAI.target, 0x00n, UniswapV3Pools.WETH_DAI.fee, tokens.WETH.target) +
                         encodeUniswapPath(tokens.WETH.target, 0x00n, UniswapV3Pools.WETH_USDC.fee, tokens.USDC.target).slice(42),
-                        fakePermit({permitted: { token: tokens.DAI.target, amount }}),
+                    fakePermit({ permitted: { token: tokens.DAI.target, amount } }),
                     '0x',
                     0n,
                 ]);
@@ -720,7 +720,7 @@ describe('Router [UniV3]', async function () {
                     encodeUniswapPath(tokens.DAI.target, 0x00n, UniswapV3Pools.WETH_DAI.fee, tokens.WETH.target) +
                         encodeUniswapPath(tokens.WETH.target, 0x00n, UniswapV3Pools.WETH_USDC.fee, tokens.USDC.target).slice(42) +
                         encodeUniswapPath(tokens.USDC.target, 0x00n, UniswapV3Pools.USDT_USDC.fee, tokens.USDT.target).slice(42),
-                        fakePermit({permitted: { token: tokens.DAI.target, amount }}),
+                    fakePermit({ permitted: { token: tokens.DAI.target, amount } }),
                     '0x',
                     0n,
                 ]);

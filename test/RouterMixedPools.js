@@ -192,7 +192,7 @@ describe('Mixed pools', async function () {
 
                 const encodedTransferFrom = iSettlerActions.encodeFunctionData('TRANSFER_FROM', [
                     UniswapV2Pools.WETH_DAI,
-                    fakePermit({permitted: { token: tokens.DAI.target, amount }}),
+                    fakePermit({ permitted: { token: tokens.DAI.target, amount } }),
                     '0x',
                 ]);
 
@@ -263,7 +263,7 @@ describe('Mixed pools', async function () {
 
                 const encodedTransferFrom = iSettlerActions.encodeFunctionData('TRANSFER_FROM', [
                     settler.target,
-                    fakePermit({permitted: { token: tokens.DAI.target, amount }}),
+                    fakePermit({ permitted: { token: tokens.DAI.target, amount } }),
                     '0x',
                 ]);
 

@@ -260,7 +260,7 @@ describe('Router [UniV2]', async function () {
             });
 
             it('settler', async function () {
-                const { addr1, tokens, settler, allowanceHolder, fakePermit, iSettlerActions, } = await loadFixture(initRouterContracts);
+                const { addr1, tokens, settler, allowanceHolder, fakePermit, iSettlerActions } = await loadFixture(initRouterContracts);
 
                 const encodedTransferFrom = iSettlerActions.encodeFunctionData('TRANSFER_FROM', [UniswapV2Pools.WETH_DAI, fakePermit(), '0x']);
 
