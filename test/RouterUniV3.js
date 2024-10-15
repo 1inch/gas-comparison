@@ -314,7 +314,7 @@ describe('Router [UniV3]', async function () {
                 const { addr1, tokens, settler, allowanceHolder, fakePermit, iSettlerActions } = await loadFixture(initRouterContracts);
 
                 const encodedUniswapV3VIP = iSettlerActions.encodeFunctionData('UNISWAPV3_VIP', [
-                    addr1.address,
+                    settler.target,
                     encodeUniswapPath(tokens.DAI.target, 0x00n, UniswapV3Pools.WETH_DAI.fee, tokens.WETH.target),
                     fakePermit({ permitted: { token: tokens.DAI.target, amount } }),
                     '0x',
@@ -323,14 +323,14 @@ describe('Router [UniV3]', async function () {
 
                 const encodeUnwrapETHFunction = iSettlerActions.encodeFunctionData('BASIC', [
                     tokens.WETH.target,
-                    0n,
+                    10000n,
                     tokens.WETH.target,
                     4n,
                     tokens.WETH.interface.getFunction('withdraw').selector + trim0x(constants.ZERO_BYTES32),
                 ]);
 
                 const swapCalldata = settler.interface.encodeFunctionData('execute', [
-                    { recipient: constants.ZERO_ADDRESS, buyToken: await tokens.EEE.getAddress(), minAmountOut: '0x00' },
+                    { recipient: addr1.address, buyToken: await tokens.EEE.getAddress(), minAmountOut: '0x00' },
                     [encodedUniswapV3VIP, encodeUnwrapETHFunction],
                     constants.ZERO_BYTES32,
                 ]);

@@ -275,7 +275,7 @@ describe('Router [UniV2]', async function () {
 
                 const encodedBasicFunctionData = iSettlerActions.encodeFunctionData('BASIC', [
                     tokens.WETH.target,
-                    0n, // bps
+                    10000n, // bps
                     tokens.WETH.target, // pool
                     4n, // offset
                     tokens.WETH.interface.getFunction('withdraw').selector + trim0x(constants.ZERO_BYTES32),
