@@ -310,6 +310,36 @@ describe('Router [UniV3]', async function () {
                 gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA, (await tx.wait()).gasUsed);
             });
 
+            it('settler', async function () {
+                const { addr1, tokens, settler, allowanceHolder, fakePermit, iSettlerActions } = await loadFixture(initRouterContracts);
+
+                const encodedUniswapV3VIP = iSettlerActions.encodeFunctionData('UNISWAPV3_VIP', [
+                    settler.target,
+                    encodeUniswapPath(tokens.DAI.target, 0x00n, UniswapV3Pools.WETH_DAI.fee, tokens.WETH.target),
+                    fakePermit({ permitted: { token: tokens.DAI.target, amount } }),
+                    '0x',
+                    0n,
+                ]);
+
+                const encodeUnwrapETHFunction = iSettlerActions.encodeFunctionData('BASIC', [
+                    tokens.WETH.target,
+                    10000n,
+                    tokens.WETH.target,
+                    4n,
+                    tokens.WETH.interface.getFunction('withdraw').selector + trim0x(constants.ZERO_BYTES32),
+                ]);
+
+                const swapCalldata = settler.interface.encodeFunctionData('execute', [
+                    { recipient: addr1.address, buyToken: await tokens.EEE.getAddress(), minAmountOut: '0x00' },
+                    [encodedUniswapV3VIP, encodeUnwrapETHFunction],
+                    constants.ZERO_BYTES32,
+                ]);
+
+                const tx = await allowanceHolder.exec(settler.target, tokens.DAI.target, amount, settler.target, swapCalldata);
+
+                gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.SETTLER, (await tx.wait()).gasUsed);
+            });
+
             it('uniswap universal router', async function () {
                 const { addr1, tokens, uniswapUniversal } = await loadFixture(initRouterContracts);
 
@@ -411,6 +441,28 @@ describe('Router [UniV3]', async function () {
                     addr1.address,
                 );
                 gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA, (await tx.wait()).gasUsed);
+            });
+
+            it('settler', async function () {
+                const { addr1, tokens, settler, allowanceHolder, fakePermit, iSettlerActions } = await loadFixture(initRouterContracts);
+
+                const encodedUniswapV3VIP = iSettlerActions.encodeFunctionData('UNISWAPV3_VIP', [
+                    addr1.address,
+                    encodeUniswapPath(tokens.DAI.target, 0x00n, UniswapV3Pools.WETH_DAI.fee, tokens.WETH.target),
+                    fakePermit({ permitted: { token: tokens.DAI.target, amount } }),
+                    '0x',
+                    0n,
+                ]);
+
+                const swapCalldata = settler.interface.encodeFunctionData('execute', [
+                    { recipient: constants.ZERO_ADDRESS, buyToken: await tokens.WETH.getAddress(), minAmountOut: '0x00' },
+                    [encodedUniswapV3VIP],
+                    constants.ZERO_BYTES32,
+                ]);
+
+                const tx = await allowanceHolder.exec(settler.target, tokens.DAI.target, amount, settler.target, swapCalldata);
+
+                gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.SETTLER, (await tx.wait()).gasUsed);
             });
 
             it('uniswap universal router', async function () {
@@ -515,6 +567,29 @@ describe('Router [UniV3]', async function () {
                     addr1.address,
                 );
                 gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA, (await tx.wait()).gasUsed);
+            });
+
+            it('settler', async function () {
+                const { addr1, tokens, settler, allowanceHolder, fakePermit, iSettlerActions } = await loadFixture(initRouterContracts);
+
+                const encodedUniswapV3VIP = iSettlerActions.encodeFunctionData('UNISWAPV3_VIP', [
+                    addr1.address,
+                    encodeUniswapPath(tokens.DAI.target, 0x00n, UniswapV3Pools.WETH_DAI.fee, tokens.WETH.target) +
+                        encodeUniswapPath(tokens.WETH.target, 0x00n, UniswapV3Pools.WETH_USDC.fee, tokens.USDC.target).slice(42),
+                    fakePermit({ permitted: { token: tokens.DAI.target, amount } }),
+                    '0x',
+                    0n,
+                ]);
+
+                const swapCalldata = settler.interface.encodeFunctionData('execute', [
+                    { recipient: constants.ZERO_ADDRESS, buyToken: await tokens.WETH.getAddress(), minAmountOut: '0x00' },
+                    [encodedUniswapV3VIP],
+                    constants.ZERO_BYTES32,
+                ]);
+
+                const tx = await allowanceHolder.exec(settler.target, tokens.DAI.target, amount, settler.target, swapCalldata);
+
+                gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.SETTLER, (await tx.wait()).gasUsed);
             });
 
             it('uniswap universal router', async function () {
@@ -635,6 +710,30 @@ describe('Router [UniV3]', async function () {
                     addr1.address,
                 );
                 gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.MATCHA, (await tx.wait()).gasUsed);
+            });
+
+            it('settler', async function () {
+                const { addr1, tokens, settler, allowanceHolder, fakePermit, iSettlerActions } = await loadFixture(initRouterContracts);
+
+                const encodedUniswapV3VIP = iSettlerActions.encodeFunctionData('UNISWAPV3_VIP', [
+                    addr1.address,
+                    encodeUniswapPath(tokens.DAI.target, 0x00n, UniswapV3Pools.WETH_DAI.fee, tokens.WETH.target) +
+                        encodeUniswapPath(tokens.WETH.target, 0x00n, UniswapV3Pools.WETH_USDC.fee, tokens.USDC.target).slice(42) +
+                        encodeUniswapPath(tokens.USDC.target, 0x00n, UniswapV3Pools.USDT_USDC.fee, tokens.USDT.target).slice(42),
+                    fakePermit({ permitted: { token: tokens.DAI.target, amount } }),
+                    '0x',
+                    0n,
+                ]);
+
+                const swapCalldata = settler.interface.encodeFunctionData('execute', [
+                    { recipient: constants.ZERO_ADDRESS, buyToken: await tokens.WETH.getAddress(), minAmountOut: '0x00' },
+                    [encodedUniswapV3VIP],
+                    constants.ZERO_BYTES32,
+                ]);
+
+                const tx = await allowanceHolder.exec(settler.target, tokens.DAI.target, amount, settler.target, swapCalldata);
+
+                gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.SETTLER, (await tx.wait()).gasUsed);
             });
 
             it('uniswap universal router', async function () {

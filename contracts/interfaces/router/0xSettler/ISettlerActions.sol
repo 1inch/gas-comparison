@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { ISignatureTransfer } from "../ISignatureTransfer.sol";
+import { ISignatureTransfer } from "../../ISignatureTransfer.sol";
 
 interface ISettlerActions {
     /// @dev Transfer funds from msg.sender Permit2.
