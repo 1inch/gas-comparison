@@ -332,7 +332,7 @@ describe('Mixed pools', async function () {
             it('settler', async function () {
                 const { addr1, tokens, settler, iSettlerActions } = await loadFixture(initRouterContracts);
 
-                const { permit2Data, permitSignature } = await getPermit2Data({ token: tokens.DAI.target, spender: settler.target, signer: addr1 });
+                const { permit2Data, permitSignature } = await getPermit2Data({ token: tokens.DAI.target, amount, spender: settler.target, signer: addr1 });
 
                 const encodedTransferFrom = iSettlerActions.encodeFunctionData('TRANSFER_FROM', [UniswapV2Pools.WETH_DAI, permit2Data.values, permitSignature]);
 
@@ -368,7 +368,7 @@ describe('Mixed pools', async function () {
             it('settler', async function () {
                 const { addr1, tokens, settler, iSettlerActions } = await loadFixture(initRouterContracts);
 
-                const { permit2Data, permitSignature } = await getPermit2Data({ token: tokens.DAI.target, spender: settler.target, signer: addr1 });
+                const { permit2Data, permitSignature } = await getPermit2Data({ token: tokens.DAI.target, amount, spender: settler.target, signer: addr1 });
 
                 const encodedTransferFrom = iSettlerActions.encodeFunctionData('TRANSFER_FROM', [settler.target, permit2Data.values, permitSignature]);
 

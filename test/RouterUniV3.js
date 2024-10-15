@@ -842,7 +842,7 @@ describe('Router [UniV3]', async function () {
             it('settler', async function () {
                 const { addr1, tokens, settler, iSettlerActions } = await loadFixture(initRouterContracts);
 
-                const { permit2Data, permitSignature } = await getPermit2Data({ token: tokens.DAI.target, spender: settler.target, signer: addr1 });
+                const { permit2Data, permitSignature } = await getPermit2Data({ token: tokens.DAI.target, amount, spender: settler.target, signer: addr1 });
 
                 const encodedUniswapV3VIP = iSettlerActions.encodeFunctionData('UNISWAPV3_VIP', [
                     settler.target,
@@ -876,7 +876,7 @@ describe('Router [UniV3]', async function () {
             it('settler', async function () {
                 const { addr1, tokens, settler, iSettlerActions } = await loadFixture(initRouterContracts);
 
-                const { permit2Data, permitSignature } = await getPermit2Data({ token: tokens.DAI.target, spender: settler.target, signer: addr1 });
+                const { permit2Data, permitSignature } = await getPermit2Data({ token: tokens.DAI.target, amount, spender: settler.target, signer: addr1 });
 
                 const encodedUniswapV3VIP = iSettlerActions.encodeFunctionData('UNISWAPV3_VIP', [
                     addr1.address,
@@ -902,7 +902,7 @@ describe('Router [UniV3]', async function () {
             it('settler', async function () {
                 const { addr1, tokens, settler, iSettlerActions } = await loadFixture(initRouterContracts);
 
-                const { permit2Data, permitSignature } = await getPermit2Data({ token: tokens.DAI.target, spender: settler.target, signer: addr1 });
+                const { permit2Data, permitSignature } = await getPermit2Data({ token: tokens.DAI.target, amount, spender: settler.target, signer: addr1 });
 
                 const encodedUniswapV3VIP = iSettlerActions.encodeFunctionData('UNISWAPV3_VIP', [
                     settler.target,
@@ -929,7 +929,7 @@ describe('Router [UniV3]', async function () {
             it('settler', async function () {
                 const { addr1, tokens, settler, iSettlerActions } = await loadFixture(initRouterContracts);
 
-                const { permit2Data, permitSignature } = await getPermit2Data({ token: tokens.DAI.target, spender: settler.target, signer: addr1 });
+                const { permit2Data, permitSignature } = await getPermit2Data({ token: tokens.DAI.target, amount, spender: settler.target, signer: addr1 });
 
                 const encodedUniswapV3VIP = iSettlerActions.encodeFunctionData('UNISWAPV3_VIP', [
                     settler.target,
