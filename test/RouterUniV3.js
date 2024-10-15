@@ -746,7 +746,7 @@ describe('Router [UniV3]', async function () {
                 const { permit2Data, permitSignature } = await getPermit2Data({ token: tokens.DAI.target, spender: settler.target, signer: addr1 });
 
                 const encodedUniswapV3VIP = iSettlerActions.encodeFunctionData('UNISWAPV3_VIP', [
-                    addr1.address,
+                    settler.target,
                     encodeUniswapPath(tokens.DAI.target, 0x00n, UniswapV3Pools.WETH_DAI.fee, tokens.WETH.target),
                     permit2Data.values,
                     permitSignature,
@@ -762,7 +762,7 @@ describe('Router [UniV3]', async function () {
                 ]);
 
                 const tx = await settler.execute(
-                    { recipient: constants.ZERO_ADDRESS, buyToken: await tokens.EEE.getAddress(), minAmountOut: '0x00' },
+                    { recipient: addr1.address, buyToken: await tokens.EEE.getAddress(), minAmountOut: '0x00' },
                     [encodedUniswapV3VIP, encodeUnwrapETHFunction],
                     constants.ZERO_BYTES32,
                 );
