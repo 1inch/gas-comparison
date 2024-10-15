@@ -1,5 +1,6 @@
 const { ethers } = require('hardhat');
-const { trim0x } = require('@1inch/solidity-utils');
+const { trim0x, ether } = require('@1inch/solidity-utils');
+const { PERMIT2_ADDRESS, SignatureTransfer } = require('@uniswap/permit2-sdk');
 
 const ProtocolKey = {
     INCH: '1inch',
@@ -10,6 +11,7 @@ const ProtocolKey = {
     COWSWAP: 'cowswap',
     MATCHA: '0x',
     PARASWAP: 'paraswap',
+    SETTLER: '0x settler',
 };
 
 /**
@@ -57,9 +59,36 @@ function uniswapV3EncodePath(path, fees) {
     return encoded.toLowerCase();
 }
 
+function encodeUniswapPath(sourceToken, fork, feeTeir, destinationToken) {
+    return '0x' + ((BigInt(sourceToken) << 192n) | (BigInt(fork) << 184n) | (BigInt(feeTeir) << 160n) | BigInt(destinationToken)).toString(16);
+}
+
+async function getPermit2Data({ token, amount = ether('1'), spender, signer }) {
+    const permit2Data = SignatureTransfer.getPermitData(
+        {
+            permitted: {
+                token,
+                amount,
+            },
+            spender,
+            nonce: 0n,
+            deadline: Date.now() + 1000,
+        },
+        PERMIT2_ADDRESS,
+        31337,
+        undefined,
+    ); // 31337 is the chain ID, used to validate the signer
+
+    const permitSignature = await signer.signTypedData(permit2Data.domain, permit2Data.types, permit2Data.values);
+
+    return { permit2Data, permitSignature };
+}
+
 module.exports = {
     ProtocolKey,
     percentageOf,
     paraswapUniV2PoolData,
     uniswapV3EncodePath,
+    encodeUniswapPath,
+    getPermit2Data,
 };
