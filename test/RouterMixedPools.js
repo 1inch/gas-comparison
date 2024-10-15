@@ -267,7 +267,7 @@ describe('Mixed pools', async function () {
                 const encodedDAIToWETH = iSettlerActions.encodeFunctionData('UNISWAPV2', [
                     settler.target,
                     tokens.DAI.target,
-                    10000n,
+                    0n,
                     UniswapV2Pools.WETH_DAI,
                     0x1e01n,
                     0n,

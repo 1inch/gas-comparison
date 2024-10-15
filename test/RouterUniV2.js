@@ -548,12 +548,12 @@ describe('Router [UniV2]', async function () {
 
                 const { permit2Data, permitSignature } = await getPermit2Data({ token: tokens.DAI.target, spender: settler.target, signer: addr1 });
 
-                const encodedTransferFrom = iSettlerActions.encodeFunctionData('TRANSFER_FROM', [settler.target, permit2Data.values, permitSignature]);
+                const encodedTransferFrom = iSettlerActions.encodeFunctionData('TRANSFER_FROM', [UniswapV2Pools.WETH_DAI, permit2Data.values, permitSignature]);
 
                 const encodedUniswapV2FunctionDataDAItoWETH = iSettlerActions.encodeFunctionData('UNISWAPV2', [
                     settler.target, // since we'll need to unwrap it
                     tokens.DAI.target, // sell token
-                    10000n, // bps
+                    0n, // bps
                     UniswapV2Pools.WETH_DAI, // pool
                     0x1e01n, // swapInfo
                     0n, // amountOutMin
@@ -561,7 +561,7 @@ describe('Router [UniV2]', async function () {
 
                 const encodedBasicFunctionData = iSettlerActions.encodeFunctionData('BASIC', [
                     tokens.WETH.target,
-                    10000n, // bps
+                    0n, // bps
                     tokens.WETH.target, // pool
                     4n, // offset
                     tokens.WETH.interface.getFunction('withdraw').selector + trim0x(constants.ZERO_BYTES32),
@@ -585,12 +585,12 @@ describe('Router [UniV2]', async function () {
 
                 const { permit2Data, permitSignature } = await getPermit2Data({ token: tokens.DAI.target, spender: settler.target, signer: addr1 });
 
-                const encodedTransferFrom = iSettlerActions.encodeFunctionData('TRANSFER_FROM', [settler.target, permit2Data.values, permitSignature]);
+                const encodedTransferFrom = iSettlerActions.encodeFunctionData('TRANSFER_FROM', [UniswapV2Pools.WETH_DAI, permit2Data.values, permitSignature]);
 
                 const encodedUniswapV2FunctionDataDAItoWETH = iSettlerActions.encodeFunctionData('UNISWAPV2', [
                     addr1.address, // recipient
                     tokens.DAI.target, // sell token
-                    10000n, // bps
+                    0n, // bps
                     UniswapV2Pools.WETH_DAI, // pool
                     0x1e01n, // swapInfo
                     0n, // amountOutMin
@@ -614,12 +614,12 @@ describe('Router [UniV2]', async function () {
 
                 const { permit2Data, permitSignature } = await getPermit2Data({ token: tokens.DAI.target, spender: settler.target, signer: addr1 });
 
-                const encodedTransferFrom = iSettlerActions.encodeFunctionData('TRANSFER_FROM', [settler.target, permit2Data.values, permitSignature]);
+                const encodedTransferFrom = iSettlerActions.encodeFunctionData('TRANSFER_FROM', [UniswapV2Pools.WETH_DAI, permit2Data.values, permitSignature]);
 
                 const UniswapV2FunctionDataDAItoWETH = iSettlerActions.encodeFunctionData('UNISWAPV2', [
                     UniswapV2Pools.WETH_USDC,
                     tokens.DAI.target, // sell token
-                    10000n, // bps
+                    0n, // bps
                     UniswapV2Pools.WETH_DAI, // pool
                     0x1e01n, // swapInfo
                     0n, // amountOutMin
@@ -652,12 +652,12 @@ describe('Router [UniV2]', async function () {
 
                 const { permit2Data, permitSignature } = await getPermit2Data({ token: tokens.DAI.target, spender: settler.target, signer: addr1 });
 
-                const encodedTransferFrom = iSettlerActions.encodeFunctionData('TRANSFER_FROM', [settler.target, permit2Data.values, permitSignature]);
+                const encodedTransferFrom = iSettlerActions.encodeFunctionData('TRANSFER_FROM', [UniswapV2Pools.WETH_DAI, permit2Data.values, permitSignature]);
 
                 const UniswapV2FunctionDataDAItoWETH = iSettlerActions.encodeFunctionData('UNISWAPV2', [
                     UniswapV2Pools.WETH_USDC,
                     tokens.DAI.target, // sell token
-                    10000n, // bps
+                    0n, // bps
                     UniswapV2Pools.WETH_DAI, // pool
                     0x1e01n, // swapInfo
                     0n, // amountOutMin

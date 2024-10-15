@@ -755,7 +755,7 @@ describe('Router [UniV3]', async function () {
 
                 const encodeUnwrapETHFunction = iSettlerActions.encodeFunctionData('BASIC', [
                     tokens.WETH.target,
-                    10000n,
+                    0n,
                     tokens.WETH.target,
                     4n,
                     tokens.WETH.interface.getFunction('withdraw').selector + trim0x(constants.ZERO_BYTES32),
