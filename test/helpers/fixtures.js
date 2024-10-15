@@ -12,6 +12,7 @@ async function initRouterContracts() {
     const permit2 = await permit2Contract();
     const paraswap = await ethers.getContractAt('IParaswapRouter', '0x000dB803A70511E09dA650D4C0506d0000100000');
     const settler = await ethers.getContractAt('ISettler', '0x70bf6634eE8Cb27D04478f184b9b8BB13E5f4710');
+    const allowanceHolder = await ethers.getContractAt('IAllowanceHolder', '0x0000000000001fF3684f28c67538d4D072C22734');
     const iSettlerActions = new ethers.Interface((await artifacts.readArtifact('ISettlerActions')).abi);
 
     const tokens = {
@@ -39,6 +40,7 @@ async function initRouterContracts() {
     await tokens.DAI.approve(uniswapv3, ether('1'));
     await tokens.DAI.approve(paraswap, ether('1'));
     await tokens.DAI.approve(permit2, ether('1'));
+    await tokens.DAI.approve(allowanceHolder, ether('1'));
     await permit2.approve(tokens.DAI, uniswapUniversal, ether('1'), Date.now());
 
     // Buy some tokens for warmup address and exchanges
@@ -57,12 +59,22 @@ async function initRouterContracts() {
     }
     await ethers.provider.send('evm_setNextBlockTimestamp', [nextBlockTimestamp]);
 
+    function fakePermit({nonce = 0n, deadline = '0xffffffffffff', permitted = { token: tokens.DAI.target, amount: ether('1') } } = {}) {
+        return {
+            nonce,
+            deadline,
+            permitted,
+        };
+    };
+
     return {
         addr1,
         tokens,
         inch,
         matcha,
         settler,
+        allowanceHolder,
+        fakePermit,
         iSettlerActions,
         paraswap,
         uniswapv2,

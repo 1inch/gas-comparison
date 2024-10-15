@@ -187,6 +187,42 @@ describe('Mixed pools', async function () {
                 gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.INCH, (await tx.wait()).gasUsed);
             });
 
+            it('settler', async function () {
+                const { addr1, tokens, settler, allowanceHolder, fakePermit, iSettlerActions } = await loadFixture(initRouterContracts);
+
+                const encodedTransferFrom = iSettlerActions.encodeFunctionData('TRANSFER_FROM', [
+                    UniswapV2Pools.WETH_DAI,
+                    fakePermit({permitted: { token: tokens.DAI.target, amount }}),
+                    '0x',
+                ]);
+
+                const encodedDAIToWETH = iSettlerActions.encodeFunctionData('UNISWAPV2', [
+                    settler.target,
+                    tokens.DAI.target,
+                    0n,
+                    UniswapV2Pools.WETH_DAI,
+                    0x1e01n,
+                    0n,
+                ]);
+
+                const encodedWETHToUSDC = iSettlerActions.encodeFunctionData('UNISWAPV3', [
+                    addr1.address,
+                    10000n,
+                    encodeUniswapPath(tokens.WETH.target, 0x00n, UniswapV3Pools.WETH_USDC.fee, tokens.USDC.target),
+                    0n,
+                ]);
+
+                const swapCalldata = settler.interface.encodeFunctionData('execute', [
+                    { recipient: constants.ZERO_ADDRESS, buyToken: constants.ZERO_ADDRESS, minAmountOut: '0x00' },
+                    [encodedTransferFrom, encodedDAIToWETH, encodedWETHToUSDC],
+                    constants.ZERO_BYTES32,
+                ]);
+
+                const tx = await allowanceHolder.exec(settler.target, tokens.DAI.target, amount, settler.target, swapCalldata);
+
+                gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.SETTLER, (await tx.wait()).gasUsed);
+            });
+
             it('uniswap', async function () {
                 const { addr1, uniswapUniversal, tokens } = await loadFixture(initRouterContracts);
 
@@ -220,6 +256,42 @@ describe('Mixed pools', async function () {
                     UniswapV2Pools.WETH_USDC,
                 );
                 gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.INCH, (await tx.wait()).gasUsed);
+            });
+
+            it('settler', async function () {
+                const { addr1, tokens, settler, allowanceHolder, fakePermit, iSettlerActions } = await loadFixture(initRouterContracts);
+
+                const encodedTransferFrom = iSettlerActions.encodeFunctionData('TRANSFER_FROM', [
+                    settler.target,
+                    fakePermit({permitted: { token: tokens.DAI.target, amount }}),
+                    '0x',
+                ]);
+
+                const encodedDAIToWETH = iSettlerActions.encodeFunctionData('UNISWAPV3', [
+                    UniswapV2Pools.WETH_USDC, // recipient, use WETH_USDC pool to save gas
+                    10000n,
+                    encodeUniswapPath(tokens.DAI.target, 0x00n, UniswapV3Pools.WETH_DAI.fee, tokens.WETH.target),
+                    0n,
+                ]);
+
+                const encodedWETHToUSDC = iSettlerActions.encodeFunctionData('UNISWAPV2', [
+                    addr1.address,
+                    tokens.WETH.target,
+                    0n,
+                    UniswapV2Pools.WETH_USDC,
+                    0x1e00n,
+                    0n,
+                ]);
+
+                const swapCalldata = settler.interface.encodeFunctionData('execute', [
+                    { recipient: constants.ZERO_ADDRESS, buyToken: constants.ZERO_ADDRESS, minAmountOut: '0x00' },
+                    [encodedTransferFrom, encodedDAIToWETH, encodedWETHToUSDC],
+                    constants.ZERO_BYTES32,
+                ]);
+
+                const tx = await allowanceHolder.exec(settler.target, tokens.DAI.target, amount, settler.target, swapCalldata);
+
+                gasUsedTable.addElementToRow(gasUsedTableRow, ProtocolKey.SETTLER, (await tx.wait()).gasUsed);
             });
 
             it('uniswap', async function () {
